@@ -3,11 +3,13 @@ import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Users, Plus, Building2, Search, ChevronRight, Shield, User, UserCheck } from "lucide-react";
+import { Users, Plus, Building2, Search, Calendar, ChevronDown, ChevronUp, Shield, User, UserCheck, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link } from "wouter";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function PainelRH() {
   const { user } = useAuth();
@@ -24,8 +26,54 @@ export default function PainelRH() {
   });
 
   const utils = trpc.useUtils();
+  const [showPhaseEditor, setShowPhaseEditor] = useState(false);
+  const [editingPhaseId, setEditingPhaseId] = useState<number | null>(null);
+  const [phaseEdits, setPhaseEdits] = useState<Record<number, { startDate: string; endDate: string; titulo: string; descricao: string }>>({});
+
   const { data: employees } = trpc.employees.all.useQuery();
   const { data: calibrationRooms } = trpc.calibration.rooms.useQuery({});
+  const { data: activeCycle } = trpc.cycles.active.useQuery();
+  const { data: cyclePhases, refetch: refetchPhases } = trpc.cyclePhases.list.useQuery(
+    { cycleId: activeCycle?.id ?? 0 },
+    { enabled: !!activeCycle?.id }
+  );
+
+  const updatePhase = trpc.cyclePhases.update.useMutation({
+    onSuccess: () => {
+      toast.success("Fase atualizada com sucesso!");
+      setEditingPhaseId(null);
+      refetchPhases();
+      utils.cyclePhases.list.invalidate();
+    },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const phaseColors = ["#1840eb", "#d9f22a", "#a855f7", "#f97316", "#22c55e", "#eab308", "#d9f22a"];
+
+  const startEditPhase = (phase: NonNullable<typeof cyclePhases>[0]) => {
+    setEditingPhaseId(phase.id);
+    setPhaseEdits((prev) => ({
+      ...prev,
+      [phase.id]: {
+        startDate: format(new Date(phase.startDate), "yyyy-MM-dd"),
+        endDate: format(new Date(phase.endDate), "yyyy-MM-dd"),
+        titulo: phase.titulo,
+        descricao: phase.descricao ?? "",
+      },
+    }));
+  };
+
+  const savePhase = (phaseId: number) => {
+    const edits = phaseEdits[phaseId];
+    if (!edits) return;
+    updatePhase.mutate({
+      id: phaseId,
+      startDate: new Date(edits.startDate + "T00:00:00").toISOString(),
+      endDate: new Date(edits.endDate + "T23:59:59").toISOString(),
+      titulo: edits.titulo,
+      descricao: edits.descricao,
+    });
+  };
 
   const createEmployee = trpc.employees.create.useMutation({
     onSuccess: () => {
@@ -196,6 +244,183 @@ export default function PainelRH() {
                 </div>
               );
             })
+          )}
+        </div>
+
+        {/* Cycle Phase Editor */}
+        <div
+          className="rounded-xl border overflow-hidden"
+          style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+        >
+          <button
+            onClick={() => setShowPhaseEditor((v) => !v)}
+            className="w-full flex items-center justify-between px-5 py-4 transition-colors"
+            style={{ borderBottom: showPhaseEditor ? "1px solid #0a3060" : "none" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#00213f"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: "#d9f22a15", color: "#d9f22a" }}
+              >
+                <Calendar size={16} />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
+                  Configurar Datas do Ciclo
+                </p>
+                <p className="text-xs" style={{ color: "#8aa3c0" }}>
+                  {activeCycle ? `Ciclo ativo: ${activeCycle.name}` : "Nenhum ciclo ativo"} · {cyclePhases?.length ?? 0} fases configuradas
+                </p>
+              </div>
+            </div>
+            {showPhaseEditor ? <ChevronUp size={16} style={{ color: "#8aa3c0" }} /> : <ChevronDown size={16} style={{ color: "#8aa3c0" }} />}
+          </button>
+
+          {showPhaseEditor && (
+            <div className="p-5 space-y-3">
+              {!activeCycle ? (
+                <p className="text-sm text-center py-6" style={{ color: "#8aa3c0" }}>Nenhum ciclo ativo encontrado.</p>
+              ) : !cyclePhases || cyclePhases.length === 0 ? (
+                <p className="text-sm text-center py-6" style={{ color: "#8aa3c0" }}>Nenhuma fase configurada para este ciclo.</p>
+              ) : (
+                cyclePhases.map((phase, idx) => {
+                  const color = phaseColors[idx] ?? "#8aa3c0";
+                  const isEditing = editingPhaseId === phase.id;
+                  const edits = phaseEdits[phase.id];
+
+                  return (
+                    <div
+                      key={phase.id}
+                      className="rounded-xl border p-4"
+                      style={{
+                        backgroundColor: "#001023",
+                        borderColor: isEditing ? `${color}60` : "#0a3060",
+                        boxShadow: isEditing ? `0 0 0 1px ${color}30` : "none",
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+                            style={{ backgroundColor: `${color}20`, color }}
+                          >
+                            {phase.phaseNumber}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {isEditing ? (
+                              <Input
+                                value={edits?.titulo ?? phase.titulo}
+                                onChange={(e) => setPhaseEdits((p) => ({ ...p, [phase.id]: { ...p[phase.id]!, titulo: e.target.value } }))}
+                                className="text-sm font-semibold h-8 mb-1"
+                                style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                              />
+                            ) : (
+                              <p className="text-sm font-semibold truncate" style={{ color: "#fdffdf" }}>{phase.titulo}</p>
+                            )}
+                            {phase.isContinuous && (
+                              <span
+                                className="inline-block text-xs px-2 py-0.5 rounded-full mt-0.5"
+                                style={{ backgroundColor: `${color}15`, color }}
+                              >
+                                Contínuo
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {isEditing ? (
+                            <>
+                              <button
+                                onClick={() => savePhase(phase.id)}
+                                disabled={updatePhase.isPending}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                                style={{ backgroundColor: "#d9f22a", color: "#001023" }}
+                              >
+                                <Check size={12} />
+                                Salvar
+                              </button>
+                              <button
+                                onClick={() => setEditingPhaseId(null)}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                                style={{ backgroundColor: "#0a3060", color: "#8aa3c0" }}
+                              >
+                                <X size={12} />
+                                Cancelar
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => startEditPhase(phase)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                              style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#d9f22a40"; }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#8aa3c0"; (e.currentTarget as HTMLButtonElement).style.borderColor = "#0a3060"; }}
+                            >
+                              <Pencil size={12} />
+                              Editar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Date fields */}
+                      <div className="mt-3 grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>Início</label>
+                          {isEditing ? (
+                            <input
+                              type="date"
+                              value={edits?.startDate ?? ""}
+                              onChange={(e) => setPhaseEdits((p) => ({ ...p, [phase.id]: { ...p[phase.id]!, startDate: e.target.value } }))}
+                              className="w-full px-3 py-2 rounded-lg text-sm"
+                              style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf", colorScheme: "dark" }}
+                            />
+                          ) : (
+                            <p className="text-sm font-medium" style={{ color: "#fdffdf" }}>
+                              {format(new Date(phase.startDate), "dd/MM/yyyy", { locale: ptBR })}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>Fim</label>
+                          {isEditing ? (
+                            <input
+                              type="date"
+                              value={edits?.endDate ?? ""}
+                              onChange={(e) => setPhaseEdits((p) => ({ ...p, [phase.id]: { ...p[phase.id]!, endDate: e.target.value } }))}
+                              className="w-full px-3 py-2 rounded-lg text-sm"
+                              style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf", colorScheme: "dark" }}
+                            />
+                          ) : (
+                            <p className="text-sm font-medium" style={{ color: "#fdffdf" }}>
+                              {format(new Date(phase.endDate), "dd/MM/yyyy", { locale: ptBR })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      {isEditing && (
+                        <div className="mt-3">
+                          <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>Descrição</label>
+                          <textarea
+                            value={edits?.descricao ?? ""}
+                            onChange={(e) => setPhaseEdits((p) => ({ ...p, [phase.id]: { ...p[phase.id]!, descricao: e.target.value } }))}
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg text-sm resize-none"
+                            style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           )}
         </div>
 

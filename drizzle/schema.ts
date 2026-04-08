@@ -236,3 +236,22 @@ export const notifications = mysqlTable("notifications", {
 });
 
 export type Notification = typeof notifications.$inferSelect;
+
+// ─── CYCLE PHASES ────────────────────────────────────────────────────────────
+// Stores the configurable start/end dates for each phase of the performance cycle
+export const cyclePhases = mysqlTable("cycle_phases", {
+  id: int("id").autoincrement().primaryKey(),
+  cycleId: int("cycleId").references(() => evaluationCycles.id).notNull(),
+  phaseNumber: int("phaseNumber").notNull(), // 1-7
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  descricao: text("descricao"),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  isContinuous: boolean("isContinuous").default(false).notNull(), // e.g. Flash Feedbacks
+  updatedBy: int("updatedBy").references(() => users.id),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CyclePhase = typeof cyclePhases.$inferSelect;
+export type InsertCyclePhase = typeof cyclePhases.$inferInsert;

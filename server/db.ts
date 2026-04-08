@@ -3,6 +3,8 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   calibrationParticipants,
   calibrationRooms,
+  cyclePhases,
+  CyclePhase,
   employees,
   evaluationCycles,
   feedbackReports,
@@ -487,4 +489,60 @@ export async function getUnreadNotificationCount(userId: number) {
     .from(notifications)
     .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
   return result[0]?.count ?? 0;
+}
+
+// ─── CYCLE PHASES ─────────────────────────────────────────────────────────────
+
+export async function getCyclePhases(cycleId: number): Promise<CyclePhase[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(cyclePhases)
+    .where(eq(cyclePhases.cycleId, cycleId))
+    .orderBy(cyclePhases.phaseNumber);
+}
+
+export async function updateCyclePhase(
+  id: number,
+  data: { startDate: Date; endDate: Date; titulo?: string; descricao?: string },
+  updatedBy: number
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(cyclePhases)
+    .set({ ...data, updatedBy })
+    .where(eq(cyclePhases.id, id));
+}
+
+export async function upsertCyclePhases(
+  cycleId: number,
+  phases: Array<{
+    phaseNumber: number;
+    titulo: string;
+    descricao?: string;
+    startDate: Date;
+    endDate: Date;
+    isContinuous?: boolean;
+  }>,
+  updatedBy: number
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  for (const phase of phases) {
+    await db
+      .insert(cyclePhases)
+      .values({ cycleId, updatedBy, ...phase, isContinuous: phase.isContinuous ?? false })
+      .onDuplicateKeyUpdate({
+        set: {
+          titulo: phase.titulo,
+          descricao: phase.descricao ?? null,
+          startDate: phase.startDate,
+          endDate: phase.endDate,
+          isContinuous: phase.isContinuous ?? false,
+          updatedBy,
+        },
+      });
+  }
 }

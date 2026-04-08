@@ -37,6 +37,8 @@ import {
   upsertManagerEvaluation,
   upsertNineboxPosition,
   upsertSelfEvaluation,
+  getCyclePhases,
+  updateCyclePhase,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -167,6 +169,37 @@ export const appRouter = router({
   cycles: router({
     active: protectedProcedure.query(() => getActiveCycle()),
     all: protectedProcedure.query(() => getAllCycles()),
+  }),
+
+  // ─── CYCLE PHASES ────────────────────────────────────────────────────────────
+  cyclePhases: router({
+    list: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(({ input }) => getCyclePhases(input.cycleId)),
+
+    update: rhProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          startDate: z.string(), // ISO date string from frontend
+          endDate: z.string(),
+          titulo: z.string().optional(),
+          descricao: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await updateCyclePhase(
+          input.id,
+          {
+            startDate: new Date(input.startDate),
+            endDate: new Date(input.endDate),
+            titulo: input.titulo,
+            descricao: input.descricao,
+          },
+          ctx.user.id
+        );
+        return { success: true };
+      }),
   }),
 
   // ─── SELF EVALUATION ─────────────────────────────────────────────────────
