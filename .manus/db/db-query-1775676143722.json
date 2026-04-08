@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `calibration_participants` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`roomId` int NOT NULL,\n\t`managerId` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `calibration_participants_id` PRIMARY KEY(`id`)\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pH99uQXZRcw3eE.root --database 4JToPnfy3jUrCoxS7dasZ6 --execute CREATE TABLE `calibration_participants` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`roomId` int NOT NULL,\n\t`managerId` int NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `calibration_participants_id` PRIMARY KEY(`id`)\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 735
+}

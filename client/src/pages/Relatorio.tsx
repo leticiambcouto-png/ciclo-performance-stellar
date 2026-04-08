@@ -1,0 +1,388 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import StellarLayout from "@/components/StellarLayout";
+import { useState } from "react";
+import { toast } from "sonner";
+import { BrainCircuit, CheckCircle, FileText, Loader2, Send, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Streamdown } from "streamdown";
+import { NINEBOX_QUADRANTS } from "../../../shared/nineboxData";
+import type { NineboxQuadrant } from "../../../shared/nineboxData";
+
+export default function Relatorio() {
+  const { user } = useAuth();
+  const platformRole = (user as any)?.platformRole ?? "colaborador";
+  const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
+  const [finalContent, setFinalContent] = useState("");
+  const [finalActionPlan, setFinalActionPlan] = useState("");
+  const [aiContent, setAiContent] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const utils = trpc.useUtils();
+  const { data: cycle } = trpc.cycles.active.useQuery();
+  const cycleId = cycle?.id ?? 0;
+  const { data: myProfile } = trpc.employees.myProfile.useQuery();
+  const { data: directReports } = trpc.employees.directReports.useQuery(undefined, {
+    enabled: platformRole !== "colaborador",
+  });
+  const { data: employees } = trpc.employees.all.useQuery();
+
+  // Colaborador: my report
+  const { data: myReport } = trpc.feedbackReport.myReport.useQuery(
+    { cycleId },
+    { enabled: cycleId > 0 && platformRole === "colaborador" }
+  );
+  const { data: myNineboxPos } = trpc.ninebox.myPosition.useQuery(
+    { cycleId },
+    { enabled: cycleId > 0 && platformRole === "colaborador" }
+  );
+
+  // Gestor: team reports
+  const { data: teamReports } = trpc.feedbackReport.teamReports.useQuery(
+    { cycleId },
+    { enabled: cycleId > 0 && platformRole !== "colaborador" }
+  );
+  const { data: managerEval } = trpc.managerEvaluation.getForEmployee.useQuery(
+    { employeeId: selectedEmployee ?? 0, cycleId },
+    { enabled: cycleId > 0 && selectedEmployee !== null && platformRole !== "colaborador" }
+  );
+
+  const saveDraft = trpc.feedbackReport.saveDraft.useMutation({
+    onSuccess: () => {
+      toast.success("Rascunho salvo!");
+      utils.feedbackReport.teamReports.invalidate();
+    },
+    onError: () => toast.error("Erro ao salvar."),
+  });
+
+  const sendReport = trpc.feedbackReport.send.useMutation({
+    onSuccess: () => {
+      toast.success("Devolutiva enviada para o colaborador!");
+      utils.feedbackReport.teamReports.invalidate();
+    },
+    onError: () => toast.error("Erro ao enviar."),
+  });
+
+  const generateFeedback = trpc.ai.generateFeedback.useMutation({
+    onSuccess: (data) => {
+      const text = typeof data === 'string' ? data : '';
+      setAiContent(text);
+      setFinalContent(text);
+    },
+    onError: () => toast.error("Erro ao gerar feedback com IA."),
+  });
+
+  const handleGenerateAI = () => {
+    if (!managerEval || !selectedEmployee) return;
+    const emp = employees?.find((e) => e.id === selectedEmployee);
+    generateFeedback.mutate({
+      employeeName: emp?.name ?? "Colaborador",
+      evaluation: {
+        ambicao: managerEval.ambicao ?? undefined,
+        ambicaoComment: managerEval.ambicaoComment ?? undefined,
+        sonharGrande: managerEval.sonharGrande ?? undefined,
+        sonharGrandeComment: managerEval.sonharGrandeComment ?? undefined,
+        accountability: managerEval.accountability ?? undefined,
+        accountabilityComment: managerEval.accountabilityComment ?? undefined,
+        juntosSomosMaisFortes: managerEval.juntosSomosMaisFortes ?? undefined,
+        juntosSomosMaisfortesComment: managerEval.juntosSomosMaisfortesComment ?? undefined,
+        qualidade: managerEval.qualidade ?? undefined,
+        qualidadeComment: managerEval.qualidadeComment ?? undefined,
+        contribuicao: managerEval.contribuicao ?? undefined,
+        contribuicaoComment: managerEval.contribuicaoComment ?? undefined,
+        adaptacao: managerEval.adaptacao ?? undefined,
+        adaptacaoComment: managerEval.adaptacaoComment ?? undefined,
+        usoDeIA: managerEval.usoDeIA ?? undefined,
+        usoDeIAComment: managerEval.usoDeIAComment ?? undefined,
+      },
+      quadrant: managerEval.nineboxQuadrant ?? "Q5",
+    });
+  };
+
+  const existingReport = selectedEmployee
+    ? teamReports?.find((r) => r.employeeId === selectedEmployee)
+    : null;
+
+  // Colaborador view
+  if (platformRole === "colaborador") {
+    const qInfo = myNineboxPos?.quadrant
+      ? NINEBOX_QUADRANTS[myNineboxPos.quadrant as NineboxQuadrant]
+      : null;
+
+    return (
+      <StellarLayout title="Minha Devolutiva">
+        <div className="p-6 max-w-3xl space-y-6">
+          {!myReport || myReport.status === "draft" ? (
+            <div
+              className="p-12 rounded-xl border text-center"
+              style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+            >
+              <FileText size={48} className="mx-auto mb-4" style={{ color: "#0a3060" }} />
+              <h3 className="font-bold text-lg mb-2" style={{ color: "#fdffdf" }}>
+                Devolutiva ainda não disponível
+              </h3>
+              <p className="text-sm" style={{ color: "#8aa3c0" }}>
+                Seu gestor ainda não enviou o resultado da sua avaliação. Você será notificado quando estiver disponível.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div
+                className="p-5 rounded-xl border"
+                style={{ backgroundColor: "#001830", borderColor: "#d9f22a30" }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle size={16} style={{ color: "#22c55e" }} />
+                  <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>
+                    Devolutiva disponível
+                  </p>
+                </div>
+                <p className="text-xs" style={{ color: "#8aa3c0" }}>
+                  Enviada em {myReport.sentAt ? new Date(myReport.sentAt).toLocaleDateString("pt-BR") : "—"}
+                </p>
+              </div>
+
+              {/* Ninebox position */}
+              {qInfo && (
+                <div
+                  className="p-5 rounded-xl border"
+                  style={{
+                    backgroundColor: "#001830",
+                    borderColor: `${qInfo.color}40`,
+                  }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#8aa3c0" }}>
+                    Seu posicionamento no 9-Box
+                  </p>
+                  <div className="flex items-start gap-4">
+                    <div
+                      className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-black flex-shrink-0"
+                      style={{ backgroundColor: `${qInfo.color}20`, color: qInfo.color }}
+                    >
+                      {myNineboxPos?.quadrant}
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg" style={{ color: "#fdffdf" }}>{qInfo.name}</p>
+                      <p className="text-sm mt-1" style={{ color: "#8aa3c0" }}>{qInfo.description}</p>
+                      <div className="flex gap-3 mt-3">
+                        {[
+                          { label: "Mérito", val: qInfo.merito },
+                          { label: "Promoção", val: qInfo.promocao },
+                        ].map((item) => (
+                          <span
+                            key={item.label}
+                            className="text-xs px-2 py-1 rounded-full border"
+                            style={{
+                              backgroundColor: item.val ? "#22c55e15" : "#ef444415",
+                              borderColor: item.val ? "#22c55e30" : "#ef444430",
+                              color: item.val ? "#22c55e" : "#ef4444",
+                            }}
+                          >
+                            {item.label}: {item.val ? "Sim" : "Não"}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    className="mt-4 p-3 rounded-lg"
+                    style={{ backgroundColor: "#001023" }}
+                  >
+                    <p className="text-xs font-semibold mb-1" style={{ color: "#d9f22a" }}>
+                      Plano de Ação
+                    </p>
+                    <p className="text-xs leading-relaxed" style={{ color: "#8aa3c0" }}>
+                      {qInfo.actionPlan}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Feedback content */}
+              <div
+                className="p-5 rounded-xl border"
+                style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#8aa3c0" }}>
+                  Feedback do Gestor
+                </p>
+                <div style={{ color: "#fdffdf" }} className="text-sm">
+                  <Streamdown>{myReport.finalContent ?? ""}</Streamdown>
+                </div>
+              </div>
+
+              {myReport.finalActionPlan && (
+                <div
+                  className="p-5 rounded-xl border"
+                  style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#8aa3c0" }}>
+                    Plano de Ação
+                  </p>
+                  <div style={{ color: "#fdffdf" }} className="text-sm">
+                    <Streamdown>{myReport.finalActionPlan}</Streamdown>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </StellarLayout>
+    );
+  }
+
+  // Gestor/RH view
+  return (
+    <StellarLayout title="Devolutivas">
+      <div className="p-6 max-w-4xl space-y-6">
+        {/* Employee selector */}
+        <div
+          className="p-4 rounded-xl border"
+          style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+        >
+          <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: "#8aa3c0" }}>
+            Selecionar Liderado
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {directReports?.map((emp) => {
+              const report = teamReports?.find((r) => r.employeeId === emp.id);
+              return (
+                <button
+                  key={emp.id}
+                  onClick={() => {
+                    setSelectedEmployee(emp.id);
+                    setFinalContent(report?.finalContent ?? "");
+                    setFinalActionPlan(report?.finalActionPlan ?? "");
+                    setAiContent("");
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all"
+                  style={{
+                    backgroundColor: selectedEmployee === emp.id ? "#d9f22a15" : "#001023",
+                    borderColor: selectedEmployee === emp.id ? "#d9f22a40" : "#0a3060",
+                    color: selectedEmployee === emp.id ? "#d9f22a" : "#fdffdf",
+                  }}
+                >
+                  <User size={14} />
+                  {emp.name}
+                  {report?.status === "sent" && (
+                    <CheckCircle size={12} style={{ color: "#22c55e" }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {selectedEmployee && (
+          <>
+            {/* AI Generate */}
+            {managerEval && (
+              <div
+                className="p-4 rounded-xl border"
+                style={{ backgroundColor: "#001830", borderColor: "#1840eb30" }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: "#fdffdf" }}>
+                      Gerar feedback com IA
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>
+                      A IA vai estruturar o feedback com base na avaliação e no quadrante do 9-Box.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleGenerateAI}
+                    disabled={generateFeedback.isPending}
+                    className="flex items-center gap-2 flex-shrink-0"
+                    style={{ backgroundColor: "#1840eb", color: "#fdffdf" }}
+                  >
+                    {generateFeedback.isPending ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <BrainCircuit size={14} />
+                    )}
+                    Gerar com IA
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Editor */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#8aa3c0" }}>
+                  Conteúdo do Feedback *
+                </label>
+                <Textarea
+                  placeholder="Escreva o feedback para o colaborador..."
+                  value={finalContent}
+                  onChange={(e) => setFinalContent(e.target.value)}
+                  rows={8}
+                  style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#8aa3c0" }}>
+                  Plano de Ação
+                </label>
+                <Textarea
+                  placeholder="Ações e próximos passos acordados..."
+                  value={finalActionPlan}
+                  onChange={(e) => setFinalActionPlan(e.target.value)}
+                  rows={4}
+                  style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (!finalContent) return toast.error("Preencha o conteúdo do feedback.");
+                    saveDraft.mutate({
+                      employeeId: selectedEmployee,
+                      cycleId,
+                      finalContent,
+                      finalActionPlan: finalActionPlan || undefined,
+                      aiFeedbackContent: aiContent || undefined,
+                    });
+                  }}
+                  disabled={saveDraft.isPending}
+                  style={{ borderColor: "#0a3060", color: "#fdffdf", backgroundColor: "transparent" }}
+                >
+                  Salvar rascunho
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (!finalContent) return toast.error("Preencha o conteúdo do feedback.");
+                    saveDraft.mutate(
+                      {
+                        employeeId: selectedEmployee,
+                        cycleId,
+                        finalContent,
+                        finalActionPlan: finalActionPlan || undefined,
+                        aiFeedbackContent: aiContent || undefined,
+                      },
+                      {
+                        onSuccess: () => {
+                          sendReport.mutate({ employeeId: selectedEmployee, cycleId });
+                        },
+                      }
+                    );
+                  }}
+                  disabled={saveDraft.isPending || sendReport.isPending}
+                  className="flex items-center gap-2"
+                  style={{ backgroundColor: "#d9f22a", color: "#001023" }}
+                >
+                  <Send size={14} />
+                  Enviar devolutiva
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </StellarLayout>
+  );
+}

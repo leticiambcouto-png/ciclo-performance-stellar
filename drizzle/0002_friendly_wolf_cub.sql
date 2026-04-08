@@ -1,0 +1,1 @@
+ALTER TABLE `employees` ADD `platformRole` enum('rh','gestor','colaborador') DEFAULT 'colaborador' NOT NULL;
