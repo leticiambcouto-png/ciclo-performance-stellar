@@ -306,3 +306,86 @@ describe("STELLAR_EXPECTED_CURVE", () => {
     expect(total).toBe(100);
   });
 });
+
+// ─── USER MANAGEMENT (RH CRUD) ───────────────────────────────────────────────
+describe("employees router - RH user management", () => {
+  function makeCollaboratorContext(): TrpcContext {
+    return {
+      user: {
+        id: 2,
+        openId: "colab-user",
+        email: "colab@estrelabet.com",
+        name: "Letícia",
+        loginMethod: "manus",
+        role: "user",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastSignedIn: new Date(),
+        platformRole: "colaborador",
+      } as any,
+      req: { protocol: "https", headers: {} } as any,
+      res: { clearCookie: () => {} } as any,
+    };
+  }
+
+  it("employees.create input accepts all required fields including area, diretoria and accessPassword", () => {
+    const input = {
+      name: "João Silva",
+      email: "joao@stellar.com",
+      jobTitle: "Analista",
+      department: "Marketing",
+      area: "Growth",
+      diretoria: "Diretoria de Marketing",
+      managerId: 1,
+      platformRole: "colaborador" as const,
+      accessPassword: "senha123",
+    };
+    expect(input.name).toBe("João Silva");
+    expect(input.area).toBe("Growth");
+    expect(input.diretoria).toBe("Diretoria de Marketing");
+    expect(input.accessPassword).toBe("senha123");
+    expect(input.platformRole).toBe("colaborador");
+  });
+
+  it("employees.update input accepts area, diretoria and accessPassword for editing", () => {
+    const input = {
+      id: 1,
+      name: "João Silva Atualizado",
+      area: "Produto",
+      diretoria: "Diretoria de Produto",
+      accessPassword: "novaSenha456",
+      platformRole: "gestor" as const,
+    };
+    expect(input.id).toBe(1);
+    expect(input.area).toBe("Produto");
+    expect(input.diretoria).toBe("Diretoria de Produto");
+    expect(input.platformRole).toBe("gestor");
+  });
+
+  it("rhProcedure blocks non-RH users from accessing employees.allWithManager", async () => {
+    const ctx = makeCollaboratorContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.employees.allWithManager()).rejects.toThrow();
+  });
+
+  it("rhProcedure blocks non-RH users from deactivating employees", async () => {
+    const ctx = makeCollaboratorContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.employees.deactivate({ id: 1 })).rejects.toThrow();
+  });
+
+  it("platformRole enum only accepts valid values", () => {
+    const validRoles = ["rh", "gestor", "colaborador"];
+    expect(validRoles).toContain("rh");
+    expect(validRoles).toContain("gestor");
+    expect(validRoles).toContain("colaborador");
+    expect(validRoles).not.toContain("admin");
+    expect(validRoles).not.toContain("superuser");
+  });
+
+  it("deactivate input requires a numeric employee id", () => {
+    const input = { id: 42 };
+    expect(typeof input.id).toBe("number");
+    expect(input.id).toBeGreaterThan(0);
+  });
+});

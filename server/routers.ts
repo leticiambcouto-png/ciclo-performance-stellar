@@ -8,8 +8,10 @@ import {
   getAllCalibrationRooms,
   getAllCycles,
   getAllEmployees,
+  getAllEmployeesWithManager,
   getAllNineboxPositions,
   getAllUsers,
+  deactivateEmployee,
   getActiveCycle,
   getCalibrationParticipants,
   getDirectReports,
@@ -109,6 +111,10 @@ export const appRouter = router({
   // ─── EMPLOYEES ───────────────────────────────────────────────────────────
   employees: router({
     all: protectedProcedure.query(() => getAllEmployees()),
+    allWithManager: rhProcedure.query(() => getAllEmployeesWithManager()),
+    deactivate: rhProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ input }) => deactivateEmployee(input.id)),
     myProfile: protectedProcedure.query(async ({ ctx }) => {
       return getEmployeeByUserId(ctx.user.id);
     }),
@@ -125,6 +131,9 @@ export const appRouter = router({
           email: z.string().optional(),
           jobTitle: z.string().optional(),
           department: z.string().optional(),
+          area: z.string().optional(),
+          diretoria: z.string().optional(),
+          accessPassword: z.string().optional(),
           managerId: z.number().nullable().optional(),
           userId: z.number().nullable().optional(),
           platformRole: z.enum(["rh", "gestor", "colaborador"]).optional(),
@@ -141,6 +150,9 @@ export const appRouter = router({
           email: z.string().optional(),
           jobTitle: z.string().optional(),
           department: z.string().optional(),
+          area: z.string().optional(),
+          diretoria: z.string().optional(),
+          accessPassword: z.string().optional(),
           managerId: z.number().optional(),
           platformRole: z.enum(["rh", "gestor", "colaborador"]).default("colaborador"),
         })
