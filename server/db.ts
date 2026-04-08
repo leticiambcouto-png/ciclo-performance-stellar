@@ -546,3 +546,132 @@ export async function upsertCyclePhases(
       });
   }
 }
+
+// ─── EVALUATION REPORT DATA (for Excel export) ───────────────────────────────
+
+export async function getEvaluationReportData(cycleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Fetch all manager evaluations for the cycle with employee and manager names
+  const evals = await db
+    .select({
+      // Evaluated employee
+      employeeId: employees.id,
+      employeeName: employees.name,
+      employeeEmail: employees.email,
+      jobTitle: employees.jobTitle,
+      department: employees.department,
+      // Manager (direct leader)
+      managerId: managerEvaluations.managerId,
+      // Evaluation criteria — Potencial axis
+      ambicao: managerEvaluations.ambicao,
+      ambicaoComment: managerEvaluations.ambicaoComment,
+      sonharGrande: managerEvaluations.sonharGrande,
+      sonharGrandeComment: managerEvaluations.sonharGrandeComment,
+      accountability: managerEvaluations.accountability,
+      accountabilityComment: managerEvaluations.accountabilityComment,
+      juntosSomosMaisFortes: managerEvaluations.juntosSomosMaisFortes,
+      juntosSomosMaisfortesComment: managerEvaluations.juntosSomosMaisfortesComment,
+      // Evaluation criteria — Performance axis
+      qualidade: managerEvaluations.qualidade,
+      qualidadeComment: managerEvaluations.qualidadeComment,
+      contribuicao: managerEvaluations.contribuicao,
+      contribuicaoComment: managerEvaluations.contribuicaoComment,
+      adaptacao: managerEvaluations.adaptacao,
+      adaptacaoComment: managerEvaluations.adaptacaoComment,
+      usoDeIA: managerEvaluations.usoDeIA,
+      usoDeIAComment: managerEvaluations.usoDeIAComment,
+      // Calculated axes
+      potencialAxis: managerEvaluations.potencialAxis,
+      performanceAxis: managerEvaluations.performanceAxis,
+      nineboxQuadrant: managerEvaluations.nineboxQuadrant,
+      evalStatus: managerEvaluations.status,
+      submittedAt: managerEvaluations.submittedAt,
+    })
+    .from(managerEvaluations)
+    .innerJoin(employees, eq(managerEvaluations.employeeId, employees.id))
+    .where(eq(managerEvaluations.cycleId, cycleId))
+    .orderBy(employees.name);
+
+  // Fetch manager names separately for each unique managerId
+  const managerIds = Array.from(new Set(evals.map((e) => e.managerId)));
+  const managerMap: Record<number, string> = {};
+  if (managerIds.length > 0) {
+    for (const mid of managerIds) {
+      const mgr = await db
+        .select({ name: employees.name })
+        .from(employees)
+        .where(eq(employees.id, mid))
+        .limit(1);
+      managerMap[mid] = mgr[0]?.name ?? "—";
+    }
+  }
+
+  return evals.map((e) => ({
+    ...e,
+    managerName: managerMap[e.managerId] ?? "—",
+  }));
+}
+
+// ─── USER MANAGEMENT (RH) ────────────────────────────────────────────────────
+
+export async function getAllEmployeesWithManager() {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Fetch all employees (including inactive) with manager name
+  const allEmps = await db
+    .select({
+      id: employees.id,
+      name: employees.name,
+      email: employees.email,
+      jobTitle: employees.jobTitle,
+      department: employees.department,
+      area: employees.area,
+      diretoria: employees.diretoria,
+      managerId: employees.managerId,
+      platformRole: employees.platformRole,
+      isActive: employees.isActive,
+      userId: employees.userId,
+      createdAt: employees.createdAt,
+    })
+    .from(employees)
+    .orderBy(employees.name);
+
+  // Build a name map for managers
+  const managerIds = Array.from(new Set(allEmps.map((e) => e.managerId).filter(Boolean) as number[]));
+  const managerMap: Record<number, string> = {};
+  for (const mid of managerIds) {
+    const mgr = await db
+      .select({ name: employees.name })
+      .from(employees)
+      .where(eq(employees.id, mid))
+      .limit(1);
+    managerMap[mid] = mgr[0]?.name ?? "—";
+  }
+
+  return allEmps.map((e) => ({
+    ...e,
+    managerName: e.managerId ? (managerMap[e.managerId] ?? "—") : "—",
+  }));
+}
+
+export async function deactivateEmployee(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(employees).set({ isActive: false }).where(eq(employees.id, id));
+}
+
+export async function reactivateEmployee(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(employees).set({ isActive: true }).where(eq(employees.id, id));
+}
+
+export async function getEmployeeById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(employees).where(eq(employees.id, id)).limit(1);
+  return result[0];
+}

@@ -38,6 +38,9 @@ export const employees = mysqlTable("employees", {
   jobTitle: varchar("jobTitle", { length: 255 }),
   department: varchar("department", { length: 255 }),
   managerId: int("managerId"), // references employees.id (self-referential)
+  area: varchar("area", { length: 255 }), // Nome da área
+  diretoria: varchar("diretoria", { length: 255 }), // Nome da diretoria
+  accessPassword: varchar("accessPassword", { length: 255 }), // Senha de acesso à plataforma (hashed)
   platformRole: mysqlEnum("platformRole", ["rh", "gestor", "colaborador"]).default("colaborador").notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

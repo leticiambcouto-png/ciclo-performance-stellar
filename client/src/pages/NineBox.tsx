@@ -82,7 +82,8 @@ export default function NineBox() {
     onError: () => toast.error("Erro ao gerar análise de IA."),
   });
 
-  const positions = platformRole === "rh" ? allPositions : platformRole === "gestor" ? teamPositions : myPosition ? [myPosition] : [];
+  // Collaborator sees only educational view — no personal position data shown
+  const positions = platformRole === "rh" ? allPositions : platformRole === "gestor" ? teamPositions : [];
   const positionArray = Array.isArray(positions) ? positions : [];
 
   const quadrantCounts: Record<NineboxQuadrant, number> = {} as any;
@@ -140,23 +141,23 @@ export default function NineBox() {
   return (
     <StellarLayout title="9-Box">
       <div className="p-6 space-y-6">
-        {/* Tabs */}
-        <div className="flex gap-2">
-          {["ninebox", "curve"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: activeTab === tab ? "#d9f22a" : "#001830",
-                color: activeTab === tab ? "#001023" : "#8aa3c0",
-                border: `1px solid ${activeTab === tab ? "#d9f22a" : "#0a3060"}`,
-              }}
-            >
-              {tab === "ninebox" ? "9-Box" : "Curva da Área"}
-            </button>
-          ))}
-          {(platformRole === "gestor" || platformRole === "rh") && (
+        {/* Tabs (only for gestor/RH) */}
+        {(platformRole === "gestor" || platformRole === "rh") && (
+          <div className="flex gap-2">
+            {["ninebox", "curve"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                style={{
+                  backgroundColor: activeTab === tab ? "#d9f22a" : "#001830",
+                  color: activeTab === tab ? "#001023" : "#8aa3c0",
+                  border: `1px solid ${activeTab === tab ? "#d9f22a" : "#0a3060"}`,
+                }}
+              >
+                {tab === "ninebox" ? "9-Box" : "Curva da Área"}
+              </button>
+            ))}
             <button
               onClick={() => setSimMode(!simMode)}
               className="ml-auto px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
@@ -169,8 +170,8 @@ export default function NineBox() {
               <Play size={14} />
               {simMode ? "Sair da Simulação" : "Modo Simulação"}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Simulation mode */}
         {simMode && (
@@ -181,7 +182,7 @@ export default function NineBox() {
             <div className="flex items-center gap-2 mb-4">
               <div className="w-2 h-2 rounded-full bg-[#1840eb] animate-pulse" />
               <p className="text-sm font-semibold" style={{ color: "#7ba7ff" }}>
-                Modo Simulação — Responda as perguntas para ver onde a pessoa ficaria no 9-Box
+                Modo Simulação: responda as perguntas abaixo para ver onde a pessoa ficaria no 9-Box
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -279,6 +280,24 @@ export default function NineBox() {
           </div>
         )}
 
+        {activeTab === "ninebox" && platformRole === "colaborador" && (
+          <div
+            className="flex items-start gap-3 p-4 rounded-xl border"
+            style={{ backgroundColor: "#1840eb10", borderColor: "#1840eb30" }}
+          >
+            <Info size={18} style={{ color: "#7ba7ff", flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "#7ba7ff" }}>
+                9-Box: Guia de Quadrantes
+              </p>
+              <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#8aa3c0" }}>
+                Aqui você pode explorar o que cada quadrante do 9-Box significa, sua descrição e a gestão de consequência associada.
+                Clique em qualquer quadrante para ver os detalhes. Seu posicionamento será compartilhado pelo seu gestor após a avaliação.
+              </p>
+            </div>
+          </div>
+        )}
+
         {activeTab === "ninebox" && (
           <div className="flex gap-6 flex-col lg:flex-row">
             {/* 9-box grid */}
@@ -298,7 +317,7 @@ export default function NineBox() {
                     const count = quadrantCounts[q] ?? 0;
                     const emps = getEmployeesInQuadrant(q);
                     const isSelected = selectedQ === q;
-                    const isMyQ = myPosition?.quadrant === q && platformRole === "colaborador";
+                    const isMyQ = false; // Collaborator has no personal position shown
 
                     return (
                       <button
@@ -306,16 +325,8 @@ export default function NineBox() {
                         onClick={() => setSelectedQ(isSelected ? null : q)}
                         className="relative p-3 rounded-xl border text-left transition-all min-h-[90px]"
                         style={{
-                          backgroundColor: isSelected
-                            ? `${info.color}25`
-                            : isMyQ
-                            ? `${info.color}15`
-                            : "#001830",
-                          borderColor: isSelected
-                            ? info.color
-                            : isMyQ
-                            ? `${info.color}60`
-                            : "#0a3060",
+                          backgroundColor: isSelected ? `${info.color}25` : "#001830",
+                          borderColor: isSelected ? info.color : "#0a3060",
                         }}
                       >
                         <div className="flex items-start justify-between mb-1">

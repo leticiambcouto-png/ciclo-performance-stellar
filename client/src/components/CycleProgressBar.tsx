@@ -175,7 +175,7 @@ export default function CycleProgressBar({ compact = false }: CycleProgressBarPr
           />
           <div>
             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#8aa3c0" }}>
-              {activeCycle?.name ?? "Ciclo"} — Progresso
+              {activeCycle?.name ?? "Ciclo"} · Progresso do Ciclo
             </p>
             <p className="text-sm font-bold mt-0.5" style={{ color: "#fdffdf" }}>
               Fase {faseAtual.phaseNumber} em andamento:{" "}
@@ -304,7 +304,7 @@ export default function CycleProgressBar({ compact = false }: CycleProgressBarPr
             <span style={{ color: "#d9f22a" }} className="font-semibold">
               {flashFeedbackPhase?.titulo ?? "Flash Feedbacks"}
             </span>
-            {" "}— contínuos durante todo o semestre
+            {" "}acontecem ao longo de todo o semestre
           </p>
         </div>
       </div>

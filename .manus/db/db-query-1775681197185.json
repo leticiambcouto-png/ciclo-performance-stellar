@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `employees` ADD `area` varchar(255); ALTER TABLE `employees` ADD `diretoria` varchar(255); ALTER TABLE `employees` ADD `accessPassword` varchar(255);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3pH99uQXZRcw3eE.root --database 4JToPnfy3jUrCoxS7dasZ6 --execute ALTER TABLE `employees` ADD `area` varchar(255); ALTER TABLE `employees` ADD `diretoria` varchar(255); ALTER TABLE `employees` ADD `accessPassword` varchar(255);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1019
+}

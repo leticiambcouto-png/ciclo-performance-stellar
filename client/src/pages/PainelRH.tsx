@@ -223,8 +223,8 @@ export default function PainelRH() {
                       <p className="text-xs" style={{ color: "#8aa3c0" }}>{emp.email}</p>
                     </div>
                   </div>
-                  <p className="text-sm" style={{ color: "#8aa3c0" }}>{emp.jobTitle ?? "—"}</p>
-                  <p className="text-sm" style={{ color: "#8aa3c0" }}>{emp.department ?? "—"}</p>
+                  <p className="text-sm" style={{ color: "#8aa3c0" }}>{emp.jobTitle ?? "Cargo não informado"}</p>
+                  <p className="text-sm" style={{ color: "#8aa3c0" }}>{emp.department ?? "Departamento não informado"}</p>
                   <div className="flex items-center gap-2">
                     <select
                       value={emp.platformRole ?? "colaborador"}

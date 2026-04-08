@@ -88,8 +88,8 @@ export default function Dashboard() {
                 className="text-right hidden sm:block"
               >
                 <p className="text-xs" style={{ color: "#8aa3c0" }}>Cargo</p>
-                <p className="text-sm font-medium" style={{ color: "#fdffdf" }}>{myProfile.jobTitle ?? "—"}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>{myProfile.department ?? "—"}</p>
+                <p className="text-sm font-medium" style={{ color: "#fdffdf" }}>{myProfile.jobTitle ?? "Cargo não informado"}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>{myProfile.department ?? "Departamento não informado"}</p>
               </div>
             )}
           </div>

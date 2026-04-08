@@ -118,3 +118,10 @@
 - [x] Criar página de Overview do Ciclo (primeira página antes do dashboard) com fases clicáveis, objetivos e responsabilidades por perfil
 - [x] Indicador de progresso do ciclo no topo do dashboard com fase atual e dias restantes
 - [x] Painel no Painel RH para editar datas de início/fim de cada fase do ciclo (persistido no banco, refletido no CycleProgressBar)
+- [ ] Exportação de relatório em Excel para o RH com notas por critério, colaborador e líder direto
+- [ ] Gestão de Usuários no Painel RH: inserir, editar e desativar colaboradores com campos Nome Completo, Líder, Área, Diretoria, Perfil de Acesso e Senha
+- [x] Remover travessões de todos os textos da interface e humanizar a linguagem
+- [x] Nova regra 9-Box: faixas 3-4=Acima, 2-2.99=Dentro, <2=Abaixo; pesos Performance 70% + Potencial 30%
+- [x] Controle de acesso por data de fase (avaliação, devolutiva só abrem na data de início)
+- [x] 9-Box do colaborador: apenas visualização educativa dos quadrantes (sem simulação, sem posicionamento pessoal antes da avaliação)
+- [x] Flash Feedback: perguntas do 9-Box para guiar o gestor + IA retorna quadrante/feeling + 4 campos de plano de ação com sugestão da IA

@@ -14,6 +14,7 @@ export default function Relatorio() {
   const { user } = useAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
+
   const [finalContent, setFinalContent] = useState("");
   const [finalActionPlan, setFinalActionPlan] = useState("");
   const [aiContent, setAiContent] = useState("");
@@ -22,6 +23,17 @@ export default function Relatorio() {
   const utils = trpc.useUtils();
   const { data: cycle } = trpc.cycles.active.useQuery();
   const cycleId = cycle?.id ?? 0;
+
+  // Phase gating: devolutiva = phase 6 (Gestão de Consequências)
+  const { data: cyclePhasesList } = trpc.cyclePhases.list.useQuery(
+    { cycleId },
+    { enabled: cycleId > 0 }
+  );
+  const devolutivaPhase = cyclePhasesList?.find((p) => p.phaseNumber === 6);
+  const isDevolutivaBlocked =
+    platformRole === "colaborador" &&
+    devolutivaPhase &&
+    new Date() < new Date(devolutivaPhase.startDate);
   const { data: myProfile } = trpc.employees.myProfile.useQuery();
   const { data: directReports } = trpc.employees.directReports.useQuery(undefined, {
     enabled: platformRole !== "colaborador",
@@ -113,7 +125,32 @@ export default function Relatorio() {
     return (
       <StellarLayout title="Minha Devolutiva">
         <div className="p-6 max-w-3xl space-y-6">
-          {!myReport || myReport.status === "draft" ? (
+          {/* Phase gating banner */}
+          {isDevolutivaBlocked && devolutivaPhase && (
+            <div
+              className="flex items-center gap-3 p-4 rounded-xl border"
+              style={{ backgroundColor: "#f59e0b10", borderColor: "#f59e0b30" }}
+            >
+              <span style={{ color: "#f59e0b", fontSize: 20 }}>&#128274;</span>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: "#f59e0b" }}>
+                  Devolutiva ainda não disponível
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>
+                  Sua devolutiva será liberada a partir de{" "}
+                  <strong style={{ color: "#fdffdf" }}>
+                    {new Date(devolutivaPhase.startDate).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </strong>. Fique de olho!
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!isDevolutivaBlocked && (!myReport || myReport.status === "draft") ? (
             <div
               className="p-12 rounded-xl border text-center"
               style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
@@ -139,7 +176,7 @@ export default function Relatorio() {
                   </p>
                 </div>
                 <p className="text-xs" style={{ color: "#8aa3c0" }}>
-                  Enviada em {myReport.sentAt ? new Date(myReport.sentAt).toLocaleDateString("pt-BR") : "—"}
+                  Enviada em {myReport?.sentAt ? new Date(myReport.sentAt).toLocaleDateString("pt-BR") : "data não registrada"}
                 </p>
               </div>
 
@@ -208,11 +245,11 @@ export default function Relatorio() {
                   Feedback do Gestor
                 </p>
                 <div style={{ color: "#fdffdf" }} className="text-sm">
-                  <Streamdown>{myReport.finalContent ?? ""}</Streamdown>
+                  <Streamdown>{myReport?.finalContent ?? ""}</Streamdown>
                 </div>
               </div>
 
-              {myReport.finalActionPlan && (
+              {myReport?.finalActionPlan && (
                 <div
                   className="p-5 rounded-xl border"
                   style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
@@ -221,7 +258,7 @@ export default function Relatorio() {
                     Plano de Ação
                   </p>
                   <div style={{ color: "#fdffdf" }} className="text-sm">
-                    <Streamdown>{myReport.finalActionPlan}</Streamdown>
+                    <Streamdown>{myReport?.finalActionPlan ?? ""}</Streamdown>
                   </div>
                 </div>
               )}

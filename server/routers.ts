@@ -49,7 +49,10 @@ import {
   calculateNineboxQuadrant,
   calculatePerformance,
   calculatePotencial,
+  calculateFullNinebox,
   NINEBOX_QUADRANTS,
+  FLASH_FEEDBACK_NINEBOX_QUESTIONS,
+  FLASH_FEEDBACK_ACTION_PLAN_FIELDS,
 } from "@shared/nineboxData";
 
 // ─── AXIS VALUE SCHEMA ───────────────────────────────────────────────────────
@@ -864,6 +867,115 @@ Gere uma análise com: (1) diagnóstico do cenário atual vs esperado, (2) princ
         });
 
         return response.choices[0]?.message?.content ?? "";
+      }),
+
+    // Gestor: generate flash feedback plan (quadrant prediction + 4-field action plan suggestions)
+    generateFlashFeedbackPlan: gestorProcedure
+      .input(
+        z.object({
+          employeeName: z.string(),
+          answers: z.object({
+            ambicao: axisValueSchema,
+            sonharGrande: axisValueSchema,
+            accountability: axisValueSchema,
+            juntosSomosMaisFortes: axisValueSchema,
+            qualidade: axisValueSchema,
+            contribuicao: axisValueSchema,
+            adaptacao: axisValueSchema,
+            usoDeIA: axisValueSchema,
+          }),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const result = calculateFullNinebox(
+          input.answers.ambicao,
+          input.answers.sonharGrande,
+          input.answers.accountability,
+          input.answers.juntosSomosMaisFortes,
+          input.answers.qualidade,
+          input.answers.contribuicao,
+          input.answers.adaptacao,
+          input.answers.usoDeIA
+        );
+        const quadrantInfo = NINEBOX_QUADRANTS[result.quadrant];
+
+        const criteriaLabels: Record<string, string> = {
+          ambicao: "Ambição",
+          sonharGrande: "Sonhar Grande",
+          accountability: "Accountability",
+          juntosSomosMaisFortes: "Juntos Somos Mais Fortes",
+          qualidade: "Qualidade",
+          contribuicao: "Contribuição",
+          adaptacao: "Adaptação",
+          usoDeIA: "Uso de IA",
+        };
+        const levelLabels: Record<string, string> = { below: "Abaixo", within: "Dentro", above: "Acima" };
+
+        const criteriaText = Object.entries(input.answers)
+          .map(([k, v]) => `${criteriaLabels[k]}: ${levelLabels[v]}`)
+          .join("\n");
+
+        const prompt = `Você é um especialista em gestão de pessoas da Stellar Gaming.
+
+O gestor acabou de avaliar ${input.employeeName} no contexto de um Flash Feedback.
+
+Resultado da avaliação:
+${criteriaText}
+
+Posicionamento calculado: ${quadrantInfo.name} (${result.quadrant})
+Descrição do quadrante: ${quadrantInfo.description}
+Plano de ação do quadrante: ${quadrantInfo.actionPlan}
+
+Com base nessa avaliação, gere sugestões para o gestor preencher os 4 campos do plano de ação do Flash Feedback. Para cada campo, seja específico, direto e baseado nos critérios avaliados.
+
+Responda em JSON com exatamente estas chaves:
+{
+  "feeling": "frase curta explicando onde a pessoa estaria hoje no 9-Box e por quê (ex: Hoje você estaria no Q5 porque...)",
+  "oQueEstaFuncionando": "sugestão para o campo 'O que está funcionando bem'",
+  "gapPrincipal": "sugestão para o campo 'Qual é o gap mais importante'",
+  "acaoConcreta": "sugestão para o campo 'Qual é a ação concreta'",
+  "apoioGestor": "sugestão para o campo 'O que o gestor vai fazer'"
+}`;
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `Você é um especialista em gestão de pessoas da Stellar Gaming. Tom de voz: direto, claro, humano, sem travessões. Responda sempre em JSON válido.`,
+            },
+            { role: "user", content: prompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "flash_feedback_plan",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  feeling: { type: "string" },
+                  oQueEstaFuncionando: { type: "string" },
+                  gapPrincipal: { type: "string" },
+                  acaoConcreta: { type: "string" },
+                  apoioGestor: { type: "string" },
+                },
+                required: ["feeling", "oQueEstaFuncionando", "gapPrincipal", "acaoConcreta", "apoioGestor"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices[0]?.message?.content ?? "{}";
+        const parsed = JSON.parse(typeof content === "string" ? content : JSON.stringify(content));
+        return {
+          quadrant: result.quadrant,
+          quadrantInfo,
+          potencialLevel: result.potencialLevel,
+          performanceLevel: result.performanceLevel,
+          weightedScore: result.weightedScore,
+          ...parsed,
+        };
       }),
 
     // Colaborador: platform assistant chat

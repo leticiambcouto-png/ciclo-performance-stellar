@@ -216,6 +216,20 @@ export default function Avaliacao() {
 
   const { data: cycle } = trpc.cycles.active.useQuery();
   const { data: myProfile } = trpc.employees.myProfile.useQuery();
+  const { data: cyclePhases } = trpc.cyclePhases.list.useQuery(
+    { cycleId: cycle?.id ?? 0 },
+    { enabled: !!cycle?.id }
+  );
+
+  // Phase gating: check if self-eval and manager-eval phases have started
+  const now = Date.now();
+  // Phase 2 = Autoavaliação, Phase 3 = Avaliação do Gestor (based on seeded phaseNumber)
+  const selfEvalPhase = cyclePhases?.find((p) => p.phaseNumber === 2);
+  const managerEvalPhase = cyclePhases?.find((p) => p.phaseNumber === 3);
+  const selfEvalOpen = !selfEvalPhase || new Date(selfEvalPhase.startDate).getTime() <= now;
+  const managerEvalOpen = !managerEvalPhase || new Date(managerEvalPhase.startDate).getTime() <= now;
+  const isPhaseBlocked = isSelfEval ? !selfEvalOpen : !managerEvalOpen;
+  const blockedPhase = isSelfEval ? selfEvalPhase : managerEvalPhase;
   const { data: directReports } = trpc.employees.directReports.useQuery(undefined, {
     enabled: platformRole === "gestor" || platformRole === "rh",
   });
@@ -390,8 +404,33 @@ export default function Avaliacao() {
           </div>
         )}
 
+        {/* Phase gating banner */}
+        {isPhaseBlocked && blockedPhase && (
+          <div
+            className="flex items-center gap-3 p-4 rounded-xl border"
+            style={{ backgroundColor: "#f59e0b10", borderColor: "#f59e0b30" }}
+          >
+            <span style={{ color: "#f59e0b", fontSize: 20 }}>&#128274;</span>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: "#f59e0b" }}>
+                Esta etapa ainda não está disponível
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>
+                A fase <strong style={{ color: "#fdffdf" }}>{blockedPhase.titulo}</strong> abre em{" "}
+                <strong style={{ color: "#fdffdf" }}>
+                  {new Date(blockedPhase.startDate).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </strong>. Fique de olho!
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Form */}
-        {(isSelfEval || selectedEmployee !== null) && (
+        {!isPhaseBlocked && (isSelfEval || selectedEmployee !== null) && (
           <>
             {isSubmitted && (
               <div

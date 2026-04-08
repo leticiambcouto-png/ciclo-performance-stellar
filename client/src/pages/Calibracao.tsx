@@ -93,7 +93,7 @@ export default function Calibracao() {
     );
   }
 
-  const getEmployeeName = (id: number) => employees?.find((e) => e.id === id)?.name ?? "—";
+  const getEmployeeName = (id: number) => employees?.find((e) => e.id === id)?.name ?? "Colaborador";
   const getEmployeeQuadrant = (id: number) =>
     allPositions?.find((p) => p.employeeId === id)?.quadrant as NineboxQuadrant | undefined;
 
@@ -214,7 +214,7 @@ export default function Calibracao() {
                   <div className="flex items-center gap-2 mb-1">
                     <GripVertical size={14} style={{ color: "#d9f22a" }} />
                     <p className="text-sm font-semibold" style={{ color: "#d9f22a" }}>
-                      Modo Calibração — Clique em um colaborador para movê-lo
+                      Modo Calibração: clique em um colaborador para movê-lo de quadrante
                     </p>
                   </div>
                   <p className="text-xs" style={{ color: "#8aa3c0" }}>

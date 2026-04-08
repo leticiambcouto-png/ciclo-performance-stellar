@@ -51,7 +51,7 @@ export default function Perfil() {
           </div>
           <div>
             <h2 className="text-xl font-bold" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
-              {user?.name ?? "—"}
+              {user?.name ?? "Usuário"}
             </h2>
             <span
               className="text-xs px-2 py-0.5 rounded-full font-medium"
@@ -83,9 +83,9 @@ export default function Perfil() {
           </div>
 
           {[
-            { icon: <Mail size={14} />, label: "E-mail", value: user?.email ?? "—", editable: false },
-            { icon: <Briefcase size={14} />, label: "Cargo", value: myProfile?.jobTitle ?? "—", key: "jobTitle", editable: true },
-            { icon: <Building2 size={14} />, label: "Departamento", value: myProfile?.department ?? "—", key: "department", editable: true },
+            { icon: <Mail size={14} />, label: "E-mail", value: user?.email ?? "E-mail não informado", editable: false },
+            { icon: <Briefcase size={14} />, label: "Cargo", value: myProfile?.jobTitle ?? "Cargo não informado", key: "jobTitle", editable: true },
+            { icon: <Building2 size={14} />, label: "Departamento", value: myProfile?.department ?? "Departamento não informado", key: "department", editable: true },
           ].map((field) => (
             <div key={field.label} className="flex items-start gap-3">
               <div

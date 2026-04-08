@@ -99,7 +99,7 @@ const FASES = [
       "Submeter todas as avaliações antes do prazo de pré-calibração",
     ],
     colaborador: [
-      "Aguardar a avaliação do gestor — não há ação nesta fase",
+      "Aguardar a avaliação do gestor. Nenhuma ação necessária nesta fase",
       "Continuar registrando flash feedbacks e acompanhando o desenvolvimento",
       "Preparar-se para a conversa de devolutiva com o gestor",
     ],
@@ -110,7 +110,7 @@ const FASES = [
       "Preparar o material para a sessão de pré-calibração",
     ],
     destaque:
-      "O posicionamento no 9-Box é sempre calculado pelas respostas — nunca por movimentação manual do gestor. A movimentação manual é exclusiva do RH no comitê de calibração.",
+      "O posicionamento no 9-Box é sempre calculado pelas respostas, nunca por movimentação manual do gestor. A movimentação manual é exclusiva do RH no comitê de calibração.",
   },
   {
     id: 4,
@@ -300,11 +300,11 @@ export default function CicloOverview() {
               style={{ color: "#fdffdf" }}
             >
               Ciclo de Performance 2.0
-              <span style={{ color: "#d9f22a" }}> — Stellar Gaming</span>
+              <span style={{ color: "#d9f22a" }}> Stellar Gaming</span>
             </h1>
 
             <p className="text-base max-w-2xl mb-6" style={{ color: "#8aa3c0" }}>
-              Aqui a performance é medida com critério, não com intenção. Sete fases estruturadas para garantir que as pessoas certas sejam reconhecidas, desenvolvidas e aceleradas — e que as decisões sejam tomadas com dados, não com feeling.
+              Aqui a performance é medida com critério, não com intenção. Sete fases estruturadas para garantir que as pessoas certas sejam reconhecidas, desenvolvidas e aceleradas. As decisões são tomadas com dados, não com feeling.
             </p>
 
             {/* Stats */}
@@ -347,7 +347,7 @@ export default function CicloOverview() {
             ≠
           </div>
           <div className="flex-1 p-4 rounded-xl" style={{ backgroundColor: "#d9f22a10", border: "1px solid #d9f22a30" }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#d9f22a" }}>AVD — Ciclo de Performance</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#d9f22a" }}>AVD: Ciclo de Performance</p>
             <p className="text-sm font-semibold mb-1" style={{ color: "#fdffdf" }}>Avalia como a pessoa performou e qual é o seu potencial</p>
             <p className="text-xs" style={{ color: "#8aa3c0" }}>
               Medido em dois eixos independentes: Potencial (comportamento/valores) e Performance (entrega/resultado).
@@ -549,7 +549,7 @@ export default function CicloOverview() {
                   style={{ backgroundColor: "#1840eb" }}
                 />
                 <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#7ba7ff" }}>
-                  Eixo de Potencial — Comportamento & Valores
+                  Eixo de Potencial: Comportamento & Valores
                 </p>
               </div>
               <div className="space-y-3">
@@ -604,7 +604,7 @@ export default function CicloOverview() {
                   style={{ backgroundColor: "#d9f22a" }}
                 />
                 <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#d9f22a" }}>
-                  Eixo de Performance — Entrega & Resultado
+                  Eixo de Performance: Entrega & Resultado
                 </p>
               </div>
               <div className="space-y-3">
