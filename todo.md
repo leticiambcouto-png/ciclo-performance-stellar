@@ -112,3 +112,7 @@
 - [x] Testes de getCurveZone, calculateCurveDistribution
 - [x] Testes de NINEBOX_QUADRANTS metadata e STELLAR_EXPECTED_CURVE
 - [x] Testes de auth.logout
+
+## Correções
+- [x] Trocar posicionamento Q7⇔Q3 e Q6⇔Q8 no grid visual e na lógica de cálculo do 9-Box
+- [x] Criar página de Overview do Ciclo (primeira página antes do dashboard) com fases clicáveis, objetivos e responsabilidades por perfil

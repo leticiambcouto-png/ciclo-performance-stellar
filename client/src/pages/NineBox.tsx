@@ -12,7 +12,12 @@ import { toast } from "sonner";
 
 type AxisLevel = "low" | "medium" | "high";
 
-// 9-box grid layout: rows = performance (high→low), cols = potencial (low→med→high)
+// 9-box grid layout (renumbered):
+//   Performance ↑
+//   Alta  │ Q7  Q8  Q9
+//   Média │ Q4  Q5  Q6
+//   Baixa │ Q1  Q2  Q3
+//          ──────────────→ Potencial (Baixo → Médio → Alto)
 const GRID_LAYOUT: NineboxQuadrant[][] = [
   ["Q7", "Q8", "Q9"],
   ["Q4", "Q5", "Q6"],

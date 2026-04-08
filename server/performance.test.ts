@@ -57,36 +57,38 @@ describe("calculateNineboxQuadrant", () => {
     expect(calculateNineboxQuadrant("low", "low")).toBe("Q1");
   });
 
-  // Map: potencial (X) x performance (Y)
-  // low potencial: Q1(low perf), Q2(med perf), Q3(high perf)
-  // medium potencial: Q4(low perf), Q5(med perf), Q6(high perf)
-  // high potencial: Q7(low perf), Q8(med perf), Q9(high perf)
-  it("maps low potential + medium performance to Q2", () => {
-    expect(calculateNineboxQuadrant("low", "medium")).toBe("Q2");
+  // Renumbered grid:
+  //   Performance ↑
+  //   Alta  │ Q7  Q8  Q9
+  //   Média │ Q4  Q5  Q6
+  //   Baixa │ Q1  Q2  Q3
+  //          ────────────→ Potencial (Baixo | Médio | Alto)
+  it("maps low potential + medium performance to Q4", () => {
+    expect(calculateNineboxQuadrant("low", "medium")).toBe("Q4");
   });
 
-  it("maps low potential + high performance to Q3", () => {
-    expect(calculateNineboxQuadrant("low", "high")).toBe("Q3");
+  it("maps low potential + high performance to Q7", () => {
+    expect(calculateNineboxQuadrant("low", "high")).toBe("Q7");
   });
 
-  it("maps medium potential + low performance to Q4", () => {
-    expect(calculateNineboxQuadrant("medium", "low")).toBe("Q4");
+  it("maps medium potential + low performance to Q2", () => {
+    expect(calculateNineboxQuadrant("medium", "low")).toBe("Q2");
   });
 
   it("maps medium potential + medium performance to Q5", () => {
     expect(calculateNineboxQuadrant("medium", "medium")).toBe("Q5");
   });
 
-  it("maps medium potential + high performance to Q6", () => {
-    expect(calculateNineboxQuadrant("medium", "high")).toBe("Q6");
+  it("maps medium potential + high performance to Q8", () => {
+    expect(calculateNineboxQuadrant("medium", "high")).toBe("Q8");
   });
 
-  it("maps high potential + low performance to Q7", () => {
-    expect(calculateNineboxQuadrant("high", "low")).toBe("Q7");
+  it("maps high potential + low performance to Q3", () => {
+    expect(calculateNineboxQuadrant("high", "low")).toBe("Q3");
   });
 
-  it("maps high potential + medium performance to Q8", () => {
-    expect(calculateNineboxQuadrant("high", "medium")).toBe("Q8");
+  it("maps high potential + medium performance to Q6", () => {
+    expect(calculateNineboxQuadrant("high", "medium")).toBe("Q6");
   });
 
   it("maps high potential + high performance to Q9", () => {
@@ -102,16 +104,18 @@ describe("getCurveZone", () => {
     expect(getCurveZone("Q4")).toBe("critical");
   });
 
+  // After renumbering: maintainers = Q3 (high-pot/low-perf), Q5 (core), Q7 (low-pot/high-perf)
   it("classifies Q3, Q5, Q7 as maintainer", () => {
-    expect(getCurveZone("Q3")).toBe("maintainer");
-    expect(getCurveZone("Q5")).toBe("maintainer");
-    expect(getCurveZone("Q7")).toBe("maintainer");
+    expect(getCurveZone("Q3")).toBe("maintainer"); // Talento Bloqueado
+    expect(getCurveZone("Q5")).toBe("maintainer"); // Core/Mantenedor
+    expect(getCurveZone("Q7")).toBe("maintainer"); // Resultado sem Cultura
   });
 
+  // After renumbering: talents = Q6 (high-pot/mid-perf), Q8 (mid-pot/high-perf), Q9
   it("classifies Q6, Q8, Q9 as talent", () => {
-    expect(getCurveZone("Q6")).toBe("talent");
-    expect(getCurveZone("Q8")).toBe("talent");
-    expect(getCurveZone("Q9")).toBe("talent");
+    expect(getCurveZone("Q6")).toBe("talent"); // Talento a Acelerar
+    expect(getCurveZone("Q8")).toBe("talent"); // Alto Entregador
+    expect(getCurveZone("Q9")).toBe("talent"); // Top Talent
   });
 });
 

@@ -13,11 +13,13 @@ import Relatorio from "./pages/Relatorio";
 import PainelRH from "./pages/PainelRH";
 import Calibracao from "./pages/Calibracao";
 import Perfil from "./pages/Perfil";
+import CicloOverview from "./pages/CicloOverview";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/ciclo" component={CicloOverview} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/avaliacao" component={Avaliacao} />
       <Route path="/9box" component={NineBox} />

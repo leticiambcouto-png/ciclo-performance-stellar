@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { NINEBOX_QUADRANTS } from "../../../shared/nineboxData";
 import type { NineboxQuadrant } from "../../../shared/nineboxData";
 
+// Grid (renumbered): Performance ↑ Alta=Q7/Q8/Q9 | Média=Q4/Q5/Q6 | Baixa=Q1/Q2/Q3
+//                   Potencial → Baixo | Médio | Alto
 const GRID_LAYOUT: NineboxQuadrant[][] = [
   ["Q7", "Q8", "Q9"],
   ["Q4", "Q5", "Q6"],

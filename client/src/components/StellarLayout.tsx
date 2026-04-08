@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3,
   Bell,
+  BookOpen,
   BrainCircuit,
   ChevronLeft,
   ChevronRight,
@@ -40,6 +41,12 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  {
+    label: "Ciclo 2.0",
+    href: "/ciclo",
+    icon: <BookOpen size={18} />,
+    roles: ["rh", "gestor", "colaborador"],
+  },
   {
     label: "Dashboard",
     href: "/dashboard",

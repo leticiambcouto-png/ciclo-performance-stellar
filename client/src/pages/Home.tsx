@@ -10,7 +10,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate("/dashboard");
+      navigate("/ciclo");
     }
   }, [loading, isAuthenticated, navigate]);
 
