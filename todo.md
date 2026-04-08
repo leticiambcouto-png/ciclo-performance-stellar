@@ -116,3 +116,4 @@
 ## Correções
 - [x] Trocar posicionamento Q7⇔Q3 e Q6⇔Q8 no grid visual e na lógica de cálculo do 9-Box
 - [x] Criar página de Overview do Ciclo (primeira página antes do dashboard) com fases clicáveis, objetivos e responsabilidades por perfil
+- [x] Indicador de progresso do ciclo no topo do dashboard com fase atual e dias restantes

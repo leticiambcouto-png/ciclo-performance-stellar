@@ -5,6 +5,7 @@ import { Bell, CheckCircle, Clock, AlertTriangle, ChevronRight, Zap, ClipboardLi
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import CycleProgressBar from "@/components/CycleProgressBar";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -60,6 +61,9 @@ export default function Dashboard() {
   return (
     <StellarLayout title="Dashboard">
       <div className="p-6 space-y-6 max-w-5xl">
+        {/* Cycle Progress */}
+        <CycleProgressBar />
+
         {/* Greeting */}
         <div
           className="p-6 rounded-xl border"
