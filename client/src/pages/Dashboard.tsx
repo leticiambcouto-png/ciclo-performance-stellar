@@ -1,13 +1,14 @@
 import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
-import { Bell, CheckCircle, Clock, AlertTriangle, Zap, ClipboardList, Grid3x3, FileText, Users, ChevronRight } from "lucide-react";
+import { Bell, CheckCircle, Clock, AlertTriangle, Zap, ClipboardList, Grid3x3, FileText, Users, ChevronRight, Award, TrendingUp, TrendingDown, X } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CycleProgressBar from "@/components/CycleProgressBar";
 import { useState, useMemo } from "react";
-import { NINEBOX_QUADRANTS } from "@shared/nineboxData";
+import { NINEBOX_QUADRANTS, STELLAR_EXPECTED_CURVE, calculateCurveDistribution } from "@shared/nineboxData";
+import type { NineboxQuadrant } from "@shared/nineboxData";
 
 // ─── Mini 9-Box grid ─────────────────────────────────────────────────────────
 const NINEBOX_LAYOUT = [
@@ -28,7 +29,15 @@ const QUADRANT_BG: Record<string, string> = {
   Q3: "#f59e0b10", Q2: "#f59e0b0c", Q1: "#ef444412",
 };
 
-function MiniNineBox({ positions }: { positions: { quadrant: string; employeeName?: string }[] }) {
+function MiniNineBox({
+  positions,
+  selectedQ,
+  onSelectQ,
+}: {
+  positions: { quadrant: string; employeeName?: string; employeeId?: number }[];
+  selectedQ?: string | null;
+  onSelectQ?: (q: string | null) => void;
+}) {
   const countByQ = useMemo(() => {
     const map: Record<string, number> = {};
     for (const p of positions) {
@@ -42,13 +51,15 @@ function MiniNineBox({ positions }: { positions: { quadrant: string; employeeNam
       {NINEBOX_LAYOUT.map((row) =>
         row.map((q) => {
           const count = countByQ[q] ?? 0;
+          const isSelected = selectedQ === q;
           return (
-            <div
+            <button
               key={q}
-              className="rounded-lg p-2 flex flex-col items-start justify-between"
+              onClick={() => onSelectQ?.(isSelected ? null : q)}
+              className="rounded-lg p-2 flex flex-col items-start justify-between text-left transition-all"
               style={{
-                backgroundColor: count > 0 ? QUADRANT_BG[q] : "#001023",
-                border: `1px solid ${count > 0 ? QUADRANT_COLORS[q] + "30" : "#0a3060"}`,
+                backgroundColor: isSelected ? QUADRANT_COLORS[q] + "25" : count > 0 ? QUADRANT_BG[q] : "#001023",
+                border: `1px solid ${isSelected ? QUADRANT_COLORS[q] : count > 0 ? QUADRANT_COLORS[q] + "30" : "#0a3060"}`,
                 minHeight: "52px",
               }}
             >
@@ -61,7 +72,7 @@ function MiniNineBox({ positions }: { positions: { quadrant: string; employeeNam
               >
                 {count}
               </span>
-            </div>
+            </button>
           );
         })
       )}
@@ -101,6 +112,8 @@ function StatCard({
 function ManagerDashboard({ isRH }: { isRH: boolean }) {
   const { data: cycle } = trpc.cycles.active.useQuery();
   const cycleId = cycle?.id ?? 0;
+  const [selectedQ, setSelectedQ] = useState<string | null>(null);
+
   const { data: teamPositions } = isRH
     ? trpc.ninebox.allPositions.useQuery({ cycleId: cycleId || 0 }, { enabled: cycleId > 0 })
     : trpc.ninebox.teamPositions.useQuery({ cycleId: cycleId || 0 }, { enabled: cycleId > 0 });
@@ -113,18 +126,23 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
     ? trpc.employees.allWithManager.useQuery()
     : trpc.employees.directReports.useQuery();
 
+  // RH only: post-calibration positions and consequences
+  const { data: allConsequences } = trpc.calibration.allConsequences.useQuery(
+    { cycleId: cycleId || undefined },
+    { enabled: isRH && cycleId > 0 }
+  );
+
   const positions = teamPositions ?? [];
   const feedbacks = flashFeedbacks ?? [];
   const employees = allEmployees ?? [];
 
   // Metrics
-  const total = isRH ? employees.length : employees.length;
+  const total = employees.length;
   const talentos = positions.filter((p) => ["Q7", "Q8", "Q9"].includes(p.quadrant)).length;
   const zonaCritica = positions.filter((p) => ["Q1", "Q2", "Q3"].includes(p.quadrant)).length;
   const ffAtrasados = feedbacks.filter((f) => f.status === "overdue").length;
   const ffRealizados = feedbacks.filter((f) => f.status === "completed").length;
   const ffPendentes = feedbacks.filter((f) => f.status === "scheduled").length;
-
   const talentosPct = total > 0 ? Math.round((talentos / total) * 100) : 0;
 
   // Flash feedbacks with overdue first, then scheduled
@@ -145,6 +163,43 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
     ...p,
     employeeName: employeeMap[p.employeeId] ?? "?",
   }));
+
+  // People in selected quadrant
+  const peopleInSelectedQ = useMemo(() => {
+    if (!selectedQ) return [];
+    return positionsWithNames.filter((p) => p.quadrant === selectedQ);
+  }, [positionsWithNames, selectedQ]);
+
+  // Curve calculations (RH only)
+  // Pre-calibration: positions NOT manually adjusted (automatic calculation)
+  const preCurve = useMemo(() => {
+    const qs = positions
+      .filter((p) => !(p as any).isManuallyAdjusted)
+      .map((p) => p.quadrant as NineboxQuadrant)
+      .filter(Boolean);
+    // If no pre-calibration positions exist, use all positions as baseline
+    const allQs = positions.map((p) => p.quadrant as NineboxQuadrant).filter(Boolean);
+    return calculateCurveDistribution(qs.length > 0 ? qs : allQs);
+  }, [positions]);
+  // Post-calibration: positions manually adjusted by RH in calibration
+  const postCurve = useMemo(() => {
+    const adjustedPositions = positions.filter((p) => (p as any).isManuallyAdjusted);
+    if (adjustedPositions.length === 0) return null;
+    const qs = adjustedPositions.map((p) => p.quadrant as NineboxQuadrant).filter(Boolean);
+    return calculateCurveDistribution(qs);
+  }, [positions]);
+
+  // Consequence summary (RH only)
+  const consequenceSummary = useMemo(() => {
+    const cons = allConsequences ?? [];
+    return {
+      merito: cons.filter((c) => c.consequence === "merito").length,
+      promocao: cons.filter((c) => c.consequence === "promocao").length,
+      desligamento: cons.filter((c) => c.consequence === "desligamento").length,
+      plano_recuperacao: cons.filter((c) => c.consequence === "plano_recuperacao").length,
+      total: cons.filter((c) => c.consequence !== "nenhuma").length,
+    };
+  }, [allConsequences]);
 
   return (
     <div className="space-y-5">
@@ -192,25 +247,61 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
               </p>
               <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>
                 {positions.length} colaboradores posicionados
+                {selectedQ && <span style={{ color: QUADRANT_COLORS[selectedQ] }}> · {selectedQ} selecionado</span>}
               </p>
             </div>
-            <Link href="/9box">
-              <button
-                className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors"
-                style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#8aa3c0"; }}
-              >
-                Ver completo
-              </button>
-            </Link>
+            <div className="flex items-center gap-2">
+              {selectedQ && (
+                <button
+                  onClick={() => setSelectedQ(null)}
+                  className="text-xs px-2 py-1 rounded-lg"
+                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                >
+                  <X size={12} />
+                </button>
+              )}
+              <Link href="/9box">
+                <button
+                  className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors"
+                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#8aa3c0"; }}
+                >
+                  Ver completo
+                </button>
+              </Link>
+            </div>
           </div>
           {positions.length === 0 ? (
             <div className="flex items-center justify-center h-32 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
               <p className="text-xs" style={{ color: "#4a7ab5" }}>Nenhum posicionamento ainda</p>
             </div>
           ) : (
-            <MiniNineBox positions={positionsWithNames} />
+            <>
+              <MiniNineBox positions={positionsWithNames} selectedQ={selectedQ} onSelectQ={setSelectedQ} />
+              {selectedQ && peopleInSelectedQ.length > 0 && (
+                <div className="mt-3 rounded-xl overflow-hidden" style={{ border: `1px solid ${QUADRANT_COLORS[selectedQ]}30` }}>
+                  <div className="px-3 py-2" style={{ backgroundColor: QUADRANT_COLORS[selectedQ] + "15" }}>
+                    <p className="text-xs font-bold" style={{ color: QUADRANT_COLORS[selectedQ] }}>
+                      {NINEBOX_QUADRANTS[selectedQ as NineboxQuadrant]?.name ?? selectedQ} · {peopleInSelectedQ.length} {peopleInSelectedQ.length === 1 ? "pessoa" : "pessoas"}
+                    </p>
+                  </div>
+                  <div className="divide-y divide-[#0a3060]">
+                    {peopleInSelectedQ.map((p) => (
+                      <div key={p.employeeId} className="flex items-center gap-2 px-3 py-2" style={{ backgroundColor: "#001023" }}>
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+                          style={{ backgroundColor: QUADRANT_COLORS[selectedQ] + "20", color: QUADRANT_COLORS[selectedQ] }}
+                        >
+                          {(p.employeeName ?? "?").split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()}
+                        </div>
+                        <p className="text-sm" style={{ color: "#fdffdf" }}>{p.employeeName}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -318,6 +409,96 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
           </div>
         </div>
       </div>
+
+      {/* RH-only: Curve comparison + Consequence indicators */}
+      {isRH && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Curve comparison */}
+          <div className="p-5 rounded-2xl border" style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp size={14} style={{ color: "#d9f22a" }} />
+              <p className="text-sm font-bold" style={{ color: "#fdffdf" }}>Curva da Empresa</p>
+            </div>
+            <div className="space-y-3">
+              {([
+                { label: "Esperada", data: STELLAR_EXPECTED_CURVE, color: "#8aa3c0" },
+                { label: "Pré-Calibração", data: preCurve, color: "#d9f22a" },
+                ...(postCurve ? [{ label: "Pós-Calibração", data: postCurve, color: "#22c55e" }] : []),
+              ] as { label: string; data: typeof STELLAR_EXPECTED_CURVE; color: string }[]).map(({ label, data, color }) => (
+                <div key={label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold" style={{ color }}>{label}</p>
+                    <div className="flex items-center gap-3 text-xs" style={{ color: "#8aa3c0" }}>
+                      <span style={{ color: "#22c55e" }}>T {data.talent}%</span>
+                      <span style={{ color: "#d9f22a" }}>M {data.maintainer}%</span>
+                      <span style={{ color: "#ef4444" }}>C {data.critical}%</span>
+                    </div>
+                  </div>
+                  <div className="flex rounded-full overflow-hidden h-3" style={{ backgroundColor: "#001023" }}>
+                    <div style={{ width: `${data.talent}%`, backgroundColor: "#22c55e" }} />
+                    <div style={{ width: `${data.maintainer}%`, backgroundColor: "#d9f22a" }} />
+                    <div style={{ width: `${data.critical}%`, backgroundColor: "#ef4444" }} />
+                  </div>
+                </div>
+              ))}
+              {!postCurve && (
+                <p className="text-xs italic" style={{ color: "#4a7ab5" }}>Pós-calibração disponível após o RH ajustar posicionamentos na calibração.</p>
+              )}
+            </div>
+            <div className="flex items-center gap-4 mt-4 pt-3" style={{ borderTop: "1px solid #0a3060" }}>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#22c55e" }} />
+                <span className="text-xs" style={{ color: "#8aa3c0" }}>Talentos</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#d9f22a" }} />
+                <span className="text-xs" style={{ color: "#8aa3c0" }}>Mantenedores</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#ef4444" }} />
+                <span className="text-xs" style={{ color: "#8aa3c0" }}>Críticos</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Consequence indicators */}
+          <div className="p-5 rounded-2xl border" style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Award size={14} style={{ color: "#d9f22a" }} />
+                <p className="text-sm font-bold" style={{ color: "#fdffdf" }}>Gestão de Consequência</p>
+              </div>
+              <Link href="/calibracao">
+                <button
+                  className="text-xs px-3 py-1.5 rounded-lg font-semibold"
+                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                >
+                  Ver calibrações
+                </button>
+              </Link>
+            </div>
+            {consequenceSummary.total === 0 ? (
+              <div className="flex items-center justify-center h-24 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
+                <p className="text-xs" style={{ color: "#4a7ab5" }}>Nenhuma decisão registrada ainda</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: "merito", label: "Mérito", count: consequenceSummary.merito, color: "#22c55e" },
+                  { key: "promocao", label: "Promoção", count: consequenceSummary.promocao, color: "#d9f22a" },
+                  { key: "plano_recuperacao", label: "Plano Recuperação", count: consequenceSummary.plano_recuperacao, color: "#f59e0b" },
+                  { key: "desligamento", label: "Desligamento", count: consequenceSummary.desligamento, color: "#ef4444" },
+                ].map(({ key, label, count, color }) => (
+                  <div key={key} className="p-3 rounded-xl" style={{ backgroundColor: "#001023", border: `1px solid ${color}20` }}>
+                    <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>{label}</p>
+                    <p className="text-2xl font-black" style={{ color, fontFamily: "Space Grotesk" }}>{count}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick links */}
       <div>

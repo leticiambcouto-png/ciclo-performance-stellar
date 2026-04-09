@@ -150,3 +150,14 @@
 - [x] CicloOverview: explicar critério de classificação (Acima/Dentro/Abaixo) como média das notas de cada dimensão
 - [x] Dashboard Gestor: indicadores visuais inline (9-Box mini, Flash Feedbacks, métricas de time)
 - [x] Dashboard RH: indicadores visuais inline (9-Box mini consolidado, Flash Feedbacks, métricas empresa)
+
+## Calibração Avançada (Abril 2026)
+- [x] Editar e excluir salas de calibração (RH)
+- [x] Seleção de pessoas por cargo/área em cada sala de calibração
+- [x] Gestão de consequência por pessoa: Mérito, Promoção, Desligamento, Plano de Recuperação
+- [x] Painel lateral na calibração: ao clicar na pessoa, ver avaliação do líder + gestão de consequência
+- [x] Finalizar sala de calibração (status "finalizada")
+- [x] 9-Box: ao clicar no quadrante, exibir lista de pessoas posicionadas nele (todos os 9-Box do sistema)
+- [x] Dashboard RH: curva esperada vs pré-calibração vs pós-calibração (barras visuais comparativas)
+- [x] Dashboard RH: indicadores de gestão de consequência (totais por tipo)
+- [ ] Relatório exportável de consequências (Excel)

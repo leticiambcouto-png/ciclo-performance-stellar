@@ -1,8 +1,10 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
+  calibrationConsequences,
   calibrationParticipants,
   calibrationRooms,
+  calibrationScope,
   cyclePhases,
   CyclePhase,
   employees,
@@ -205,6 +207,11 @@ export async function getManagerEvaluationsForTeam(managerId: number, cycleId: n
     );
 }
 
+export async function getAllManagerEvaluations(cycleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(managerEvaluations).where(eq(managerEvaluations.cycleId, cycleId));
+}
 export async function upsertManagerEvaluation(
   data: typeof managerEvaluations.$inferInsert
 ) {
@@ -451,8 +458,80 @@ export async function getCalibrationParticipants(roomId: number) {
     .from(calibrationParticipants)
     .where(eq(calibrationParticipants.roomId, roomId));
 }
-
-// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+export async function removeCalibrationParticipant(roomId: number, managerId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(calibrationParticipants)
+    .where(and(eq(calibrationParticipants.roomId, roomId), eq(calibrationParticipants.managerId, managerId)));
+}
+export async function deleteCalibrationRoom(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Delete related records first
+  await db.delete(calibrationConsequences).where(eq(calibrationConsequences.roomId, id));
+  await db.delete(calibrationScope).where(eq(calibrationScope.roomId, id));
+  await db.delete(calibrationParticipants).where(eq(calibrationParticipants.roomId, id));
+  await db.delete(calibrationRooms).where(eq(calibrationRooms.id, id));
+}
+// ─── CALIBRATION SCOPE ────────────────────────────────────────────────────────
+export async function getCalibrationScope(roomId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(calibrationScope).where(eq(calibrationScope.roomId, roomId));
+}
+export async function addCalibrationScopeEmployee(roomId: number, employeeId: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Upsert: ignore if already exists
+  const existing = await db.select().from(calibrationScope)
+    .where(and(eq(calibrationScope.roomId, roomId), eq(calibrationScope.employeeId, employeeId)));
+  if (existing.length === 0) {
+    await db.insert(calibrationScope).values({ roomId, employeeId });
+  }
+}
+export async function removeCalibrationScopeEmployee(roomId: number, employeeId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(calibrationScope)
+    .where(and(eq(calibrationScope.roomId, roomId), eq(calibrationScope.employeeId, employeeId)));
+}
+// ─── CALIBRATION CONSEQUENCES ─────────────────────────────────────────────────
+export async function getCalibrationConsequences(roomId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(calibrationConsequences).where(eq(calibrationConsequences.roomId, roomId));
+}
+export async function getAllCalibrationConsequences(cycleId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  if (cycleId) {
+    return db.select().from(calibrationConsequences).where(eq(calibrationConsequences.cycleId, cycleId));
+  }
+  return db.select().from(calibrationConsequences);
+}
+export async function upsertCalibrationConsequence(
+  roomId: number,
+  employeeId: number,
+  cycleId: number | undefined,
+  consequence: "merito" | "promocao" | "desligamento" | "plano_recuperacao" | "nenhuma",
+  notes: string | undefined,
+  decidedBy: number
+) {
+  const db = await getDb();
+  if (!db) return;
+  const existing = await db.select().from(calibrationConsequences)
+    .where(and(eq(calibrationConsequences.roomId, roomId), eq(calibrationConsequences.employeeId, employeeId)));
+  if (existing.length > 0) {
+    await db.update(calibrationConsequences)
+      .set({ consequence, notes, decidedBy, decidedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(calibrationConsequences.roomId, roomId), eq(calibrationConsequences.employeeId, employeeId)));
+  } else {
+    await db.insert(calibrationConsequences).values({
+      roomId, employeeId, cycleId, consequence, notes, decidedBy, decidedAt: new Date()
+    });
+  }
+}
+// ─── NOTIFICATIONSS ────────────────────────────────────────────────────────────
 
 export async function getNotificationsForUser(userId: number) {
   const db = await getDb();

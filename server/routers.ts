@@ -3,7 +3,15 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import {
   addCalibrationParticipant,
+  addCalibrationScopeEmployee,
   createCalibrationRoom,
+  deleteCalibrationRoom,
+  getAllCalibrationConsequences,
+  getCalibrationConsequences,
+  getCalibrationScope,
+  removeCalibrationParticipant,
+  removeCalibrationScopeEmployee,
+  upsertCalibrationConsequence,
   createFlashFeedback,
   createNotification,
   getAllCalibrationRooms,
@@ -21,6 +29,7 @@ import {
   getFeedbackReportsForManager,
   getFlashFeedbacksForEmployee,
   getFlashFeedbacksForManager,
+  getAllManagerEvaluations,
   getManagerEvaluation,
   getManagerEvaluationsForTeam,
   getNineboxPosition,
@@ -326,6 +335,9 @@ export const appRouter = router({
         if (!me) return [];
         return getManagerEvaluationsForTeam(me.id, input.cycleId);
       }),
+    allEvaluations: rhProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(({ input }) => getAllManagerEvaluations(input.cycleId)),
     save: gestorProcedure
       .input(
         z.object({
@@ -663,6 +675,7 @@ export const appRouter = router({
       return getAllFlashFeedbacks();
     }),
   }),
+
 
   // ─── FEEDBACK REPORTS ────────────────────────────────────────────────────
   feedbackReport: router({
@@ -1094,6 +1107,50 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
     participants: rhProcedure
       .input(z.object({ roomId: z.number() }))
       .query(({ input }) => getCalibrationParticipants(input.roomId)),
+    removeParticipant: rhProcedure
+      .input(z.object({ roomId: z.number(), managerId: z.number() }))
+      .mutation(({ input }) => removeCalibrationParticipant(input.roomId, input.managerId)),
+    deleteRoom: rhProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ input }) => deleteCalibrationRoom(input.id)),
+    finalizeRoom: rhProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(({ input }) => updateCalibrationRoom(input.id, { status: 'completed' })),
+    // Scope: which employees are calibrated in each room
+    scope: rhProcedure
+      .input(z.object({ roomId: z.number() }))
+      .query(({ input }) => getCalibrationScope(input.roomId)),
+    addScopeEmployee: rhProcedure
+      .input(z.object({ roomId: z.number(), employeeId: z.number() }))
+      .mutation(({ input }) => addCalibrationScopeEmployee(input.roomId, input.employeeId)),
+    removeScopeEmployee: rhProcedure
+      .input(z.object({ roomId: z.number(), employeeId: z.number() }))
+      .mutation(({ input }) => removeCalibrationScopeEmployee(input.roomId, input.employeeId)),
+    // Consequences
+    consequences: rhProcedure
+      .input(z.object({ roomId: z.number() }))
+      .query(({ input }) => getCalibrationConsequences(input.roomId)),
+    allConsequences: rhProcedure
+      .input(z.object({ cycleId: z.number().optional() }))
+      .query(({ input }) => getAllCalibrationConsequences(input.cycleId)),
+    upsertConsequence: rhProcedure
+      .input(z.object({
+        roomId: z.number(),
+        employeeId: z.number(),
+        cycleId: z.number().optional(),
+        consequence: z.enum(['merito', 'promocao', 'desligamento', 'plano_recuperacao', 'nenhuma']),
+        notes: z.string().optional(),
+      }))
+      .mutation(({ ctx, input }) =>
+        upsertCalibrationConsequence(
+          input.roomId,
+          input.employeeId,
+          input.cycleId,
+          input.consequence,
+          input.notes,
+          ctx.user.id
+        )
+      ),
   }),
 
   // ─── NOTIFICATIONS ───────────────────────────────────────────────────────

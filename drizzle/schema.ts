@@ -219,6 +219,32 @@ export const calibrationParticipants = mysqlTable("calibration_participants", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// ─── CALIBRATION SCOPE (employees to be calibrated in each room) ──────────────
+// Defines which employees are calibrated in each room (filtered by job title/area)
+export const calibrationScope = mysqlTable("calibration_scope", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: int("roomId").references(() => calibrationRooms.id).notNull(),
+  employeeId: int("employeeId").references(() => employees.id).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CalibrationScope = typeof calibrationScope.$inferSelect;
+
+// ─── CALIBRATION CONSEQUENCES ─────────────────────────────────────────────────
+// Stores the consequence decision for each employee in a calibration room
+export const calibrationConsequences = mysqlTable("calibration_consequences", {
+  id: int("id").autoincrement().primaryKey(),
+  roomId: int("roomId").references(() => calibrationRooms.id).notNull(),
+  employeeId: int("employeeId").references(() => employees.id).notNull(),
+  cycleId: int("cycleId").references(() => evaluationCycles.id),
+  consequence: mysqlEnum("consequence", ["merito", "promocao", "desligamento", "plano_recuperacao", "nenhuma"]).default("nenhuma").notNull(),
+  notes: text("notes"),
+  decidedBy: int("decidedBy").references(() => users.id),
+  decidedAt: timestamp("decidedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CalibrationConsequence = typeof calibrationConsequences.$inferSelect;
+
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
