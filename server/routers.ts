@@ -199,6 +199,75 @@ export const appRouter = router({
         if (!me) throw new TRPCError({ code: "NOT_FOUND", message: "Perfil não encontrado." });
         return updateEmployee(me.id, input);
       }),
+    importBulk: rhProcedure
+      .input(
+        z.object({
+          rows: z.array(
+            z.object({
+              name: z.string(),
+              email: z.string().optional(),
+              jobTitle: z.string().optional(),
+              department: z.string().optional(),
+              area: z.string().optional(),
+              diretoria: z.string().optional(),
+              managerId: z.number().nullable().optional(),
+              platformRole: z.enum(["rh", "gestor", "colaborador"]).default("colaborador"),
+              accessPassword: z.string().optional(),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ input }) => {
+        // Get existing emails to detect duplicates
+        const existing = await getAllEmployees();
+        const existingEmails = new Set(
+          existing
+            .map((e) => e.email?.toLowerCase().trim())
+            .filter(Boolean)
+        );
+
+        const results: { row: number; name: string; status: "ok" | "error"; error?: string }[] = [];
+        let imported = 0;
+
+        for (let i = 0; i < input.rows.length; i++) {
+          const row = input.rows[i];
+          const rowNum = i + 1;
+
+          // Validate required fields
+          if (!row.name?.trim()) {
+            results.push({ row: rowNum, name: row.name || "(sem nome)", status: "error", error: "Nome é obrigatório" });
+            continue;
+          }
+
+          // Check duplicate email
+          const emailKey = row.email?.toLowerCase().trim();
+          if (emailKey && existingEmails.has(emailKey)) {
+            results.push({ row: rowNum, name: row.name, status: "error", error: `E-mail '${row.email}' já cadastrado` });
+            continue;
+          }
+
+          // Hash password if provided
+          const data: Record<string, unknown> = { ...row };
+          if (data.accessPassword) {
+            data.accessPassword = await bcrypt.hash(data.accessPassword as string, 10);
+          }
+          // Remove null managerId
+          if (data.managerId === null || data.managerId === undefined) {
+            delete data.managerId;
+          }
+
+          try {
+            await createEmployee(data as Parameters<typeof createEmployee>[0]);
+            if (emailKey) existingEmails.add(emailKey);
+            imported++;
+            results.push({ row: rowNum, name: row.name, status: "ok" });
+          } catch (err) {
+            results.push({ row: rowNum, name: row.name, status: "error", error: "Erro ao salvar no banco" });
+          }
+        }
+
+        return { imported, total: input.rows.length, results };
+      }),
   }),
 
   // ─── CYCLES ──────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   Users, Plus, Building2, Search, Calendar, ChevronDown, ChevronUp,
   Shield, User, UserCheck, Pencil, Check, X, Download, Eye, EyeOff,
-  UserX, UserPlus, FileSpreadsheet,
+  UserX, UserPlus, FileSpreadsheet, Upload, AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,10 @@ export default function PainelRH() {
   const [editingPhaseId, setEditingPhaseId] = useState<number | null>(null);
   const [phaseEdits, setPhaseEdits] = useState<Record<number, { startDate: string; endDate: string; titulo: string; descricao: string }>>({});
   const [showInactive, setShowInactive] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [csvPreview, setCsvPreview] = useState<Array<Record<string, string>>>([]);
+  const [csvErrors, setCsvErrors] = useState<string[]>([]);
+  const [importResult, setImportResult] = useState<{ imported: number; total: number; results: Array<{ row: number; name: string; status: string; error?: string }> } | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -90,6 +94,17 @@ export default function PainelRH() {
       refetchEmployees();
     },
     onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const importBulk = trpc.employees.importBulk.useMutation({
+    onSuccess: (result) => {
+      setImportResult(result);
+      refetchEmployees();
+      if (result.imported > 0) {
+        toast.success(`${result.imported} colaborador(es) importado(s) com sucesso!`);
+      }
+    },
+    onError: (e) => toast.error(`Erro na importação: ${e.message}`),
   });
 
   const deactivateEmployee = trpc.employees.deactivate.useMutation({
@@ -140,6 +155,77 @@ export default function PainelRH() {
       platformRole: (emp.platformRole as any) ?? "colaborador",
       accessPassword: (emp as any).accessPassword ?? "",
     });
+  };
+
+  const downloadTemplate = () => {
+    const header = "nome,email,cargo,departamento,area,diretoria,perfil_acesso,senha";
+    const example = "João Silva,joao@empresa.com,Analista,Marketing,Produto,Diretoria de Tecnologia,colaborador,Senha@2026";
+    const note = "# perfil_acesso: colaborador | gestor | rh";
+    const csv = `${header}\n${example}\n${note}`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "template_colaboradores.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCsvFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith("#"));
+      if (lines.length < 2) { setCsvErrors(["Arquivo vazio ou sem dados."]); return; }
+      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      const requiredCols = ["nome"];
+      const missing = requiredCols.filter((c) => !headers.includes(c));
+      if (missing.length) { setCsvErrors([`Coluna obrigatória ausente: ${missing.join(", ")}`]); return; }
+      const rows: Array<Record<string, string>> = [];
+      const errs: string[] = [];
+      const seenEmails = new Set<string>();
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(",").map((v) => v.trim());
+        const row: Record<string, string> = {};
+        headers.forEach((h, idx) => { row[h] = vals[idx] ?? ""; });
+        const rowErrors: string[] = [];
+        if (!row["nome"]) rowErrors.push("nome obrigatório");
+        const perfil = row["perfil_acesso"] || "colaborador";
+        if (!["rh", "gestor", "colaborador"].includes(perfil)) {
+          rowErrors.push(`perfil_acesso inválido '${perfil}'`);
+        }
+        const emailKey = row["email"]?.toLowerCase().trim();
+        if (emailKey) {
+          if (seenEmails.has(emailKey)) rowErrors.push(`e-mail '${row["email"]}' duplicado no CSV`);
+          else seenEmails.add(emailKey);
+        }
+        row["_errors"] = rowErrors.join(" | ");
+        if (rowErrors.length > 0) {
+          errs.push(`Linha ${i + 1} (${row["nome"] || "sem nome"}): ${rowErrors.join(", ")}`);
+        }
+        rows.push(row);
+      }
+      setCsvErrors(errs);
+      setCsvPreview(rows);
+      setImportResult(null);
+    };
+    reader.readAsText(file, "UTF-8");
+  };
+
+  const handleConfirmImport = () => {
+    const validRows = csvPreview.filter((r) => !r["_errors"]);
+    if (!validRows.length) return;
+    const rows = validRows.map((r) => ({
+      name: r["nome"] ?? "",
+      email: r["email"] || undefined,
+      jobTitle: r["cargo"] || undefined,
+      department: r["departamento"] || undefined,
+      area: r["area"] || undefined,
+      diretoria: r["diretoria"] || undefined,
+      platformRole: (r["perfil_acesso"] as "rh" | "gestor" | "colaborador") || "colaborador",
+      accessPassword: r["senha"] || undefined,
+    }));
+    importBulk.mutate({ rows });
   };
 
   const handleSaveEmployee = () => {
@@ -259,6 +345,17 @@ export default function PainelRH() {
             <UserPlus size={14} />
             Novo colaborador
           </Button>
+
+          <button
+            onClick={() => { setShowImportDialog(true); setCsvPreview([]); setCsvErrors([]); setImportResult(null); }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#d9f22a40"; (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#0a3060"; (e.currentTarget as HTMLButtonElement).style.color = "#fdffdf"; }}
+          >
+            <Upload size={14} />
+            Importar CSV
+          </button>
 
           <Link href="/calibracao">
             <Button
@@ -756,6 +853,169 @@ export default function PainelRH() {
         </Dialog>
 
       </div>
+
+      {/* CSV Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={(open) => { setShowImportDialog(open); if (!open) { setCsvPreview([]); setCsvErrors([]); setImportResult(null); } }}>
+        <DialogContent
+          className="max-w-3xl max-h-[90vh] overflow-y-auto"
+          style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+        >
+          <DialogHeader>
+            <DialogTitle style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>Importar Colaboradores via CSV</DialogTitle>
+          </DialogHeader>
+
+          {/* Step 1: Download template */}
+          <div className="p-4 rounded-xl border space-y-2" style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}>
+            <p className="text-sm font-semibold" style={{ color: "#8aa3c0" }}>1. Baixe o template CSV</p>
+            <p className="text-xs" style={{ color: "#4a6080" }}>Colunas: <span style={{ color: "#fdffdf" }}>nome, email, cargo, departamento, area, diretoria, perfil_acesso, senha</span></p>
+            <button
+              onClick={downloadTemplate}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold"
+              style={{ backgroundColor: "#0a3060", color: "#d9f22a", border: "1px solid #d9f22a30" }}
+            >
+              <Download size={14} />
+              Baixar template_colaboradores.csv
+            </button>
+          </div>
+
+          {/* Step 2: Upload file */}
+          <div className="p-4 rounded-xl border space-y-2" style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}>
+            <p className="text-sm font-semibold" style={{ color: "#8aa3c0" }}>2. Selecione o arquivo CSV preenchido</p>
+            <label
+              className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed cursor-pointer transition-colors"
+              style={{ borderColor: "#0a3060", color: "#8aa3c0" }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleCsvFile(f); }}
+            >
+              <Upload size={24} />
+              <span className="text-sm">Clique para selecionar ou arraste o arquivo CSV aqui</span>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }}
+              />
+            </label>
+          </div>
+
+          {/* Validation errors */}
+          {csvErrors.length > 0 && (
+            <div className="p-3 rounded-xl border space-y-1" style={{ backgroundColor: "#2a0a0a", borderColor: "#ff4444" }}>
+              <p className="text-xs font-semibold flex items-center gap-1" style={{ color: "#ff6666" }}>
+                <AlertCircle size={12} /> {csvErrors.length} erro(s) encontrado(s)
+              </p>
+              {csvErrors.map((err, i) => (
+                <p key={i} className="text-xs" style={{ color: "#ff9999" }}>{err}</p>
+              ))}
+            </div>
+          )}
+
+          {/* Preview table */}
+          {csvPreview.length > 0 && !importResult && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold" style={{ color: "#8aa3c0" }}>
+                3. Preview — {csvPreview.filter((r) => !r["_errors"]).length} válido(s) de {csvPreview.length} registro(s)
+              </p>
+              <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "#0a3060" }}>
+                <table className="w-full text-xs min-w-[600px]">
+                  <thead>
+                    <tr style={{ backgroundColor: "#001023" }}>
+                      {["Nome", "E-mail", "Cargo", "Área", "Perfil"].map((h) => (
+                        <th key={h} className="px-3 py-2 text-left font-semibold" style={{ color: "#8aa3c0" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvPreview.slice(0, 30).map((row, i) => {
+                      const hasError = !!row["_errors"];
+                      return (
+                        <tr key={i} style={{ borderTop: "1px solid #0a3060", backgroundColor: hasError ? "#2a0a0a" : undefined }}>
+                          <td className="px-3 py-2">
+                            <span style={{ color: hasError ? "#ff9999" : "#fdffdf" }}>{row["nome"] || "—"}</span>
+                            {hasError && <p className="text-xs mt-0.5" style={{ color: "#ff6666" }}>{row["_errors"]}</p>}
+                          </td>
+                          <td className="px-3 py-2" style={{ color: hasError ? "#ff9999" : "#8aa3c0" }}>{row["email"] || "—"}</td>
+                          <td className="px-3 py-2" style={{ color: "#8aa3c0" }}>{row["cargo"] || "—"}</td>
+                          <td className="px-3 py-2" style={{ color: "#8aa3c0" }}>{row["area"] || "—"}</td>
+                          <td className="px-3 py-2">
+                            {hasError ? (
+                              <span style={{ color: "#ff6666" }}><AlertCircle size={12} className="inline" /></span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{
+                                backgroundColor: row["perfil_acesso"] === "rh" ? "#d9f22a15" : row["perfil_acesso"] === "gestor" ? "#1840eb15" : "#8aa3c015",
+                                color: row["perfil_acesso"] === "rh" ? "#d9f22a" : row["perfil_acesso"] === "gestor" ? "#6080ff" : "#8aa3c0",
+                              }}>{row["perfil_acesso"] || "colaborador"}</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {csvPreview.length > 20 && (
+                  <p className="px-3 py-2 text-xs" style={{ color: "#4a6080" }}>... e mais {csvPreview.length - 20} registro(s)</p>
+                )}
+              </div>
+              <Button
+                onClick={handleConfirmImport}
+                disabled={importBulk.isPending || csvPreview.filter((r) => !r["_errors"]).length === 0}
+                className="w-full"
+                style={{ backgroundColor: "#d9f22a", color: "#001023" }}
+              >
+                {importBulk.isPending
+                  ? "Importando..."
+                  : `Confirmar importação de ${csvPreview.filter((r) => !r["_errors"]).length} colaborador(es) válido(s)`}
+              </Button>
+            </div>
+          )}
+
+          {/* Import result */}
+          {importResult && (
+            <div className="space-y-3">
+              <div className="flex gap-4 p-4 rounded-xl border" style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}>
+                <div className="text-center">
+                  <p className="text-2xl font-black" style={{ color: "#d9f22a" }}>{importResult.imported}</p>
+                  <p className="text-xs" style={{ color: "#8aa3c0" }}>Importados</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-black" style={{ color: importResult.total - importResult.imported > 0 ? "#ff6666" : "#8aa3c0" }}>{importResult.total - importResult.imported}</p>
+                  <p className="text-xs" style={{ color: "#8aa3c0" }}>Erros</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-black" style={{ color: "#fdffdf" }}>{importResult.total}</p>
+                  <p className="text-xs" style={{ color: "#8aa3c0" }}>Total</p>
+                </div>
+              </div>
+              {importResult.results.filter((r) => r.status === "error").length > 0 && (
+                <div className="p-3 rounded-xl border space-y-1" style={{ backgroundColor: "#2a0a0a", borderColor: "#ff4444" }}>
+                  <p className="text-xs font-semibold" style={{ color: "#ff6666" }}>Registros com erro:</p>
+                  {importResult.results.filter((r) => r.status === "error").map((r) => (
+                    <p key={r.row} className="text-xs flex items-center gap-1" style={{ color: "#ff9999" }}>
+                      <AlertCircle size={10} /> Linha {r.row} — {r.name}: {r.error}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {importResult.imported > 0 && (
+                <div className="p-3 rounded-xl border" style={{ backgroundColor: "#0a2a0a", borderColor: "#22c55e" }}>
+                  <p className="text-xs font-semibold flex items-center gap-1" style={{ color: "#22c55e" }}>
+                    <CheckCircle2 size={12} /> {importResult.imported} colaborador(es) adicionado(s) com sucesso!
+                  </p>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => { setShowImportDialog(false); setCsvPreview([]); setCsvErrors([]); setImportResult(null); }}
+                className="w-full"
+                style={{ borderColor: "#0a3060", color: "#8aa3c0", backgroundColor: "transparent" }}
+              >
+                Fechar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </StellarLayout>
   );
 }

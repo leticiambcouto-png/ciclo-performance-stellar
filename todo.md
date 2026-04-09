@@ -171,3 +171,11 @@
 
 ## Bugs (Abril 2026)
 - [x] PainelRH: campo de input perde foco a cada letra digitada no formulário de adicionar colaborador (componente EmployeeFormFields definido inline causava re-mount a cada render)
+
+## Importação CSV de Colaboradores (Abril 2026)
+- [x] Backend: procedure importBulk para importar colaboradores em lote com hash bcrypt por senha
+- [x] Backend: validação por linha (e-mail duplicado, campos obrigatórios, perfil inválido)
+- [x] Frontend: botão "Importar CSV" no Painel RH
+- [x] Frontend: download de template CSV com colunas corretas e linha de exemplo
+- [x] Frontend: preview dos dados antes de confirmar importação (tabela com erros destacados)
+- [x] Frontend: feedback de resultado (X importados, Y erros com detalhes por linha)
