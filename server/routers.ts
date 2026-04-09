@@ -116,7 +116,8 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(({ input }) => deactivateEmployee(input.id)),
     myProfile: protectedProcedure.query(async ({ ctx }) => {
-      return getEmployeeByUserId(ctx.user.id);
+      const emp = await getEmployeeByUserId(ctx.user.id);
+      return emp ?? null;
     }),
     directReports: gestorProcedure.query(async ({ ctx }) => {
       const me = await getEmployeeByUserId(ctx.user.id);

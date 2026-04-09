@@ -13,13 +13,15 @@ import {
   Grid3x3,
   LayoutDashboard,
   LogOut,
+  Menu,
   MessageSquare,
   Settings,
   Shield,
   Users,
+  X,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,13 +102,28 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location]);
+
+  // Prevent body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   const { data: unreadCount } = trpc.notifications.unreadCount.useQuery(undefined, {
     refetchInterval: 30000,
   });
 
   const platformRole = (user as any)?.platformRole ?? "colaborador";
-
   const visibleNav = navItems.filter((item) => item.roles.includes(platformRole));
 
   const roleLabel = {
@@ -121,119 +138,132 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
     colaborador: "bg-[#fdffdf]/10 text-[#fdffdf] border-[#fdffdf]/20",
   }[platformRole as string] ?? "bg-[#fdffdf]/10 text-[#fdffdf] border-[#fdffdf]/20";
 
+  const NavContent = ({ onItemClick }: { onItemClick?: () => void }) => (
+    <>
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-4 py-5 border-b flex-shrink-0" style={{ borderColor: "#0a3060" }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#d9f22a" }}>
+          <BrainCircuit size={16} style={{ color: "#001023" }} />
+        </div>
+        {!collapsed && (
+          <div>
+            <p className="text-xs font-bold leading-none" style={{ color: "#d9f22a" }}>STELLAR</p>
+            <p className="text-xs leading-none mt-0.5" style={{ color: "#8aa3c0" }}>Performance 2.0</p>
+          </div>
+        )}
+      </div>
+
+      {/* Nav */}
+      <ScrollArea className="flex-1 py-3">
+        <nav className="px-2 space-y-1">
+          {visibleNav.map((item) => {
+            const isActive = location === item.href || location.startsWith(item.href + "/");
+            return (
+              <Link key={item.href} href={item.href}>
+                <div
+                  onClick={onItemClick}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150",
+                    isActive ? "text-[#001023]" : "text-[#8aa3c0] hover:text-[#fdffdf]"
+                  )}
+                  style={isActive ? { backgroundColor: "#d9f22a" } : { backgroundColor: "transparent" }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "#001830";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
+                  }}
+                >
+                  <span className={cn("flex-shrink-0", isActive ? "text-[#001023]" : "")}>{item.icon}</span>
+                  {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </ScrollArea>
+
+      {/* Bottom collapse toggle (desktop only) */}
+      <div className="p-2 border-t hidden lg:block" style={{ borderColor: "#0a3060" }}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="w-full flex items-center justify-center p-2 rounded-lg transition-colors"
+          style={{ color: "#8aa3c0" }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#001830"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#001023" }}>
-      {/* Sidebar */}
+
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)" }}
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer sidebar */}
       <aside
         className={cn(
-          "flex flex-col border-r transition-all duration-300 flex-shrink-0",
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 transition-transform duration-300 lg:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        style={{ backgroundColor: "#000d1a", borderRight: "1px solid #0a3060" }}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-4 p-1.5 rounded-lg"
+          style={{ color: "#8aa3c0" }}
+        >
+          <X size={18} />
+        </button>
+        <NavContent onItemClick={() => setMobileOpen(false)} />
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={cn(
+          "hidden lg:flex flex-col border-r transition-all duration-300 flex-shrink-0",
           collapsed ? "w-16" : "w-60"
         )}
-        style={{
-          backgroundColor: "#000d1a",
-          borderColor: "#0a3060",
-        }}
+        style={{ backgroundColor: "#000d1a", borderColor: "#0a3060" }}
       >
-        {/* Logo */}
-        <div
-          className="flex items-center gap-3 px-4 py-5 border-b"
-          style={{ borderColor: "#0a3060" }}
-        >
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: "#d9f22a" }}
-          >
-            <BrainCircuit size={16} style={{ color: "#001023" }} />
-          </div>
-          {!collapsed && (
-            <div>
-              <p className="text-xs font-bold leading-none" style={{ color: "#d9f22a" }}>
-                STELLAR
-              </p>
-              <p className="text-xs leading-none mt-0.5" style={{ color: "#8aa3c0" }}>
-                Performance 2.0
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Nav */}
-        <ScrollArea className="flex-1 py-3">
-          <nav className="px-2 space-y-1">
-            {visibleNav.map((item) => {
-              const isActive = location === item.href || location.startsWith(item.href + "/");
-              return (
-                <Link key={item.href} href={item.href}>
-                  <div
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 group",
-                      isActive
-                        ? "text-[#001023]"
-                        : "text-[#8aa3c0] hover:text-[#fdffdf]"
-                    )}
-                    style={
-                      isActive
-                        ? { backgroundColor: "#d9f22a" }
-                        : { backgroundColor: "transparent" }
-                    }
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        (e.currentTarget as HTMLDivElement).style.backgroundColor = "#001830";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
-                      }
-                    }}
-                  >
-                    <span className={cn("flex-shrink-0", isActive ? "text-[#001023]" : "")}>
-                      {item.icon}
-                    </span>
-                    {!collapsed && (
-                      <span className="text-sm font-medium truncate">{item.label}</span>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </nav>
-        </ScrollArea>
-
-        {/* Bottom */}
-        <div className="p-2 border-t" style={{ borderColor: "#0a3060" }}>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center p-2 rounded-lg transition-colors"
-            style={{ color: "#8aa3c0" }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#001830";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-            }}
-          >
-            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          </button>
-        </div>
+        <NavContent />
       </aside>
 
       {/* Main */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         {/* Header */}
         <header
-          className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0"
+          className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 border-b flex-shrink-0"
           style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}
         >
-          <div>
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Hamburger (mobile only) */}
+            <button
+              className="lg:hidden p-2 rounded-lg flex-shrink-0"
+              style={{ color: "#8aa3c0" }}
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu size={20} />
+            </button>
             {title && (
-              <h1 className="text-lg font-bold" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
+              <h1 className="text-base lg:text-lg font-bold truncate" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
                 {title}
               </h1>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
             {/* Notifications */}
             <Link href="/dashboard">
               <button
@@ -264,14 +294,10 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-2 lg:px-3 py-2 rounded-lg transition-colors"
                   style={{ color: "#fdffdf" }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#001830";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#001830"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
                 >
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -280,15 +306,10 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
                     {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
                   </div>
                   <div className="text-left hidden sm:block">
-                    <p className="text-sm font-medium leading-none" style={{ color: "#fdffdf" }}>
+                    <p className="text-sm font-medium leading-none truncate max-w-[120px]" style={{ color: "#fdffdf" }}>
                       {user?.name ?? "Usuário"}
                     </p>
-                    <span
-                      className={cn(
-                        "text-xs px-1.5 py-0.5 rounded border mt-0.5 inline-block",
-                        roleColor
-                      )}
-                    >
+                    <span className={cn("text-xs px-1.5 py-0.5 rounded border mt-0.5 inline-block", roleColor)}>
                       {roleLabel}
                     </span>
                   </div>
@@ -297,11 +318,7 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
               <DropdownMenuContent
                 align="end"
                 className="w-48"
-                style={{
-                  backgroundColor: "#001830",
-                  border: "1px solid #0a3060",
-                  color: "#fdffdf",
-                }}
+                style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
               >
                 <DropdownMenuItem asChild>
                   <Link href="/perfil">
@@ -310,11 +327,7 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator style={{ backgroundColor: "#0a3060" }} />
-                <DropdownMenuItem
-                  onClick={logout}
-                  style={{ color: "#ef4444" }}
-                  className="cursor-pointer"
-                >
+                <DropdownMenuItem onClick={logout} style={{ color: "#ef4444" }} className="cursor-pointer">
                   <LogOut size={14} className="mr-2" />
                   Sair
                 </DropdownMenuItem>

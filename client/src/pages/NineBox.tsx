@@ -140,7 +140,7 @@ export default function NineBox() {
 
   return (
     <StellarLayout title="9-Box">
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Tabs (only for gestor/RH) */}
         {(platformRole === "gestor" || platformRole === "rh") && (
           <div className="flex gap-2">
@@ -302,16 +302,16 @@ export default function NineBox() {
           <div className="flex gap-6 flex-col lg:flex-row">
             {/* 9-box grid */}
             <div className="flex-1">
-              <div className="relative">
-                {/* Y axis label */}
+              <div className="relative overflow-x-auto">
+                {/* Y axis label - hidden on mobile to save space */}
                 <div
-                  className="absolute -left-8 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-semibold whitespace-nowrap"
+                  className="hidden sm:block absolute -left-8 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-semibold whitespace-nowrap"
                   style={{ color: "#8aa3c0" }}
                 >
                   Performance (Baixo → Alto)
                 </div>
 
-                <div className="grid grid-cols-3 gap-1.5 ml-4">
+                <div className="grid grid-cols-3 gap-1 sm:gap-1.5 ml-0 sm:ml-4 min-w-[280px]">
                   {GRID_LAYOUT.flat().map((q) => {
                     const info = NINEBOX_QUADRANTS[q];
                     const count = quadrantCounts[q] ?? 0;
@@ -620,7 +620,7 @@ export default function NineBox() {
 
         {activeTab === "curve" && platformRole === "colaborador" && (
           <div
-            className="p-8 rounded-xl border text-center"
+            className="p-6 sm:p-8 rounded-xl border text-center"
             style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
           >
             <Info size={32} className="mx-auto mb-3" style={{ color: "#0a3060" }} />

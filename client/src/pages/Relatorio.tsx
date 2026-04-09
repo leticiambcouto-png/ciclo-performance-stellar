@@ -124,7 +124,7 @@ export default function Relatorio() {
 
     return (
       <StellarLayout title="Minha Devolutiva">
-        <div className="p-6 max-w-3xl space-y-6">
+        <div className="p-4 sm:p-6 max-w-3xl space-y-4 sm:space-y-6">
           {/* Phase gating banner */}
           {isDevolutivaBlocked && devolutivaPhase && (
             <div
@@ -152,7 +152,7 @@ export default function Relatorio() {
 
           {!isDevolutivaBlocked && (!myReport || myReport.status === "draft") ? (
             <div
-              className="p-12 rounded-xl border text-center"
+              className="p-8 sm:p-12 rounded-xl border text-center"
               style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
             >
               <FileText size={48} className="mx-auto mb-4" style={{ color: "#0a3060" }} />
@@ -272,7 +272,7 @@ export default function Relatorio() {
   // Gestor/RH view
   return (
     <StellarLayout title="Devolutivas">
-      <div className="p-6 max-w-4xl space-y-6">
+      <div className="p-4 sm:p-6 max-w-4xl space-y-4 sm:space-y-6">
         {/* Employee selector */}
         <div
           className="p-4 rounded-xl border"

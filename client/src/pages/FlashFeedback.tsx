@@ -214,7 +214,7 @@ export default function FlashFeedback() {
 
   return (
     <StellarLayout title="Flash Feedbacks">
-      <div className="p-6 space-y-6 max-w-4xl">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-4xl">
         {/* Header actions */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2 flex-wrap">
@@ -262,7 +262,7 @@ export default function FlashFeedback() {
 
         {/* Stats for manager */}
         {(platformRole === "gestor" || platformRole === "rh") && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: "Agendados", count: counts.scheduled, color: "#3b82f6" },
               { label: "Realizados", count: counts.completed, color: "#22c55e" },
@@ -283,7 +283,7 @@ export default function FlashFeedback() {
         {/* Feedback list */}
         <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}>
           {filteredFeedbacks.length === 0 ? (
-            <div className="p-12 text-center">
+            <div className="p-8 sm:p-12 text-center">
               <Zap size={40} className="mx-auto mb-3" style={{ color: "#0a3060" }} />
               <p className="font-semibold mb-1" style={{ color: "#fdffdf" }}>Nenhum flash feedback encontrado</p>
               <p className="text-sm" style={{ color: "#8aa3c0" }}>

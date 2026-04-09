@@ -259,11 +259,11 @@ export default function CicloOverview() {
 
   return (
     <StellarLayout title="Ciclo de Performance 2.0">
-      <div className="p-6 space-y-8 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
 
         {/* ── Hero ──────────────────────────────────────────────────────────── */}
         <div
-          className="rounded-2xl p-8 relative overflow-hidden"
+          className="rounded-2xl p-5 sm:p-8 relative overflow-hidden"
           style={{
             background: "linear-gradient(135deg, #001830 0%, #001023 60%, #0a0820 100%)",
             border: "1px solid #0a3060",
@@ -296,7 +296,7 @@ export default function CicloOverview() {
             </div>
 
             <h1
-              className="text-3xl md:text-4xl font-black mb-3 leading-tight"
+              className="text-2xl sm:text-3xl md:text-4xl font-black mb-3 leading-tight"
               style={{ color: "#fdffdf" }}
             >
               Ciclo de Performance 2.0

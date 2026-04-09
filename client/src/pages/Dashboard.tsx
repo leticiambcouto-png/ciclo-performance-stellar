@@ -60,7 +60,7 @@ export default function Dashboard() {
 
   return (
     <StellarLayout title="Dashboard">
-      <div className="p-6 space-y-6 max-w-5xl">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-5xl">
         {/* Cycle Progress */}
         <CycleProgressBar />
 

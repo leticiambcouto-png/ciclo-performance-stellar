@@ -165,7 +165,7 @@ function CriterionCard({
 
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: "#0a3060" }}>
-          <div className="grid grid-cols-3 gap-2 pt-3">
+          <div className="grid grid-cols-1 xs:grid-cols-3 sm:grid-cols-3 gap-2 pt-3">
             {(["below", "within", "above"] as AxisValue[]).map((v) => (
               <button
                 key={v}
@@ -321,7 +321,7 @@ export default function Avaliacao() {
 
   return (
     <StellarLayout title="Avaliação">
-      <div className="p-6 max-w-3xl space-y-6">
+      <div className="p-4 sm:p-6 max-w-3xl space-y-4 sm:space-y-6">
         {/* Cycle info */}
         {cycle && (
           <div

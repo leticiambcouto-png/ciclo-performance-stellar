@@ -125,3 +125,14 @@
 - [x] Controle de acesso por data de fase (avaliação, devolutiva só abrem na data de início)
 - [x] 9-Box do colaborador: apenas visualização educativa dos quadrantes (sem simulação, sem posicionamento pessoal antes da avaliação)
 - [x] Flash Feedback: perguntas do 9-Box para guiar o gestor + IA retorna quadrante/feeling + 4 campos de plano de ação com sugestão da IA
+
+## Otimização Mobile
+- [x] StellarLayout: sidebar como drawer/overlay em mobile, header com hamburger menu
+- [x] Dashboard e CycleProgressBar: layout responsivo para telas pequenas
+- [x] CicloOverview: fases em scroll horizontal ou accordion em mobile
+- [x] Avaliação: formulário responsivo com campos empilhados em mobile
+- [x] 9-Box: grid responsivo com scroll e cards adaptados para mobile
+- [x] Flash Feedback: layout de cards responsivo para mobile
+- [x] Relatório/Devolutiva: layout responsivo para mobile
+- [x] Painel RH: tabelas e formulários responsivos para mobile
+- [x] Calibração: 9-Box de calibração responsivo para mobile

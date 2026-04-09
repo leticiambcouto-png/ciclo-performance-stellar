@@ -177,7 +177,7 @@ export default function PainelRH() {
       <StellarLayout title="Painel RH">
         <div className="p-6">
           <div
-            className="p-12 rounded-xl border text-center"
+            className="p-8 sm:p-12 rounded-xl border text-center"
             style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
           >
             <Shield size={48} className="mx-auto mb-4" style={{ color: "#0a3060" }} />
@@ -214,7 +214,7 @@ export default function PainelRH() {
 
   const EmployeeFormFields = () => (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Nome Completo *</label>
           <Input
@@ -235,7 +235,7 @@ export default function PainelRH() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Cargo</label>
           <Input
@@ -256,7 +256,7 @@ export default function PainelRH() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Área</label>
           <Input
@@ -333,10 +333,10 @@ export default function PainelRH() {
 
   return (
     <StellarLayout title="Painel RH">
-      <div className="p-6 space-y-6 max-w-6xl">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-6xl">
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Total Ativos", count: activeEmployees.length, color: "#fdffdf", icon: <Users size={18} /> },
             { label: "Gestores", count: activeEmployees.filter((e) => e.platformRole === "gestor").length, color: "#1840eb", icon: <UserCheck size={18} /> },
@@ -433,9 +433,10 @@ export default function PainelRH() {
         </div>
 
         {/* Employee table */}
+        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "#0a3060" }}>
         <div
-          className="rounded-xl border overflow-hidden"
-          style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+          className="rounded-xl overflow-hidden min-w-[640px]"
+          style={{ backgroundColor: "#001830" }}
         >
           <div
             className="px-4 py-3 text-xs font-semibold uppercase tracking-wider"
@@ -545,6 +546,7 @@ export default function PainelRH() {
               );
             })
           )}
+        </div>
         </div>
 
         {/* Cycle Phase Editor */}

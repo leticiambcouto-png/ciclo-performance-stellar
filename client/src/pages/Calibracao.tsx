@@ -79,7 +79,7 @@ export default function Calibracao() {
       <StellarLayout title="Calibração">
         <div className="p-6">
           <div
-            className="p-12 rounded-xl border text-center"
+            className="p-8 sm:p-12 rounded-xl border text-center"
             style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
           >
             <Shield size={48} className="mx-auto mb-4" style={{ color: "#0a3060" }} />
@@ -114,7 +114,7 @@ export default function Calibracao() {
 
   return (
     <StellarLayout title="Comitê de Calibração">
-      <div className="p-6 space-y-6 max-w-6xl">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-6xl">
         {/* Room list or create */}
         {!selectedRoom ? (
           <>
@@ -134,7 +134,7 @@ export default function Calibracao() {
 
             {(!rooms || rooms.length === 0) ? (
               <div
-                className="p-12 rounded-xl border text-center"
+                className="p-8 sm:p-12 rounded-xl border text-center"
                 style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
               >
                 <Building2 size={48} className="mx-auto mb-4" style={{ color: "#0a3060" }} />
@@ -204,7 +204,7 @@ export default function Calibracao() {
               <h2 className="font-bold" style={{ color: "#fdffdf" }}>{room?.name}</h2>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* 9box with drag-to-move */}
               <div className="lg:col-span-2">
                 <div
@@ -222,7 +222,7 @@ export default function Calibracao() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
                   {GRID_LAYOUT.flat().map((q) => {
                     const info = NINEBOX_QUADRANTS[q];
                     const emps = getEmployeesInQuadrant(q);

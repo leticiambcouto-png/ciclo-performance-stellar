@@ -212,16 +212,16 @@ export default function CycleProgressBar({ compact = false }: CycleProgressBarPr
       </div>
 
       {/* Phase timeline */}
-      <div className="px-5 py-4">
-        <div className="relative">
+      <div className="px-3 sm:px-5 py-4">
+        <div className="relative overflow-x-auto pb-2">
           {/* Connecting line */}
           <div
-            className="absolute top-5 left-5 right-5 h-px"
+            className="absolute top-5 left-5 right-5 h-px hidden sm:block"
             style={{ backgroundColor: "#0a3060" }}
           />
 
           {/* Phases */}
-          <div className="relative flex justify-between">
+          <div className="relative flex justify-between sm:justify-between gap-1 sm:gap-0 min-w-max sm:min-w-0 w-full">
             {fasesMain.map((fase) => {
               const status = getPhaseStatus(fase.inicio, fase.fim, false);
               const Icon = fase.icone;
