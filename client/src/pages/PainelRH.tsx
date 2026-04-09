@@ -212,125 +212,6 @@ export default function PainelRH() {
   const inputStyle = { backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" };
   const labelStyle = { color: "#8aa3c0" };
 
-  const EmployeeFormFields = () => (
-    <div className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Nome Completo *</label>
-          <Input
-            placeholder="Nome completo"
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-semibold mb-1 block" style={labelStyle}>E-mail</label>
-          <Input
-            placeholder="email@stellar.com"
-            value={form.email}
-            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Cargo</label>
-          <Input
-            placeholder="Ex: Analista de Marketing"
-            value={form.jobTitle}
-            onChange={(e) => setForm((p) => ({ ...p, jobTitle: e.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Departamento</label>
-          <Input
-            placeholder="Ex: Marketing"
-            value={form.department}
-            onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Área</label>
-          <Input
-            placeholder="Ex: Produto"
-            value={form.area}
-            onChange={(e) => setForm((p) => ({ ...p, area: e.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-        <div>
-          <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Diretoria</label>
-          <Input
-            placeholder="Ex: Diretoria de Tecnologia"
-            value={form.diretoria}
-            onChange={(e) => setForm((p) => ({ ...p, diretoria: e.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Nome do Líder Direto</label>
-        <select
-          value={form.managerId}
-          onChange={(e) => setForm((p) => ({ ...p, managerId: e.target.value }))}
-          className="w-full px-3 py-2 rounded-lg text-sm"
-          style={inputStyle}
-        >
-          <option value="">Nenhum</option>
-          {activeEmployees
-            .filter((e) => e.platformRole === "gestor" && e.id !== editingEmployee)
-            .map((e) => (
-              <option key={e.id} value={e.id}>{e.name}</option>
-            ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Perfil de Acesso</label>
-        <select
-          value={form.platformRole}
-          onChange={(e) => setForm((p) => ({ ...p, platformRole: e.target.value as any }))}
-          className="w-full px-3 py-2 rounded-lg text-sm"
-          style={inputStyle}
-        >
-          <option value="colaborador">Colaborador</option>
-          <option value="gestor">Gestor</option>
-          <option value="rh">RH</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Senha de Acesso <span style={{ color: '#4a6080', fontWeight: 400 }}>(registro interno)</span></label>
-        <div className="relative">
-          <Input
-            type={showPassword ? "text" : "password"}
-            placeholder="Senha de acesso à plataforma"
-            value={form.accessPassword}
-            onChange={(e) => setForm((p) => ({ ...p, accessPassword: e.target.value }))}
-            style={{ ...inputStyle, paddingRight: "2.5rem" }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            style={{ color: "#8aa3c0" }}
-          >
-            {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <StellarLayout title="Painel RH">
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-6xl">
@@ -735,7 +616,124 @@ export default function PainelRH() {
               </DialogTitle>
             </DialogHeader>
 
-            <EmployeeFormFields />
+
+            <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Nome Completo *</label>
+                      <Input
+                        placeholder="Nome completo"
+                        value={form.name}
+                        onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>E-mail</label>
+                      <Input
+                        placeholder="email@stellar.com"
+                        value={form.email}
+                        onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+            
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Cargo</label>
+                      <Input
+                        placeholder="Ex: Analista de Marketing"
+                        value={form.jobTitle}
+                        onChange={(e) => setForm((p) => ({ ...p, jobTitle: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Departamento</label>
+                      <Input
+                        placeholder="Ex: Marketing"
+                        value={form.department}
+                        onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+            
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Área</label>
+                      <Input
+                        placeholder="Ex: Produto"
+                        value={form.area}
+                        onChange={(e) => setForm((p) => ({ ...p, area: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Diretoria</label>
+                      <Input
+                        placeholder="Ex: Diretoria de Tecnologia"
+                        value={form.diretoria}
+                        onChange={(e) => setForm((p) => ({ ...p, diretoria: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+            
+                  <div>
+                    <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Nome do Líder Direto</label>
+                    <select
+                      value={form.managerId}
+                      onChange={(e) => setForm((p) => ({ ...p, managerId: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg text-sm"
+                      style={inputStyle}
+                    >
+                      <option value="">Nenhum</option>
+                      {activeEmployees
+                        .filter((e) => e.platformRole === "gestor" && e.id !== editingEmployee)
+                        .map((e) => (
+                          <option key={e.id} value={e.id}>{e.name}</option>
+                        ))}
+                    </select>
+                  </div>
+            
+                  <div>
+                    <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Perfil de Acesso</label>
+                    <select
+                      value={form.platformRole}
+                      onChange={(e) => setForm((p) => ({ ...p, platformRole: e.target.value as any }))}
+                      className="w-full px-3 py-2 rounded-lg text-sm"
+                      style={inputStyle}
+                    >
+                      <option value="colaborador">Colaborador</option>
+                      <option value="gestor">Gestor</option>
+                      <option value="rh">RH</option>
+                    </select>
+                  </div>
+            
+                  <div>
+                    <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Senha de Acesso <span style={{ color: '#4a6080', fontWeight: 400 }}>(registro interno)</span></label>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Senha de acesso à plataforma"
+                        value={form.accessPassword}
+                        onChange={(e) => setForm((p) => ({ ...p, accessPassword: e.target.value }))}
+                        style={{ ...inputStyle, paddingRight: "2.5rem" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                        style={{ color: "#8aa3c0" }}
+                      >
+                        {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
 
             <div className="flex gap-3 mt-2">
               <Button

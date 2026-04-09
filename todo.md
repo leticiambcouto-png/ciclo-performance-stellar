@@ -168,3 +168,6 @@
 - [x] Adicionar trust proxy no Express para HTTPS funcionar corretamente atrás do proxy Manus
 - [x] Login redireciona para página original após autenticação (redirect query param)
 - [x] Corrigir autenticação das rotas de export Excel para usar stellar_session
+
+## Bugs (Abril 2026)
+- [x] PainelRH: campo de input perde foco a cada letra digitada no formulário de adicionar colaborador (componente EmployeeFormFields definido inline causava re-mount a cada render)
