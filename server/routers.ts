@@ -33,6 +33,7 @@ import {
   updateCalibrationRoom,
   createEmployee,
   updateEmployee,
+  getAllFlashFeedbacks,
   updateFlashFeedback,
   updateOverdueFlashFeedbacks,
   updateUserPlatformRole,
@@ -656,7 +657,11 @@ export const appRouter = router({
       }),
     cancel: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(({ input }) => updateFlashFeedback(input.id, { status: "cancelled" })),
+      .mutation(({ input }) => updateFlashFeedback(input.id, { status: 'cancelled' })),
+    allFeedbacks: rhProcedure.query(async () => {
+      await updateOverdueFlashFeedbacks();
+      return getAllFlashFeedbacks();
+    }),
   }),
 
   // ─── FEEDBACK REPORTS ────────────────────────────────────────────────────

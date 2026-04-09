@@ -144,3 +144,9 @@
 - [x] Perfil: tela de troca de senha pelo próprio usuário
 - [x] Senhas dos usuários fictícios configuradas (Stellar@2026) com bcrypt
 - [x] 52 testes passando, 0 erros TypeScript após migração completa
+
+## Melhorias Visuais (Abril 2026)
+- [x] CicloOverview: adicionar pesos Performance 70% / Potencial 30% na seção de critérios
+- [x] CicloOverview: explicar critério de classificação (Acima/Dentro/Abaixo) como média das notas de cada dimensão
+- [x] Dashboard Gestor: indicadores visuais inline (9-Box mini, Flash Feedbacks, métricas de time)
+- [x] Dashboard RH: indicadores visuais inline (9-Box mini consolidado, Flash Feedbacks, métricas empresa)

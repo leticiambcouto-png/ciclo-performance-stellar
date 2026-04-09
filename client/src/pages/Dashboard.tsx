@@ -1,19 +1,379 @@
 import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
-import { Bell, CheckCircle, Clock, AlertTriangle, ChevronRight, Zap, ClipboardList, Grid3x3, FileText, Users } from "lucide-react";
+import { Bell, CheckCircle, Clock, AlertTriangle, Zap, ClipboardList, Grid3x3, FileText, Users, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import CycleProgressBar from "@/components/CycleProgressBar";
+import { useState, useMemo } from "react";
+import { NINEBOX_QUADRANTS } from "@shared/nineboxData";
 
-export default function Dashboard() {
+// ─── Mini 9-Box grid ─────────────────────────────────────────────────────────
+const NINEBOX_LAYOUT = [
+  ["Q7", "Q8", "Q9"],
+  ["Q4", "Q5", "Q6"],
+  ["Q1", "Q2", "Q3"],
+];
+
+const QUADRANT_COLORS: Record<string, string> = {
+  Q9: "#22c55e", Q8: "#22c55e", Q7: "#22c55e",
+  Q6: "#d9f22a", Q5: "#d9f22a", Q4: "#d9f22a",
+  Q3: "#f59e0b", Q2: "#f59e0b", Q1: "#ef4444",
+};
+
+const QUADRANT_BG: Record<string, string> = {
+  Q9: "#22c55e12", Q8: "#22c55e0c", Q7: "#22c55e0c",
+  Q6: "#d9f22a10", Q5: "#d9f22a0c", Q4: "#d9f22a0c",
+  Q3: "#f59e0b10", Q2: "#f59e0b0c", Q1: "#ef444412",
+};
+
+function MiniNineBox({ positions }: { positions: { quadrant: string; employeeName?: string }[] }) {
+  const countByQ = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const p of positions) {
+      if (p.quadrant) map[p.quadrant] = (map[p.quadrant] ?? 0) + 1;
+    }
+    return map;
+  }, [positions]);
+
+  return (
+    <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+      {NINEBOX_LAYOUT.map((row) =>
+        row.map((q) => {
+          const count = countByQ[q] ?? 0;
+          return (
+            <div
+              key={q}
+              className="rounded-lg p-2 flex flex-col items-start justify-between"
+              style={{
+                backgroundColor: count > 0 ? QUADRANT_BG[q] : "#001023",
+                border: `1px solid ${count > 0 ? QUADRANT_COLORS[q] + "30" : "#0a3060"}`,
+                minHeight: "52px",
+              }}
+            >
+              <span className="text-xs font-bold" style={{ color: QUADRANT_COLORS[q], opacity: count > 0 ? 1 : 0.4 }}>
+                {q}
+              </span>
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: count > 0 ? QUADRANT_COLORS[q] : "#2a4a6b" }}
+              >
+                {count}
+              </span>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+// ─── Stat card ───────────────────────────────────────────────────────────────
+function StatCard({
+  label,
+  value,
+  sub,
+  color = "#fdffdf",
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  color?: string;
+}) {
+  return (
+    <div
+      className="p-4 rounded-xl border flex flex-col gap-2"
+      style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+    >
+      <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#8aa3c0" }}>
+        {label}
+      </p>
+      <p className="text-4xl font-black leading-none" style={{ color, fontFamily: "Space Grotesk" }}>
+        {value}
+      </p>
+      {sub && <p className="text-xs" style={{ color: "#8aa3c0" }}>{sub}</p>}
+    </div>
+  );
+}
+
+// ─── Dashboard for Gestor / RH ───────────────────────────────────────────────
+function ManagerDashboard({ isRH }: { isRH: boolean }) {
+  const { data: cycle } = trpc.cycles.active.useQuery();
+  const cycleId = cycle?.id ?? 0;
+  const { data: teamPositions } = isRH
+    ? trpc.ninebox.allPositions.useQuery({ cycleId: cycleId || 0 }, { enabled: cycleId > 0 })
+    : trpc.ninebox.teamPositions.useQuery({ cycleId: cycleId || 0 }, { enabled: cycleId > 0 });
+
+  const { data: flashFeedbacks } = isRH
+    ? trpc.flashFeedback.allFeedbacks.useQuery()
+    : trpc.flashFeedback.teamFeedbacks.useQuery();
+
+  const { data: allEmployees } = isRH
+    ? trpc.employees.allWithManager.useQuery()
+    : trpc.employees.directReports.useQuery();
+
+  const positions = teamPositions ?? [];
+  const feedbacks = flashFeedbacks ?? [];
+  const employees = allEmployees ?? [];
+
+  // Metrics
+  const total = isRH ? employees.length : employees.length;
+  const talentos = positions.filter((p) => ["Q7", "Q8", "Q9"].includes(p.quadrant)).length;
+  const zonaCritica = positions.filter((p) => ["Q1", "Q2", "Q3"].includes(p.quadrant)).length;
+  const ffAtrasados = feedbacks.filter((f) => f.status === "overdue").length;
+  const ffRealizados = feedbacks.filter((f) => f.status === "completed").length;
+  const ffPendentes = feedbacks.filter((f) => f.status === "scheduled").length;
+
+  const talentosPct = total > 0 ? Math.round((talentos / total) * 100) : 0;
+
+  // Flash feedbacks with overdue first, then scheduled
+  const ffHighlight = feedbacks
+    .filter((f) => f.status === "overdue" || f.status === "scheduled")
+    .sort((a, b) => (a.status === "overdue" ? -1 : 1))
+    .slice(0, 3);
+
+  // Enrich with employee name
+  const employeeMap = useMemo(() => {
+    const m: Record<number, string> = {};
+    for (const e of employees) m[(e as any).id] = (e as any).name;
+    return m;
+  }, [employees]);
+
+  // Ninebox positions with names
+  const positionsWithNames = positions.map((p) => ({
+    ...p,
+    employeeName: employeeMap[p.employeeId] ?? "?",
+  }));
+
+  return (
+    <div className="space-y-5">
+      {/* Cycle + title */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>
+          {cycle ? `${cycle.name} · ${isRH ? "Empresa" : "Time"}` : "Sem ciclo ativo"}
+        </p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label="Total" value={total} sub={isRH ? "colaboradores" : "no time"} />
+        <StatCard
+          label="Talentos"
+          value={talentos}
+          sub={`${talentosPct}% ${isRH ? "da empresa" : "do time"}`}
+          color="#22c55e"
+        />
+        <StatCard
+          label="Zona Crítica"
+          value={zonaCritica}
+          sub="ação necessária"
+          color={zonaCritica > 0 ? "#ef4444" : "#fdffdf"}
+        />
+        <StatCard
+          label="FF Atrasados"
+          value={ffAtrasados}
+          sub={`${ffPendentes} pendentes`}
+          color={ffAtrasados > 0 ? "#ef4444" : "#fdffdf"}
+        />
+      </div>
+
+      {/* 9-Box mini + Flash Feedbacks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 9-Box mini */}
+        <div
+          className="p-5 rounded-2xl border"
+          style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-bold" style={{ color: "#fdffdf" }}>
+                9-Box {isRH ? "da Empresa" : "do Time"}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>
+                {positions.length} colaboradores posicionados
+              </p>
+            </div>
+            <Link href="/9box">
+              <button
+                className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors"
+                style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#8aa3c0"; }}
+              >
+                Ver completo
+              </button>
+            </Link>
+          </div>
+          {positions.length === 0 ? (
+            <div className="flex items-center justify-center h-32 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
+              <p className="text-xs" style={{ color: "#4a7ab5" }}>Nenhum posicionamento ainda</p>
+            </div>
+          ) : (
+            <MiniNineBox positions={positionsWithNames} />
+          )}
+        </div>
+
+        {/* Flash Feedbacks */}
+        <div
+          className="p-5 rounded-2xl border"
+          style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Zap size={14} style={{ color: "#d9f22a" }} />
+                <p className="text-sm font-bold" style={{ color: "#fdffdf" }}>Flash Feedbacks</p>
+              </div>
+              <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>Realizados vs pendentes</p>
+            </div>
+            <Link href="/flash-feedback">
+              <button
+                className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors"
+                style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#8aa3c0"; }}
+              >
+                Ver todos
+              </button>
+            </Link>
+          </div>
+
+          {/* FF counters */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="text-center p-2 rounded-lg" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>Realizados</p>
+              <p className="text-2xl font-black" style={{ color: "#22c55e", fontFamily: "Space Grotesk" }}>{ffRealizados}</p>
+            </div>
+            <div className="text-center p-2 rounded-lg" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>Pendentes</p>
+              <p className="text-2xl font-black" style={{ color: "#f59e0b", fontFamily: "Space Grotesk" }}>{ffPendentes}</p>
+            </div>
+            <div className="text-center p-2 rounded-lg" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
+              <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>Atrasados</p>
+              <p className="text-2xl font-black" style={{ color: ffAtrasados > 0 ? "#ef4444" : "#fdffdf", fontFamily: "Space Grotesk" }}>{ffAtrasados}</p>
+            </div>
+          </div>
+
+          {/* Highlight items */}
+          <div className="space-y-2">
+            {ffHighlight.length === 0 ? (
+              <div className="flex items-center justify-center h-12 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
+                <p className="text-xs" style={{ color: "#4a7ab5" }}>Nenhum feedback pendente</p>
+              </div>
+            ) : (
+              ffHighlight.map((ff) => {
+                const isOverdue = ff.status === "overdue";
+                const otherPersonId = (ff as any).requesterId === (ff as any).receiverId
+                  ? (ff as any).receiverId
+                  : (ff as any).requesterId;
+                const name = employeeMap[(ff as any).receiverId] ?? employeeMap[(ff as any).requesterId] ?? "Colaborador";
+                const initials = name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
+                return (
+                  <div
+                    key={ff.id}
+                    className="flex items-center gap-3 p-3 rounded-xl"
+                    style={{
+                      backgroundColor: isOverdue ? "#ef444408" : "#001023",
+                      border: `1px solid ${isOverdue ? "#ef444430" : "#0a3060"}`,
+                    }}
+                  >
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0"
+                      style={{ backgroundColor: isOverdue ? "#ef444420" : "#0a3060", color: isOverdue ? "#ef4444" : "#8aa3c0" }}
+                    >
+                      {initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: "#fdffdf" }}>{name}</p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span
+                          className="text-xs px-1.5 py-0.5 rounded-full font-medium"
+                          style={{
+                            backgroundColor: isOverdue ? "#ef444420" : "#f59e0b20",
+                            color: isOverdue ? "#ef4444" : "#f59e0b",
+                          }}
+                        >
+                          {isOverdue ? "Atrasado" : "Agendado"}
+                        </span>
+                        {(ff as any).scheduledAt && (
+                          <span className="text-xs" style={{ color: "#4a7ab5" }}>
+                            {new Date((ff as any).scheduledAt).toLocaleDateString("pt-BR")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Link href="/flash-feedback">
+                      <button
+                        className="text-xs px-2 py-1 rounded-lg font-semibold flex-shrink-0"
+                        style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                      >
+                        Ver
+                      </button>
+                    </Link>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick links */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#8aa3c0" }}>
+          Acesso Rápido
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {(isRH
+            ? [
+                { label: "Painel RH", href: "/rh", icon: <Users size={18} />, desc: "Visão global da empresa" },
+                { label: "9-Box Global", href: "/9box", icon: <Grid3x3 size={18} />, desc: "Posicionamento de todos" },
+                { label: "Calibração", href: "/calibracao", icon: <ClipboardList size={18} />, desc: "Comitês de calibração" },
+                { label: "Flash Feedbacks", href: "/flash-feedback", icon: <Zap size={18} />, desc: "Acompanhamento geral" },
+              ]
+            : [
+                { label: "Avaliar Time", href: "/avaliacao", icon: <ClipboardList size={18} />, desc: "Avalie seus liderados" },
+                { label: "9-Box do Time", href: "/9box", icon: <Grid3x3 size={18} />, desc: "Posicionamento do time" },
+                { label: "Flash Feedbacks", href: "/flash-feedback", icon: <Zap size={18} />, desc: "Feedbacks do time" },
+                { label: "Devolutivas", href: "/relatorio", icon: <FileText size={18} />, desc: "Envie resultados" },
+              ]
+          ).map((link) => (
+            <Link key={link.href} href={link.href}>
+              <div
+                className="p-4 rounded-xl border cursor-pointer transition-all"
+                style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.borderColor = "#d9f22a40";
+                  el.style.backgroundColor = "#00213f";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.borderColor = "#0a3060";
+                  el.style.backgroundColor = "#001830";
+                }}
+              >
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: "#d9f22a15", color: "#d9f22a" }}>
+                  {link.icon}
+                </div>
+                <p className="text-sm font-semibold mb-0.5" style={{ color: "#fdffdf" }}>{link.label}</p>
+                <p className="text-xs" style={{ color: "#8aa3c0" }}>{link.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard for Colaborador ────────────────────────────────────────────────
+function ColaboradorDashboard() {
   const { user } = useStellarAuth();
-  const platformRole = (user as any)?.platformRole ?? "colaborador";
-
-  const { data: notifications } = trpc.notifications.list.useQuery();
   const { data: cycle } = trpc.cycles.active.useQuery();
   const { data: myProfile } = trpc.employees.myProfile.useQuery();
+  const { data: notifications } = trpc.notifications.list.useQuery();
   const utils = trpc.useUtils();
 
   const markAllRead = trpc.notifications.markAllRead.useMutation({
@@ -22,6 +382,7 @@ export default function Dashboard() {
 
   const unreadNotifs = notifications?.filter((n) => !n.isRead) ?? [];
   const recentNotifs = notifications?.slice(0, 5) ?? [];
+  const greetingName = user?.name?.split(" ")[0] ?? "Stellar";
 
   const notifIcon = (type: string) => {
     switch (type) {
@@ -33,183 +394,147 @@ export default function Dashboard() {
     }
   };
 
-  const quickLinks = {
-    rh: [
-      { label: "Painel RH", href: "/rh", icon: <Users size={18} />, desc: "Visão global da empresa" },
-      { label: "9-Box Global", href: "/9box", icon: <Grid3x3 size={18} />, desc: "Posicionamento de todos" },
-      { label: "Calibração", href: "/calibracao", icon: <ClipboardList size={18} />, desc: "Comitês de calibração" },
-      { label: "Flash Feedbacks", href: "/flash-feedback", icon: <Zap size={18} />, desc: "Acompanhamento geral" },
-    ],
-    gestor: [
-      { label: "Avaliar Time", href: "/avaliacao", icon: <ClipboardList size={18} />, desc: "Avalie seus liderados" },
-      { label: "9-Box do Time", href: "/9box", icon: <Grid3x3 size={18} />, desc: "Posicionamento do time" },
-      { label: "Flash Feedbacks", href: "/flash-feedback", icon: <Zap size={18} />, desc: "Feedbacks do time" },
-      { label: "Devolutivas", href: "/relatorio", icon: <FileText size={18} />, desc: "Envie resultados" },
-    ],
-    colaborador: [
-      { label: "Autoavaliação", href: "/avaliacao", icon: <ClipboardList size={18} />, desc: "Faça sua autoavaliação" },
-      { label: "Meu 9-Box", href: "/9box", icon: <Grid3x3 size={18} />, desc: "Veja seu posicionamento" },
-      { label: "Flash Feedbacks", href: "/flash-feedback", icon: <Zap size={18} />, desc: "Agende com seu gestor" },
-      { label: "Minha Devolutiva", href: "/relatorio", icon: <FileText size={18} />, desc: "Resultado da avaliação" },
-    ],
-  };
+  return (
+    <div className="space-y-5">
+      {/* Greeting */}
+      <div className="p-6 rounded-xl border" style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}>
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold mb-1" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
+              Olá, {greetingName}! 👋
+            </h2>
+            <p style={{ color: "#8aa3c0" }} className="text-sm">
+              {cycle
+                ? `Ciclo ativo: ${cycle.name} · Encerra em ${new Date(cycle.endDate).toLocaleDateString("pt-BR")}`
+                : "Nenhum ciclo ativo no momento."}
+            </p>
+          </div>
+          {myProfile && (
+            <div className="text-right hidden sm:block">
+              <p className="text-xs" style={{ color: "#8aa3c0" }}>Cargo</p>
+              <p className="text-sm font-medium" style={{ color: "#fdffdf" }}>{myProfile.jobTitle ?? "Cargo não informado"}</p>
+              <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>{myProfile.department ?? "Departamento não informado"}</p>
+            </div>
+          )}
+        </div>
+      </div>
 
-  const links = quickLinks[platformRole as keyof typeof quickLinks] ?? quickLinks.colaborador;
+      {/* Quick links */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#8aa3c0" }}>
+          Acesso Rápido
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Autoavaliação", href: "/avaliacao", icon: <ClipboardList size={18} />, desc: "Faça sua autoavaliação" },
+            { label: "Meu 9-Box", href: "/9box", icon: <Grid3x3 size={18} />, desc: "Veja seu posicionamento" },
+            { label: "Flash Feedbacks", href: "/flash-feedback", icon: <Zap size={18} />, desc: "Agende com seu gestor" },
+            { label: "Minha Devolutiva", href: "/relatorio", icon: <FileText size={18} />, desc: "Resultado da avaliação" },
+          ].map((link) => (
+            <Link key={link.href} href={link.href}>
+              <div
+                className="p-4 rounded-xl border cursor-pointer transition-all"
+                style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.borderColor = "#d9f22a40";
+                  el.style.backgroundColor = "#00213f";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  el.style.borderColor = "#0a3060";
+                  el.style.backgroundColor = "#001830";
+                }}
+              >
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: "#d9f22a15", color: "#d9f22a" }}>
+                  {link.icon}
+                </div>
+                <p className="text-sm font-semibold mb-0.5" style={{ color: "#fdffdf" }}>{link.label}</p>
+                <p className="text-xs" style={{ color: "#8aa3c0" }}>{link.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
 
-  const greetingName = user?.name?.split(" ")[0] ?? "Stellar";
+      {/* Notifications */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold" style={{ color: "#8aa3c0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Notificações{" "}
+            {unreadNotifs.length > 0 && (
+              <span className="ml-2 px-1.5 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: "#d9f22a", color: "#001023" }}>
+                {unreadNotifs.length}
+              </span>
+            )}
+          </h3>
+          {unreadNotifs.length > 0 && (
+            <button
+              onClick={() => markAllRead.mutate()}
+              className="text-xs transition-colors"
+              style={{ color: "#8aa3c0" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#8aa3c0"; }}
+            >
+              Marcar todas como lidas
+            </button>
+          )}
+        </div>
+
+        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}>
+          {recentNotifs.length === 0 ? (
+            <div className="p-8 text-center">
+              <Bell size={32} className="mx-auto mb-3" style={{ color: "#0a3060" }} />
+              <p className="text-sm" style={{ color: "#8aa3c0" }}>Nenhuma notificação ainda.</p>
+            </div>
+          ) : (
+            recentNotifs.map((notif, i) => (
+              <div
+                key={notif.id}
+                className="flex items-start gap-3 p-4"
+                style={{
+                  borderBottom: i < recentNotifs.length - 1 ? "1px solid #0a3060" : "none",
+                  backgroundColor: notif.isRead ? "transparent" : "#d9f22a08",
+                }}
+              >
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: "#001023" }}>
+                  {notifIcon(notif.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium" style={{ color: notif.isRead ? "#8aa3c0" : "#fdffdf" }}>{notif.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>{notif.message}</p>
+                  <p className="text-xs mt-1" style={{ color: "#4a6a8a" }}>
+                    {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: ptBR })}
+                  </p>
+                </div>
+                {!notif.isRead && (
+                  <div className="w-2 h-2 rounded-full flex-shrink-0 mt-2" style={{ backgroundColor: "#d9f22a" }} />
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
+export default function Dashboard() {
+  const { user } = useStellarAuth();
+  const platformRole = (user as any)?.platformRole ?? "colaborador";
 
   return (
     <StellarLayout title="Dashboard">
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-5xl">
-        {/* Cycle Progress */}
         <CycleProgressBar />
-
-        {/* Greeting */}
-        <div
-          className="p-6 rounded-xl border"
-          style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <h2
-                className="text-2xl font-bold mb-1"
-                style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}
-              >
-                Olá, {greetingName}! 👋
-              </h2>
-              <p style={{ color: "#8aa3c0" }} className="text-sm">
-                {cycle
-                  ? `Ciclo ativo: ${cycle.name} · Encerra em ${new Date(cycle.endDate).toLocaleDateString("pt-BR")}`
-                  : "Nenhum ciclo ativo no momento."}
-              </p>
-            </div>
-            {myProfile && (
-              <div
-                className="text-right hidden sm:block"
-              >
-                <p className="text-xs" style={{ color: "#8aa3c0" }}>Cargo</p>
-                <p className="text-sm font-medium" style={{ color: "#fdffdf" }}>{myProfile.jobTitle ?? "Cargo não informado"}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>{myProfile.department ?? "Departamento não informado"}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Quick links */}
-        <div>
-          <h3
-            className="text-sm font-semibold mb-3"
-            style={{ color: "#8aa3c0", textTransform: "uppercase", letterSpacing: "0.05em" }}
-          >
-            Acesso Rápido
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {links.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <div
-                  className="p-4 rounded-xl border cursor-pointer transition-all group"
-                  style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLDivElement;
-                    el.style.borderColor = "#d9f22a40";
-                    el.style.backgroundColor = "#00213f";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLDivElement;
-                    el.style.borderColor = "#0a3060";
-                    el.style.backgroundColor = "#001830";
-                  }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center mb-3"
-                    style={{ backgroundColor: "#d9f22a15", color: "#d9f22a" }}
-                  >
-                    {link.icon}
-                  </div>
-                  <p className="text-sm font-semibold mb-0.5" style={{ color: "#fdffdf" }}>
-                    {link.label}
-                  </p>
-                  <p className="text-xs" style={{ color: "#8aa3c0" }}>{link.desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Notifications */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3
-              className="text-sm font-semibold"
-              style={{ color: "#8aa3c0", textTransform: "uppercase", letterSpacing: "0.05em" }}
-            >
-              Notificações {unreadNotifs.length > 0 && (
-                <span
-                  className="ml-2 px-1.5 py-0.5 rounded-full text-xs font-bold"
-                  style={{ backgroundColor: "#d9f22a", color: "#001023" }}
-                >
-                  {unreadNotifs.length}
-                </span>
-              )}
-            </h3>
-            {unreadNotifs.length > 0 && (
-              <button
-                onClick={() => markAllRead.mutate()}
-                className="text-xs transition-colors"
-                style={{ color: "#8aa3c0" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#d9f22a"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#8aa3c0"; }}
-              >
-                Marcar todas como lidas
-              </button>
-            )}
-          </div>
-
-          <div
-            className="rounded-xl border overflow-hidden"
-            style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
-          >
-            {recentNotifs.length === 0 ? (
-              <div className="p-8 text-center">
-                <Bell size={32} className="mx-auto mb-3" style={{ color: "#0a3060" }} />
-                <p className="text-sm" style={{ color: "#8aa3c0" }}>Nenhuma notificação ainda.</p>
-              </div>
-            ) : (
-              recentNotifs.map((notif, i) => (
-                <div
-                  key={notif.id}
-                  className="flex items-start gap-3 p-4"
-                  style={{
-                    borderBottom: i < recentNotifs.length - 1 ? "1px solid #0a3060" : "none",
-                    backgroundColor: notif.isRead ? "transparent" : "#d9f22a08",
-                  }}
-                >
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ backgroundColor: "#001023" }}
-                  >
-                    {notifIcon(notif.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ color: notif.isRead ? "#8aa3c0" : "#fdffdf" }}>
-                      {notif.title}
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>{notif.message}</p>
-                    <p className="text-xs mt-1" style={{ color: "#4a6a8a" }}>
-                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: ptBR })}
-                    </p>
-                  </div>
-                  {!notif.isRead && (
-                    <div
-                      className="w-2 h-2 rounded-full flex-shrink-0 mt-2"
-                      style={{ backgroundColor: "#d9f22a" }}
-                    />
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        {platformRole === "rh" ? (
+          <ManagerDashboard isRH={true} />
+        ) : platformRole === "gestor" ? (
+          <ManagerDashboard isRH={false} />
+        ) : (
+          <ColaboradorDashboard />
+        )}
       </div>
     </StellarLayout>
   );

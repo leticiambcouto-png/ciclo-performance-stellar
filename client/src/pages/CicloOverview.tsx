@@ -534,23 +534,56 @@ export default function CicloOverview() {
 
         {/* ── Critérios de Avaliação ─────────────────────────────────────────── */}
         <div>
-          <h2 className="text-lg font-bold mb-4" style={{ color: "#fdffdf" }}>
+          <h2 className="text-lg font-bold mb-2" style={{ color: "#fdffdf" }}>
             Os 8 Critérios de Avaliação
           </h2>
+          {/* Pesos dos eixos */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
+              style={{ backgroundColor: "#d9f22a15", border: "1px solid #d9f22a40", color: "#d9f22a" }}
+            >
+              <span className="text-base font-black">70%</span>
+              <span>Performance</span>
+            </div>
+            <span style={{ color: "#0a3060" }}>+</span>
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
+              style={{ backgroundColor: "#1840eb15", border: "1px solid #1840eb40", color: "#7ba7ff" }}
+            >
+              <span className="text-base font-black">30%</span>
+              <span>Potencial</span>
+            </div>
+            <span style={{ color: "#0a3060" }}>=</span>
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
+              style={{ backgroundColor: "#00102310", border: "1px solid #0a3060", color: "#8aa3c0" }}
+            >
+              Posicionamento no 9-Box
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Potencial */}
             <div
               className="p-5 rounded-2xl"
               style={{ backgroundColor: "#001830", border: "1px solid #1840eb40" }}
             >
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: "#1840eb" }}
-                />
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#7ba7ff" }}>
-                  Eixo de Potencial: Comportamento & Valores
-                </p>
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: "#1840eb" }}
+                  />
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#7ba7ff" }}>
+                    Eixo de Potencial: Comportamento & Valores
+                  </p>
+                </div>
+                <span
+                  className="text-xs font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: "#1840eb20", color: "#7ba7ff", border: "1px solid #1840eb40" }}
+                >
+                  Peso 30%
+                </span>
               </div>
               <div className="space-y-3">
                 {[
@@ -586,10 +619,25 @@ export default function CicloOverview() {
                 ))}
               </div>
               <div
-                className="mt-3 p-3 rounded-xl text-xs"
+                className="mt-3 p-3 rounded-xl text-xs space-y-2"
                 style={{ backgroundColor: "#1840eb10", color: "#7ba7ff", border: "1px solid #1840eb20" }}
               >
-                <strong>Regra:</strong> 3+ "Acima" = Potencial Alto · Mix = Potencial Médio · Qualquer "Abaixo" em Accountability ou Ambição = Potencial Baixo
+                <p><strong>Como é calculado:</strong> A média das notas dos 4 critérios de Potencial define o nível do eixo.</p>
+                <div className="grid grid-cols-3 gap-1 text-center">
+                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: "#1840eb20" }}>
+                    <p className="font-black text-sm" style={{ color: "#7ba7ff" }}>Alto</p>
+                    <p className="text-xs" style={{ color: "#7ba7ff99" }}>Média 3 a 4</p>
+                  </div>
+                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: "#1840eb15" }}>
+                    <p className="font-black text-sm" style={{ color: "#7ba7ff" }}>Médio</p>
+                    <p className="text-xs" style={{ color: "#7ba7ff99" }}>Média 2 a 2,99</p>
+                  </div>
+                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: "#1840eb10" }}>
+                    <p className="font-black text-sm" style={{ color: "#7ba7ff" }}>Baixo</p>
+                    <p className="text-xs" style={{ color: "#7ba7ff99" }}>Média abaixo de 2</p>
+                  </div>
+                </div>
+                <p className="text-xs" style={{ color: "#7ba7ff80" }}>Abaixo = 1 ponto · Dentro = 2 pontos · Acima = 3 pontos</p>
               </div>
             </div>
 
@@ -598,14 +646,22 @@ export default function CicloOverview() {
               className="p-5 rounded-2xl"
               style={{ backgroundColor: "#001830", border: "1px solid #d9f22a40" }}
             >
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: "#d9f22a" }}
-                />
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#d9f22a" }}>
-                  Eixo de Performance: Entrega & Resultado
-                </p>
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: "#d9f22a" }}
+                  />
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#d9f22a" }}>
+                    Eixo de Performance: Entrega & Resultado
+                  </p>
+                </div>
+                <span
+                  className="text-xs font-black px-2 py-0.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: "#d9f22a20", color: "#d9f22a", border: "1px solid #d9f22a40" }}
+                >
+                  Peso 70%
+                </span>
               </div>
               <div className="space-y-3">
                 {[
@@ -641,10 +697,25 @@ export default function CicloOverview() {
                 ))}
               </div>
               <div
-                className="mt-3 p-3 rounded-xl text-xs"
+                className="mt-3 p-3 rounded-xl text-xs space-y-2"
                 style={{ backgroundColor: "#d9f22a10", color: "#d9f22a", border: "1px solid #d9f22a20" }}
               >
-                <strong>Regra:</strong> 3+ "Acima" = Performance Alta · Maioria "Dentro" = Média · Qualquer "Abaixo" em Qualidade ou Contribuição = Baixa
+                <p><strong>Como é calculado:</strong> A média das notas dos 4 critérios de Performance define o nível do eixo.</p>
+                <div className="grid grid-cols-3 gap-1 text-center">
+                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: "#d9f22a20" }}>
+                    <p className="font-black text-sm" style={{ color: "#d9f22a" }}>Alta</p>
+                    <p className="text-xs" style={{ color: "#d9f22a99" }}>Média 3 a 4</p>
+                  </div>
+                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: "#d9f22a15" }}>
+                    <p className="font-black text-sm" style={{ color: "#d9f22a" }}>Média</p>
+                    <p className="text-xs" style={{ color: "#d9f22a99" }}>Média 2 a 2,99</p>
+                  </div>
+                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: "#d9f22a10" }}>
+                    <p className="font-black text-sm" style={{ color: "#d9f22a" }}>Baixa</p>
+                    <p className="text-xs" style={{ color: "#d9f22a99" }}>Média abaixo de 2</p>
+                  </div>
+                </div>
+                <p className="text-xs" style={{ color: "#d9f22a80" }}>Abaixo = 1 ponto · Dentro = 2 pontos · Acima = 3 pontos</p>
               </div>
             </div>
           </div>

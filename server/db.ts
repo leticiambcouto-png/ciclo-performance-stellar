@@ -321,6 +321,12 @@ export async function getFlashFeedbacksForManager(managerId: number) {
     .orderBy(desc(flashFeedbacks.scheduledAt));
 }
 
+export async function getAllFlashFeedbacks() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(flashFeedbacks).orderBy(desc(flashFeedbacks.scheduledAt));
+}
+
 export async function createFlashFeedback(data: typeof flashFeedbacks.$inferInsert) {
   const db = await getDb();
   if (!db) return null;
