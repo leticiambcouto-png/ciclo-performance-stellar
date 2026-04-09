@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { useState } from "react";
@@ -11,7 +11,7 @@ import { NINEBOX_QUADRANTS } from "../../../shared/nineboxData";
 import type { NineboxQuadrant } from "../../../shared/nineboxData";
 
 export default function Relatorio() {
-  const { user } = useAuth();
+  const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
 

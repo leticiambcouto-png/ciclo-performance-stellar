@@ -1,14 +1,14 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { useState } from "react";
 import { toast } from "sonner";
-import { User, Mail, Briefcase, Building2, Save } from "lucide-react";
+import { Mail, Briefcase, Building2, Save, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function Perfil() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
   const { data: myProfile } = trpc.employees.myProfile.useQuery();
   const utils = trpc.useUtils();
@@ -18,6 +18,13 @@ export default function Perfil() {
     jobTitle: myProfile?.jobTitle ?? "",
     department: myProfile?.department ?? "",
   });
+
+  // Password change state
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
 
   const updateProfile = trpc.employees.updateMyProfile.useMutation({
     onSuccess: () => {
@@ -34,6 +41,42 @@ export default function Perfil() {
     colaborador: { label: "Colaborador", color: "#8aa3c0" },
   };
   const roleInfo = roleLabels[platformRole as keyof typeof roleLabels] ?? roleLabels.colaborador;
+
+  const handleChangePassword = async () => {
+    if (!pwForm.current || !pwForm.next || !pwForm.confirm) {
+      toast.error("Preencha todos os campos de senha.");
+      return;
+    }
+    if (pwForm.next !== pwForm.confirm) {
+      toast.error("A nova senha e a confirmação não coincidem.");
+      return;
+    }
+    if (pwForm.next.length < 6) {
+      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.next }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Senha alterada com sucesso!");
+        setPwForm({ current: "", next: "", confirm: "" });
+        setChangingPassword(false);
+      } else {
+        toast.error(data.error || "Erro ao alterar senha.");
+      }
+    } catch {
+      toast.error("Erro de conexão. Tente novamente.");
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   return (
     <StellarLayout title="Meu Perfil">
@@ -120,6 +163,121 @@ export default function Perfil() {
               <Save size={14} />
               Salvar alterações
             </Button>
+          )}
+        </div>
+
+        {/* Password change */}
+        <div
+          className="p-5 rounded-xl border space-y-4"
+          style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Lock size={14} style={{ color: "#8aa3c0" }} />
+              <p className="text-sm font-semibold" style={{ color: "#fdffdf" }}>Segurança</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setPwForm({ current: "", next: "", confirm: "" });
+                setChangingPassword(!changingPassword);
+              }}
+              style={{ borderColor: "#0a3060", color: "#8aa3c0", backgroundColor: "transparent" }}
+            >
+              {changingPassword ? "Cancelar" : "Alterar senha"}
+            </Button>
+          </div>
+
+          {!changingPassword && (
+            <p className="text-sm" style={{ color: "#4a7ab5" }}>
+              Mantenha sua conta segura com uma senha forte e única.
+            </p>
+          )}
+
+          {changingPassword && (
+            <div className="space-y-3">
+              {/* Current password */}
+              <div>
+                <p className="text-xs mb-1" style={{ color: "#8aa3c0" }}>Senha atual</p>
+                <div className="relative">
+                  <Input
+                    type={showCurrent ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={pwForm.current}
+                    onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))}
+                    disabled={pwLoading}
+                    className="pr-10 h-9 text-sm"
+                    style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+                    style={{ color: "#fdffdf" }}
+                  >
+                    {showCurrent ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* New password */}
+              <div>
+                <p className="text-xs mb-1" style={{ color: "#8aa3c0" }}>Nova senha</p>
+                <div className="relative">
+                  <Input
+                    type={showNext ? "text" : "password"}
+                    placeholder="Mínimo 6 caracteres"
+                    value={pwForm.next}
+                    onChange={e => setPwForm(p => ({ ...p, next: e.target.value }))}
+                    disabled={pwLoading}
+                    className="pr-10 h-9 text-sm"
+                    style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNext(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+                    style={{ color: "#fdffdf" }}
+                  >
+                    {showNext ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm password */}
+              <div>
+                <p className="text-xs mb-1" style={{ color: "#8aa3c0" }}>Confirmar nova senha</p>
+                <Input
+                  type="password"
+                  placeholder="Repita a nova senha"
+                  value={pwForm.confirm}
+                  onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
+                  disabled={pwLoading}
+                  className="h-9 text-sm"
+                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" }}
+                />
+              </div>
+
+              <Button
+                onClick={handleChangePassword}
+                disabled={pwLoading}
+                className="w-full flex items-center gap-2"
+                style={{ backgroundColor: "#d9f22a", color: "#001023" }}
+              >
+                {pwLoading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Lock size={14} />
+                    Confirmar nova senha
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
 

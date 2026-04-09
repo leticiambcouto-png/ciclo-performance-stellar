@@ -136,3 +136,11 @@
 - [x] Relatório/Devolutiva: layout responsivo para mobile
 - [x] Painel RH: tabelas e formulários responsivos para mobile
 - [x] Calibração: 9-Box de calibração responsivo para mobile
+
+## Autenticação Própria (Email + Senha)
+- [x] Backend: endpoint de login com email/senha, hash bcrypt, JWT próprio, logout
+- [x] Frontend: tela de login customizada desvinculada do OAuth Manus
+- [x] Gestão de Usuários: hash de senha ao criar/editar colaborador
+- [x] Perfil: tela de troca de senha pelo próprio usuário
+- [x] Senhas dos usuários fictícios configuradas (Stellar@2026) com bcrypt
+- [x] 52 testes passando, 0 erros TypeScript após migração completa

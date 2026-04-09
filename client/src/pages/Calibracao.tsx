@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { useState } from "react";
@@ -20,7 +20,7 @@ const GRID_LAYOUT: NineboxQuadrant[][] = [
 ];
 
 export default function Calibracao() {
-  const { user } = useAuth();
+  const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);

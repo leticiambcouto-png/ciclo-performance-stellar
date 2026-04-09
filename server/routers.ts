@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
 import {
   addCalibrationParticipant,
   createCalibrationRoom,
@@ -140,8 +141,11 @@ export const appRouter = router({
           platformRole: z.enum(["rh", "gestor", "colaborador"]).optional(),
         })
       )
-      .mutation(({ input }) => {
+      .mutation(async ({ input }) => {
         const { id, ...data } = input;
+        if (data.accessPassword) {
+          data.accessPassword = await bcrypt.hash(data.accessPassword, 10);
+        }
         return updateEmployee(id, data);
       }),
     create: rhProcedure
@@ -158,7 +162,13 @@ export const appRouter = router({
           platformRole: z.enum(["rh", "gestor", "colaborador"]).default("colaborador"),
         })
       )
-      .mutation(({ input }) => createEmployee(input)),
+      .mutation(async ({ input }) => {
+        const data = { ...input };
+        if (data.accessPassword) {
+          data.accessPassword = await bcrypt.hash(data.accessPassword, 10);
+        }
+        return createEmployee(data);
+      }),
     updateRole: rhProcedure
       .input(
         z.object({

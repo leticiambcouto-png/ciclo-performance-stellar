@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { useState } from "react";
@@ -40,7 +40,7 @@ const EMPTY_FORM: EmployeeForm = {
 };
 
 export default function PainelRH() {
-  const { user } = useAuth();
+  const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
   const [search, setSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);

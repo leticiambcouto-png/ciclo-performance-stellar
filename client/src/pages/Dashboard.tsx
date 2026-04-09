@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { Bell, CheckCircle, Clock, AlertTriangle, ChevronRight, Zap, ClipboardList, Grid3x3, FileText, Users } from "lucide-react";
@@ -8,7 +8,7 @@ import { ptBR } from "date-fns/locale";
 import CycleProgressBar from "@/components/CycleProgressBar";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
 
   const { data: notifications } = trpc.notifications.list.useQuery();

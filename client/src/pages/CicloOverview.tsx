@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import StellarLayout from "@/components/StellarLayout";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -238,7 +238,7 @@ const FASES = [
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 
 export default function CicloOverview() {
-  const { user } = useAuth();
+  const { user } = useStellarAuth();
   const [, navigate] = useLocation();
   const [faseSelecionada, setFaseSelecionada] = useState<number | null>(1);
   const platformRole = (user as any)?.platformRole ?? "colaborador";

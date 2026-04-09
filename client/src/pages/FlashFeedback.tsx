@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { useState, useMemo } from "react";
@@ -61,7 +61,7 @@ const ZONE_CONFIG = {
 };
 
 export default function FlashFeedback() {
-  const { user } = useAuth();
+  const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
 
   // Schedule state

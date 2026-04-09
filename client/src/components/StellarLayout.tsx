@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
@@ -99,7 +99,7 @@ interface StellarLayoutProps {
 }
 
 export default function StellarLayout({ children, title }: StellarLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user, logout } = useStellarAuth();
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);

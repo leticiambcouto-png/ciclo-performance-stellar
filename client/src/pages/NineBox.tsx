@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
 import { useState } from "react";
@@ -42,7 +42,7 @@ const SIMULATION_CRITERIA = [
 ];
 
 export default function NineBox() {
-  const { user } = useAuth();
+  const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
   const [selectedQ, setSelectedQ] = useState<NineboxQuadrant | null>(null);
   const [simMode, setSimMode] = useState(false);
