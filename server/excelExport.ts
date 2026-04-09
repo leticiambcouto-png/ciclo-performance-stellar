@@ -1,7 +1,21 @@
 import type { Express } from "express";
 import * as XLSX from "xlsx";
 import { getActiveCycle, getConsequencesWithEmployeeData, getEvaluationReportData } from "./db";
-import { sdk } from "./_core/sdk";
+import { verifyStellarToken } from "./customAuth";
+
+const STELLAR_COOKIE = "stellar_session";
+
+async function authenticateRH(req: Express extends never ? never : Parameters<Parameters<Express['get']>[1]>[0]): Promise<boolean> {
+  try {
+    const cookies = req.cookies ?? {};
+    const token = cookies[STELLAR_COOKIE];
+    if (!token) return false;
+    const payload = await verifyStellarToken(token);
+    return payload?.platformRole === "rh";
+  } catch {
+    return false;
+  }
+}
 
 const SCORE_LABEL: Record<string, string> = {
   acima: "Acima das expectativas",
@@ -13,14 +27,8 @@ export function registerExcelExportRoute(app: Express) {
   // Export consequences (calibration decisions)
   app.get("/api/export/consequencias", async (req, res) => {
     // Authenticate — only RH can download
-    let user: Awaited<ReturnType<typeof sdk.authenticateRequest>> | null = null;
-    try {
-      user = await sdk.authenticateRequest(req as any);
-    } catch {
-      res.status(401).json({ error: "Não autorizado" });
-      return;
-    }
-    if (!user || (user as any).platformRole !== "rh") {
+    const isRH = await authenticateRH(req as any);
+    if (!isRH) {
       res.status(403).json({ error: "Acesso restrito ao perfil RH" });
       return;
     }
@@ -63,15 +71,8 @@ export function registerExcelExportRoute(app: Express) {
 
   app.get("/api/export/avaliacoes", async (req, res) => {
     // Authenticate — only RH can download
-    let user: Awaited<ReturnType<typeof sdk.authenticateRequest>> | null = null;
-    try {
-      user = await sdk.authenticateRequest(req as any);
-    } catch {
-      res.status(401).json({ error: "Não autorizado" });
-      return;
-    }
-
-    if (!user || (user as any).platformRole !== "rh") {
+    const isRH = await authenticateRH(req as any);
+    if (!isRH) {
       res.status(403).json({ error: "Acesso restrito ao perfil RH" });
       return;
     }

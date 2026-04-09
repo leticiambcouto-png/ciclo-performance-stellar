@@ -15,10 +15,20 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Read optional redirect param from URL (safe: only allow relative paths)
+  const getRedirectPath = () => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+    if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+      return redirect;
+    }
+    return "/ciclo";
+  };
+
   // If already logged in, redirect
   useEffect(() => {
     if (!loading && user) {
-      navigate("/ciclo");
+      navigate(getRedirectPath());
     }
   }, [loading, user, navigate]);
 
@@ -33,7 +43,7 @@ export default function Login() {
     setSubmitting(false);
     if (result.success) {
       toast.success("Bem-vindo de volta!");
-      navigate("/ciclo");
+      navigate(getRedirectPath());
     } else {
       toast.error(result.error || "Erro ao fazer login.");
     }

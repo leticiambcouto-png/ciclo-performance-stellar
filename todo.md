@@ -161,3 +161,10 @@
 - [x] Dashboard RH: curva esperada vs pré-calibração vs pós-calibração (barras visuais comparativas)
 - [x] Dashboard RH: indicadores de gestão de consequência (totais por tipo)
 - [x] Relatório exportável de consequências (Excel) - botão no Dashboard RH e rota /api/export/consequencias
+
+## Correção de Autenticação em Produção (Abril 2026)
+- [x] Corrigir context.ts do tRPC para ler stellar_session em vez do cookie OAuth Manus
+- [x] Corrigir getLoginUrl para apontar para /login interno em vez do OAuth Manus
+- [x] Adicionar trust proxy no Express para HTTPS funcionar corretamente atrás do proxy Manus
+- [x] Login redireciona para página original após autenticação (redirect query param)
+- [x] Corrigir autenticação das rotas de export Excel para usar stellar_session
