@@ -1,7 +1,7 @@
 import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import StellarLayout from "@/components/StellarLayout";
-import { Bell, CheckCircle, Clock, AlertTriangle, Zap, ClipboardList, Grid3x3, FileText, Users, ChevronRight, Award, TrendingUp, TrendingDown, X } from "lucide-react";
+import { Bell, CheckCircle, Clock, AlertTriangle, Zap, ClipboardList, Download, Grid3x3, FileText, Users, ChevronRight, Award, TrendingUp, TrendingDown, X } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -468,14 +468,24 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
                 <Award size={14} style={{ color: "#d9f22a" }} />
                 <p className="text-sm font-bold" style={{ color: "#fdffdf" }}>Gestão de Consequência</p>
               </div>
-              <Link href="/calibracao">
-                <button
-                  className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
-                >
-                  Ver calibrações
-                </button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <a href="/api/export/consequencias" download>
+                  <button
+                    className="text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1"
+                    style={{ backgroundColor: "#d9f22a20", border: "1px solid #d9f22a40", color: "#d9f22a" }}
+                  >
+                    <Download size={12} /> Excel
+                  </button>
+                </a>
+                <Link href="/calibracao">
+                  <button
+                    className="text-xs px-3 py-1.5 rounded-lg font-semibold"
+                    style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#8aa3c0" }}
+                  >
+                    Ver calibrações
+                  </button>
+                </Link>
+              </div>
             </div>
             {consequenceSummary.total === 0 ? (
               <div className="flex items-center justify-center h-24 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>

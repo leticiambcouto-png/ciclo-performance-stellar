@@ -160,4 +160,4 @@
 - [x] 9-Box: ao clicar no quadrante, exibir lista de pessoas posicionadas nele (todos os 9-Box do sistema)
 - [x] Dashboard RH: curva esperada vs pré-calibração vs pós-calibração (barras visuais comparativas)
 - [x] Dashboard RH: indicadores de gestão de consequência (totais por tipo)
-- [ ] Relatório exportável de consequências (Excel)
+- [x] Relatório exportável de consequências (Excel) - botão no Dashboard RH e rota /api/export/consequencias

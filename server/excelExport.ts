@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import * as XLSX from "xlsx";
-import { getActiveCycle, getEvaluationReportData } from "./db";
+import { getActiveCycle, getConsequencesWithEmployeeData, getEvaluationReportData } from "./db";
 import { sdk } from "./_core/sdk";
 
 const SCORE_LABEL: Record<string, string> = {
@@ -10,6 +10,57 @@ const SCORE_LABEL: Record<string, string> = {
 };
 
 export function registerExcelExportRoute(app: Express) {
+  // Export consequences (calibration decisions)
+  app.get("/api/export/consequencias", async (req, res) => {
+    // Authenticate — only RH can download
+    let user: Awaited<ReturnType<typeof sdk.authenticateRequest>> | null = null;
+    try {
+      user = await sdk.authenticateRequest(req as any);
+    } catch {
+      res.status(401).json({ error: "Não autorizado" });
+      return;
+    }
+    if (!user || (user as any).platformRole !== "rh") {
+      res.status(403).json({ error: "Acesso restrito ao perfil RH" });
+      return;
+    }
+    const cycle = await getActiveCycle();
+    const data = await getConsequencesWithEmployeeData(cycle?.id);
+    const CONSEQUENCE_LABEL: Record<string, string> = {
+      merito: "Mérito",
+      promocao: "Promoção",
+      desligamento: "Desligamento",
+      plano_recuperacao: "Plano de Recuperação",
+      nenhuma: "Nenhuma decisão",
+    };
+    const rows = data.map((row) => ({
+      "Nome do Colaborador": row.employeeName,
+      "E-mail": row.employeeEmail,
+      "Cargo": row.jobTitle,
+      "Área": row.area,
+      "Diretoria": row.diretoria,
+      "Líder Direto": row.managerName,
+      "Sala de Calibração": row.roomName,
+      "Quadrante 9-Box": row.quadrant,
+      "Decisão": CONSEQUENCE_LABEL[row.consequence] ?? row.consequence,
+      "Observações": row.notes,
+      "Data da Decisão": row.decidedAt
+        ? new Date(row.decidedAt).toLocaleDateString("pt-BR")
+        : "",
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{ "Mensagem": "Nenhuma decisão registrada" }]);
+    const colWidths = Object.keys(rows[0] ?? { "Mensagem": "" }).map((key) => ({ wch: Math.max(key.length, 20) }));
+    worksheet["!cols"] = colWidths;
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Consequências");
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+    const cycleName = cycle?.name?.replace(/\s+/g, "_") ?? "ciclo";
+    const filename = `consequencias_${cycleName}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(buffer);
+  });
+
   app.get("/api/export/avaliacoes", async (req, res) => {
     // Authenticate — only RH can download
     let user: Awaited<ReturnType<typeof sdk.authenticateRequest>> | null = null;

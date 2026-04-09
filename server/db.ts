@@ -509,6 +509,45 @@ export async function getAllCalibrationConsequences(cycleId?: number) {
   }
   return db.select().from(calibrationConsequences);
 }
+
+export async function getConsequencesWithEmployeeData(cycleId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  // Get all consequences
+  const cons = cycleId
+    ? await db.select().from(calibrationConsequences).where(eq(calibrationConsequences.cycleId, cycleId))
+    : await db.select().from(calibrationConsequences);
+  if (cons.length === 0) return [];
+  // Get all employees and rooms for enrichment
+  const allEmployees = await db.select().from(employees);
+  const allRooms = await db.select().from(calibrationRooms);
+  // Get ninebox positions for quadrant info
+  const allPositions = cycleId
+    ? await db.select().from(nineboxPositions).where(eq(nineboxPositions.cycleId, cycleId))
+    : await db.select().from(nineboxPositions);
+  const empMap = new Map(allEmployees.map((e) => [e.id, e]));
+  const roomMap = new Map(allRooms.map((r) => [r.id, r]));
+  const posMap = new Map(allPositions.map((p) => [p.employeeId, p]));
+  return cons.map((c) => {
+    const emp = empMap.get(c.employeeId);
+    const manager = emp?.managerId ? empMap.get(emp.managerId) : null;
+    const room = roomMap.get(c.roomId);
+    const pos = posMap.get(c.employeeId);
+    return {
+      employeeName: emp?.name ?? "",
+      employeeEmail: emp?.email ?? "",
+      jobTitle: emp?.jobTitle ?? "",
+      area: emp?.area ?? "",
+      diretoria: emp?.diretoria ?? "",
+      managerName: manager?.name ?? "",
+      roomName: room?.name ?? "",
+      quadrant: pos?.quadrant ?? "",
+      consequence: c.consequence,
+      notes: c.notes ?? "",
+      decidedAt: c.decidedAt,
+    };
+  });
+}
 export async function upsertCalibrationConsequence(
   roomId: number,
   employeeId: number,
