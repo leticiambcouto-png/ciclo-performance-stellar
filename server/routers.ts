@@ -173,11 +173,11 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const data = { ...input };
+        const data: Record<string, unknown> = { ...input, mustChangePassword: true };
         if (data.accessPassword) {
-          data.accessPassword = await bcrypt.hash(data.accessPassword, 10);
+          data.accessPassword = await bcrypt.hash(data.accessPassword as string, 10);
         }
-        return createEmployee(data);
+        return createEmployee(data as Parameters<typeof createEmployee>[0]);
       }),
     updateRole: rhProcedure
       .input(
@@ -247,7 +247,7 @@ export const appRouter = router({
           }
 
           // Hash password if provided
-          const data: Record<string, unknown> = { ...row };
+          const data: Record<string, unknown> = { ...row, mustChangePassword: true };
           if (data.accessPassword) {
             data.accessPassword = await bcrypt.hash(data.accessPassword as string, 10);
           }

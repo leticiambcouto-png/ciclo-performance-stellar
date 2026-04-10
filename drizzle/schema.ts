@@ -41,6 +41,7 @@ export const employees = mysqlTable("employees", {
   area: varchar("area", { length: 255 }), // Nome da área
   diretoria: varchar("diretoria", { length: 255 }), // Nome da diretoria
   accessPassword: varchar("accessPassword", { length: 255 }), // Senha de acesso à plataforma (hashed)
+  mustChangePassword: boolean("mustChangePassword").default(true).notNull(), // Força troca de senha no primeiro acesso
   platformRole: mysqlEnum("platformRole", ["rh", "gestor", "colaborador"]).default("colaborador").notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

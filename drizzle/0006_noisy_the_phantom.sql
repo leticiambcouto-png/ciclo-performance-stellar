@@ -1,0 +1,1 @@
+ALTER TABLE `employees` ADD `mustChangePassword` boolean DEFAULT true NOT NULL;

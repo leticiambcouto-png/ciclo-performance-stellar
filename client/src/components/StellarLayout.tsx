@@ -2,6 +2,7 @@ import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
+  AlertTriangle,
   BarChart3,
   Bell,
   BookOpen,
@@ -336,6 +337,21 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
           </div>
         </header>
 
+        {/* Temporary password banner */}
+        {user?.mustChangePassword && (
+          <Link href="/perfil">
+            <div
+              className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "#2a1500", borderBottom: "1px solid #f59e0b" }}
+            >
+              <AlertTriangle size={15} style={{ color: "#f59e0b" }} className="shrink-0" />
+              <p className="text-xs font-semibold" style={{ color: "#fbbf24" }}>
+                Você está usando uma senha temporária.
+              </p>
+              <span className="text-xs underline ml-auto whitespace-nowrap" style={{ color: "#f59e0b" }}>Definir minha senha</span>
+            </div>
+          </Link>
+        )}
         {/* Page content */}
         <main className="flex-1 overflow-auto" style={{ backgroundColor: "#001023" }}>
           {children}

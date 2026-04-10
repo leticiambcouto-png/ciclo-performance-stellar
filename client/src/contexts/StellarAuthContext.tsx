@@ -9,6 +9,7 @@ export interface StellarUser {
   area?: string | null;
   diretoria?: string | null;
   cargo?: string | null;
+  mustChangePassword?: boolean;
 }
 
 interface StellarAuthContextType {

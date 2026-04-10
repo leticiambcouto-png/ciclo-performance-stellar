@@ -98,7 +98,10 @@ customAuthRouter.post("/login", async (req, res) => {
 
     return res.json({
       success: true,
-      user: payload,
+      user: {
+        ...payload,
+        mustChangePassword: employee.mustChangePassword,
+      },
     });
   } catch (err) {
     console.error("[CustomAuth] Login error:", err);
@@ -157,6 +160,7 @@ customAuthRouter.get("/me", async (req, res) => {
         area: employee.area,
         diretoria: employee.diretoria,
         cargo: employee.jobTitle,
+        mustChangePassword: employee.mustChangePassword,
       },
     });
   } catch (err) {
@@ -187,8 +191,8 @@ customAuthRouter.post("/change-password", async (req, res) => {
       return res.status(400).json({ error: "Senha atual e nova senha são obrigatórias." });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: "A nova senha deve ter pelo menos 6 caracteres." });
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: "A nova senha deve ter pelo menos 8 caracteres." });
     }
 
     const db = await getDb();
@@ -213,9 +217,10 @@ customAuthRouter.post("/change-password", async (req, res) => {
     }
 
     const newHash = await bcrypt.hash(newPassword, 10);
+    // Clear mustChangePassword flag after successful password change
     await db
       .update(employees)
-      .set({ accessPassword: newHash })
+      .set({ accessPassword: newHash, mustChangePassword: false })
       .where(eq(employees.id, payload.employeeId));
 
     return res.json({ success: true });

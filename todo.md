@@ -179,3 +179,13 @@
 - [x] Frontend: download de template CSV com colunas corretas e linha de exemplo
 - [x] Frontend: preview dos dados antes de confirmar importação (tabela com erros destacados)
 - [x] Frontend: feedback de resultado (X importados, Y erros com detalhes por linha)
+
+## Página de Perfil e Senha Temporária (Abril 2026)
+- [x] Schema: adicionar flag mustChangePassword na tabela employees
+- [x] Backend: ao criar colaborador, marcar mustChangePassword = true por padrão
+- [x] Backend: ao trocar senha com sucesso, limpar mustChangePassword = false
+- [x] Frontend: banner de alerta em todas as páginas ao usar senha temporária (StellarLayout)
+- [x] Perfil: página completa com dados do usuário, troca de senha e indicador de senha temporária
+- [x] Perfil: validação de senha atual antes de trocar
+- [x] Perfil: indicador de força de senha com dicas visuais
+- [x] Perfil: rota /perfil registrada no App.tsx e link no menu lateral
