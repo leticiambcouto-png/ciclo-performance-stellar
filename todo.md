@@ -266,3 +266,13 @@
 - [x] Relatório 5: Gestão de Consequência (colaborador + consequência definida)
 - [x] Relatório 6: Painel Geral do Ciclo (consolidado: colaborador + avaliação + 9-Box + consequência)
 - [x] Criar aba "Relatórios" no Painel RH com cards de cada relatório e botão de exportação
+
+## Acesso RH Secundário e Avaliação por Ciclo (Abril 2026 - Lote 8)
+- [ ] Backend: rhProcedure deve aceitar papel RH primário OU secundário
+- [ ] Backend: excelExport.ts authenticateRH deve aceitar papel RH primário OU secundário
+- [ ] Frontend: rota /rh (Painel RH) deve ser acessível para usuários com papel RH secundário
+- [ ] Frontend: rota /calibracao deve ser acessível para usuários com papel RH secundário
+- [ ] Frontend: menu lateral deve exibir Painel RH e Calibração para usuários com papel RH secundário
+- [x] Tela de Avaliação: reorganizar por ciclo (lista de ciclos com status)
+- [x] Tela de Avaliação: dentro de cada ciclo, exibir "Autoavaliação" com status (pendente/rascunho/enviada)
+- [x] Tela de Avaliação: dentro de cada ciclo, exibir "Avaliação dos Liderados" com status por liderado

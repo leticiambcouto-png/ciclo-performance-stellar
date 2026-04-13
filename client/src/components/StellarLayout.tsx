@@ -125,7 +125,11 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
   });
 
   const platformRole = (user as any)?.platformRole ?? "colaborador";
-  const visibleNav = navItems.filter((item) => item.roles.includes(platformRole));
+  const secondaryRole = (user as any)?.secondaryPlatformRole ?? null;
+  // A user can see a nav item if their primary OR secondary role is in the allowed list
+  const visibleNav = navItems.filter((item) =>
+    item.roles.includes(platformRole) || (secondaryRole && item.roles.includes(secondaryRole))
+  );
 
   const roleLabel = {
     rh: "RH",

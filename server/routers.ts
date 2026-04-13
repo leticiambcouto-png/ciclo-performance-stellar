@@ -76,7 +76,8 @@ const performanceLevelSchema = z.enum(["low", "medium", "high"]);
 
 // ─── RH GUARD ────────────────────────────────────────────────────────────────
 const rhProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.platformRole !== "rh" && ctx.user.role !== "admin") {
+  const isRH = ctx.user.platformRole === "rh" || (ctx.user as any).secondaryPlatformRole === "rh";
+  if (!isRH && ctx.user.role !== "admin") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Acesso restrito ao RH." });
   }
   return next({ ctx });
@@ -84,11 +85,13 @@ const rhProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 // ─── GESTOR GUARD ────────────────────────────────────────────────────────────
 const gestorProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (
-    ctx.user.platformRole !== "gestor" &&
-    ctx.user.platformRole !== "rh" &&
-    ctx.user.role !== "admin"
-  ) {
+  const secondary = (ctx.user as any).secondaryPlatformRole;
+  const isGestor =
+    ctx.user.platformRole === "gestor" ||
+    ctx.user.platformRole === "rh" ||
+    secondary === "gestor" ||
+    secondary === "rh";
+  if (!isGestor && ctx.user.role !== "admin") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Acesso restrito a gestores." });
   }
   return next({ ctx });
@@ -278,6 +281,39 @@ export const appRouter = router({
   cycles: router({
     active: protectedProcedure.query(() => getActiveCycle()),
     all: protectedProcedure.query(() => getAllCycles()),
+    // Returns a summary of evaluations per cycle for the current user
+    evaluationSummary: protectedProcedure.query(async ({ ctx }) => {
+      const me = await getEmployeeByUserId(ctx.user.id);
+      if (!me) return [];
+      const cycles = await getAllCycles();
+      const results = await Promise.all(
+        cycles.map(async (cycle) => {
+          // Self evaluation status
+          const selfEval = await getSelfEvaluation(me.id, cycle.id);
+          // Direct reports evaluations (if gestor)
+          const teamEvals = await getManagerEvaluationsForTeam(me.id, cycle.id);
+          // Direct reports list
+          const reports = await getDirectReports(me.id);
+          return {
+            cycleId: cycle.id,
+            cycleName: cycle.name,
+            cycleStatus: cycle.status,
+            selfEvalStatus: selfEval?.status ?? null,
+            selfEvalSubmittedAt: selfEval?.submittedAt ?? null,
+            teamEvals: reports.map((emp) => {
+              const ev = teamEvals.find((e) => e.employeeId === emp.id);
+              return {
+                employeeId: emp.id,
+                employeeName: emp.name,
+                status: ev?.status ?? null,
+                submittedAt: ev?.submittedAt ?? null,
+              };
+            }),
+          };
+        })
+      );
+      return results;
+    }),
   }),
 
   // ─── CYCLE PHASES ────────────────────────────────────────────────────────────

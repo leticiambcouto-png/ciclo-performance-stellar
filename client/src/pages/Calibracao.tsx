@@ -56,6 +56,8 @@ function getConsequenceInfo(val: string) {
 export default function Calibracao() {
   const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
+  const secondaryRole = (user as any)?.secondaryPlatformRole ?? null;
+  const isRH = platformRole === "rh" || secondaryRole === "rh";
 
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
@@ -194,7 +196,7 @@ export default function Calibracao() {
     onError: () => toast.error("Erro ao salvar decisão."),
   });
 
-  if (platformRole !== "rh") {
+  if (!isRH) {
     return (
       <StellarLayout title="Calibração">
         <div className="p-6">
@@ -661,7 +663,7 @@ export default function Calibracao() {
           <DialogHeader><DialogTitle style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>Participantes da Calibração</DialogTitle></DialogHeader>
           <p className="text-sm mb-3" style={{ color: "#8aa3c0" }}>Selecione os gestores e RH que participarão desta sala:</p>
           <div className="space-y-2 max-h-72 overflow-y-auto">
-            {(employees ?? []).filter((e) => e.platformRole === "gestor" || e.platformRole === "rh").map((emp) => {
+            {(employees ?? []).filter((e) => e.platformRole === "gestor" || e.platformRole === "rh" || (e as any).secondaryPlatformRole === "gestor" || (e as any).secondaryPlatformRole === "rh").map((emp) => {
               const isAdded = participants?.some((p) => p.managerId === emp.id);
               return (
                 <button key={emp.id} onClick={() => { if (!isAdded) addParticipant.mutate({ roomId: selectedRoom!, employeeId: emp.id }); }}

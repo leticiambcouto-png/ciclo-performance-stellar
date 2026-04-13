@@ -5,6 +5,7 @@ export interface StellarUser {
   email: string;
   name: string;
   platformRole: "rh" | "gestor" | "colaborador";
+  secondaryPlatformRole?: "rh" | "gestor" | "colaborador" | null;
   managerId?: number | null;
   area?: string | null;
   diretoria?: string | null;

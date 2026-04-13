@@ -19,7 +19,7 @@ async function authenticateRH(req: any): Promise<boolean> {
     const token = cookies[STELLAR_COOKIE];
     if (!token) return false;
     const payload = await verifyStellarToken(token);
-    return payload?.platformRole === "rh";
+    return payload?.platformRole === "rh" || payload?.secondaryPlatformRole === "rh";
   } catch {
     return false;
   }

@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
-  user: User | null;
+  user: (User & { secondaryPlatformRole?: string | null }) | null;
 };
 
 const STELLAR_COOKIE = "stellar_session";
@@ -37,7 +37,8 @@ export async function createContext(
             user = {
               ...result[0],
               platformRole: payload.platformRole,
-            };
+              secondaryPlatformRole: payload.secondaryPlatformRole ?? null,
+            } as User & { secondaryPlatformRole?: string | null };
           }
         }
       }

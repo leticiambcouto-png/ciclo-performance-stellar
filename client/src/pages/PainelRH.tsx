@@ -45,6 +45,8 @@ const EMPTY_FORM: EmployeeForm = {
 export default function PainelRH() {
   const { user } = useStellarAuth();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
+  const secondaryRole = (user as any)?.secondaryPlatformRole ?? null;
+  const isRH = platformRole === "rh" || secondaryRole === "rh";
   const [search, setSearch] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<number | null>(null);
@@ -275,7 +277,7 @@ export default function PainelRH() {
     }
   };
 
-  if (platformRole !== "rh") {
+  if (!isRH) {
     return (
       <StellarLayout title="Painel RH">
         <div className="p-6">

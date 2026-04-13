@@ -17,6 +17,7 @@ export interface StellarSessionPayload {
   email: string;
   name: string;
   platformRole: "rh" | "gestor" | "colaborador";
+  secondaryPlatformRole?: "rh" | "gestor" | "colaborador" | null;
 }
 
 export async function signStellarToken(payload: StellarSessionPayload): Promise<string> {
@@ -91,6 +92,7 @@ customAuthRouter.post("/login", async (req, res) => {
       email: employee.email || "",
       name: employee.name || "",
       platformRole: employee.platformRole as "rh" | "gestor" | "colaborador",
+      secondaryPlatformRole: employee.secondaryPlatformRole as "rh" | "gestor" | "colaborador" | null | undefined,
     };
 
     const token = await signStellarToken(payload);
@@ -158,6 +160,7 @@ customAuthRouter.get("/me", async (req, res) => {
         email: employee.email || "",
         name: employee.name || "",
         platformRole: employee.platformRole,
+        secondaryPlatformRole: employee.secondaryPlatformRole,
         managerId: employee.managerId,
         area: employee.area,
         diretoria: employee.diretoria,
