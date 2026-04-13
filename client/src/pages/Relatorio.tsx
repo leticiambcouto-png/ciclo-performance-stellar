@@ -36,8 +36,9 @@ export default function Relatorio() {
     { enabled: cycleId > 0 }
   );
   const devolutivaPhase = cyclePhasesList?.find((p) => p.phaseNumber === 6);
+  // Block self-view (colaborador or gestor viewing their own devolutiva) if phase hasn't started
   const isDevolutivaBlocked =
-    platformRole === "colaborador" &&
+    (isColaborador || showSelfView) &&
     devolutivaPhase &&
     new Date() < new Date(devolutivaPhase.startDate);
   const { data: myProfile } = trpc.employees.myProfile.useQuery();

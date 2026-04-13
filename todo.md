@@ -244,11 +244,11 @@
 - [x] Atualizar testes unitários para refletir nova nomenclatura
 
 ## Múltiplos Papéis e Abas de Visão (Abril 2026 - Lote 5)
-- [ ] Adicionar coluna `secondaryPlatformRole` na tabela employees (nullable: gestor | rh | null)
-- [ ] Migrar banco e atualizar procedures create/update/importBulk no backend
-- [ ] Atualizar formulário de cadastro no Painel RH para exibir campo de papel secundário
-- [ ] Criar hook `useViewMode` que determina quais abas o usuário vê
-- [ ] Adicionar abas "Gestão do Time" / "Minhas Avaliações" na página Avaliação
-- [ ] Adicionar abas na página 9-Box
-- [ ] Adicionar abas na página Flash Feedback
-- [ ] Adicionar abas na página Devolutiva
+- [x] Adicionar coluna `secondaryPlatformRole` na tabela employees (nullable: gestor | rh | null)
+- [x] Migrar banco e atualizar procedures create/update/importBulk no backend
+- [x] Atualizar formulário de cadastro no Painel RH para exibir campo de papel secundário
+- [x] Criar hook `useViewMode` que determina quais abas o usuário vê
+- [x] Adicionar abas "Gestão do Time" / "Minhas Avaliações" na página Avaliação
+- [x] Adicionar abas na página 9-Box
+- [x] Adicionar abas na página Flash Feedback
+- [x] Adicionar abas na página Devolutiva
