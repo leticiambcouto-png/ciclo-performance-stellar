@@ -7,6 +7,7 @@ import {
   Users, Plus, Building2, Search, Calendar, ChevronDown, ChevronUp,
   Shield, User, UserCheck, Pencil, Check, X, Download, Eye, EyeOff,
   UserX, UserPlus, FileSpreadsheet, Upload, AlertCircle, CheckCircle2,
+  BarChart2, Grid3X3, MessageSquare, TrendingUp, Layers, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,8 +54,10 @@ export default function PainelRH() {
   const [editingPhaseId, setEditingPhaseId] = useState<number | null>(null);
   const [phaseEdits, setPhaseEdits] = useState<Record<number, { startDate: string; endDate: string; titulo: string; descricao: string }>>({});
   const [showInactive, setShowInactive] = useState(false);
+  const [activeSection, setActiveSection] = useState<"colaboradores" | "fases" | "relatorios">("colaboradores");
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [csvPreview, setCsvPreview] = useState<Array<Record<string, string>>>([]);
+  const [csvPreview, setCsvPreview] = useState<Array<Record<string, string>>>([])
+  const [exportLoading, setExportLoading] = useState<string | null>(null);
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
   const [importResult, setImportResult] = useState<{ imported: number; total: number; results: Array<{ row: number; name: string; status: string; error?: string }> } | null>(null);
 
@@ -381,8 +384,30 @@ export default function PainelRH() {
           ))}
         </div>
 
+        {/* Section Tabs */}
+        <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
+          {([
+            { id: "colaboradores" as const, label: "Colaboradores", icon: <Users size={14} /> },
+            { id: "fases" as const, label: "Fases do Ciclo", icon: <Calendar size={14} /> },
+            { id: "relatorios" as const, label: "Relatórios", icon: <BarChart2 size={14} /> },
+          ]).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSection(tab.id)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all flex-1 justify-center"
+              style={{
+                backgroundColor: activeSection === tab.id ? "#d9f22a" : "transparent",
+                color: activeSection === tab.id ? "#001023" : "#8aa3c0",
+              }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Actions bar */}
-        <div className="flex flex-wrap items-center gap-3">
+        {activeSection === "colaboradores" && <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8aa3c0" }} />
             <Input
@@ -465,9 +490,9 @@ export default function PainelRH() {
             <UserX size={14} />
             {showInactive ? "Ver ativos" : "Ver inativos"}
           </button>
-        </div>
+        </div>}
 
-        {/* Employee table */}
+        {activeSection === "colaboradores" && <>{/* Employee table */}
         <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "#0a3060" }}>
         <div
           className="rounded-xl overflow-hidden"
@@ -663,7 +688,10 @@ export default function PainelRH() {
           )}
         </div>
         </div>
+        </>
+        }
 
+        {activeSection === "fases" && <>
         {/* Cycle Phase Editor */}
         <div
           className="rounded-xl border overflow-hidden"
@@ -837,6 +865,130 @@ export default function PainelRH() {
             </div>
           )}
         </div>
+        </>
+        }
+
+        {/* Relatórios Section */}
+        {activeSection === "relatorios" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-black mb-1" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>Relatórios de Gestão</h2>
+              <p className="text-sm" style={{ color: "#8aa3c0" }}>Exporte dados do ciclo atual em formato XLSX para análise e apresentação.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {([
+                {
+                  id: "colaboradores",
+                  title: "Colaboradores",
+                  description: "Lista completa com cargo, área, diretoria, líder e perfil de acesso.",
+                  icon: <Users size={20} />,
+                  color: "#8aa3c0",
+                  endpoint: "/api/export/colaboradores",
+                  filename: "colaboradores",
+                },
+                {
+                  id: "avaliacoes",
+                  title: "Avaliações",
+                  description: "Notas por dimensão (Performance e Cultura) com comentários do gestor.",
+                  icon: <TrendingUp size={20} />,
+                  color: "#1840eb",
+                  endpoint: "/api/export/avaliacoes",
+                  filename: "avaliacoes",
+                },
+                {
+                  id: "ninebox",
+                  title: "9-Box",
+                  description: "Posicionamento de cada colaborador com quadrante inicial e calibrado.",
+                  icon: <Grid3X3 size={20} />,
+                  color: "#d9f22a",
+                  endpoint: "/api/export/ninebox",
+                  filename: "ninebox",
+                },
+                {
+                  id: "flash-feedbacks",
+                  title: "Flash Feedbacks",
+                  description: "Registros de FFs realizados com data, gestor, colaborador e pauta.",
+                  icon: <MessageSquare size={20} />,
+                  color: "#22c55e",
+                  endpoint: "/api/export/flash-feedbacks",
+                  filename: "flash-feedbacks",
+                },
+                {
+                  id: "consequencias",
+                  title: "Gestão de Consequência",
+                  description: "Decisões de calibração: promoção, mérito, desligamento e plano de recuperação.",
+                  icon: <Layers size={20} />,
+                  color: "#f97316",
+                  endpoint: "/api/export/consequencias",
+                  filename: "consequencias",
+                },
+                {
+                  id: "painel-geral",
+                  title: "Painel Geral Consolidado",
+                  description: "Visão completa: colaborador + avaliação + 9-Box + consequência em uma planilha.",
+                  icon: <BookOpen size={20} />,
+                  color: "#a855f7",
+                  endpoint: "/api/export/painel-geral",
+                  filename: "painel-geral",
+                },
+              ]).map((report) => (
+                <div
+                  key={report.id}
+                  className="rounded-xl border p-5 flex flex-col gap-4"
+                  style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${report.color}15`, color: report.color }}
+                    >
+                      {report.icon}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>{report.title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#8aa3c0" }}>{report.description}</p>
+                    </div>
+                  </div>
+                  <button
+                    disabled={exportLoading === report.id}
+                    onClick={async () => {
+                      setExportLoading(report.id);
+                      try {
+                        const res = await fetch(report.endpoint);
+                        if (res.status === 403) { toast.error("Acesso negado. Apenas o RH pode exportar."); return; }
+                        if (res.status === 404) { toast.error("Nenhum ciclo ativo encontrado."); return; }
+                        if (!res.ok) { toast.error("Erro ao gerar o relatório. Tente novamente."); return; }
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `${report.filename}-stellar-${new Date().toISOString().slice(0,10)}.xlsx`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        toast.success(`Relatório "${report.title}" exportado com sucesso!`);
+                      } catch {
+                        toast.error("Falha na conexão ao exportar. Tente novamente.");
+                      } finally {
+                        setExportLoading(null);
+                      }
+                    }}
+                    className="mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all w-full"
+                    style={{
+                      backgroundColor: exportLoading === report.id ? `${report.color}30` : `${report.color}15`,
+                      color: report.color,
+                      border: `1px solid ${report.color}40`,
+                      opacity: exportLoading === report.id ? 0.7 : 1,
+                      cursor: exportLoading === report.id ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <FileSpreadsheet size={14} />
+                    {exportLoading === report.id ? "Gerando..." : "Exportar XLSX"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Add / Edit Employee Dialog */}
         <Dialog open={showAddDialog} onOpenChange={(open) => { setShowAddDialog(open); if (!open) { setEditingEmployee(null); setForm(EMPTY_FORM); } }}>

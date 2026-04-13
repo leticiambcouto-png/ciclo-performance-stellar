@@ -817,3 +817,219 @@ export async function getEmployeeById(id: number) {
   const result = await db.select().from(employees).where(eq(employees.id, id)).limit(1);
   return result[0];
 }
+
+// ─── REPORT DATA FUNCTIONS ───────────────────────────────────────────────────
+
+/** Relatório 1: Todos os colaboradores com dados completos */
+export async function getCollaboratorsReportData() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const allEmps = await db
+    .select({
+      id: employees.id,
+      name: employees.name,
+      email: employees.email,
+      jobTitle: employees.jobTitle,
+      department: employees.department,
+      area: employees.area,
+      diretoria: employees.diretoria,
+      managerId: employees.managerId,
+      platformRole: employees.platformRole,
+      secondaryPlatformRole: employees.secondaryPlatformRole,
+      isActive: employees.isActive,
+      createdAt: employees.createdAt,
+    })
+    .from(employees)
+    .orderBy(employees.name);
+
+  // Build manager name map
+  const managerIds = Array.from(new Set(allEmps.map((e) => e.managerId).filter(Boolean) as number[]));
+  const managerMap: Record<number, string> = {};
+  for (const mid of managerIds) {
+    const mgr = await db.select({ name: employees.name }).from(employees).where(eq(employees.id, mid)).limit(1);
+    managerMap[mid] = mgr[0]?.name ?? "—";
+  }
+
+  return allEmps.map((e) => ({
+    ...e,
+    managerName: e.managerId ? (managerMap[e.managerId] ?? "—") : "—",
+  }));
+}
+
+/** Relatório 3: 9-Box com quadrante inicial e calibrado */
+export async function getNineboxReportData(cycleId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get active cycle if not provided
+  let cid = cycleId;
+  if (!cid) {
+    const cycle = await getActiveCycle();
+    cid = cycle?.id;
+  }
+  if (!cid) return [];
+
+  const positions = await db
+    .select({
+      employeeId: nineboxPositions.employeeId,
+      performanceAxis: nineboxPositions.performanceAxis,
+      potencialAxis: nineboxPositions.potencialAxis,
+      quadrant: nineboxPositions.quadrant,
+      isManuallyAdjusted: nineboxPositions.isManuallyAdjusted,
+      adjustmentNote: nineboxPositions.adjustmentNote,
+      updatedAt: nineboxPositions.updatedAt,
+    })
+    .from(nineboxPositions)
+    .where(eq(nineboxPositions.cycleId, cid));
+
+  // Fetch employee data
+  const empIds = positions.map((p) => p.employeeId).filter(Boolean) as number[];
+  const empMap: Record<number, { name: string; email: string | null; jobTitle: string | null; area: string | null; diretoria: string | null; managerId: number | null }> = {};
+  for (const eid of empIds) {
+    const emp = await db
+      .select({ name: employees.name, email: employees.email, jobTitle: employees.jobTitle, area: employees.area, diretoria: employees.diretoria, managerId: employees.managerId })
+      .from(employees)
+      .where(eq(employees.id, eid))
+      .limit(1);
+    if (emp[0]) empMap[eid] = emp[0];
+  }
+
+  // Fetch manager names
+  const managerIds = Array.from(new Set(Object.values(empMap).map((e) => e.managerId).filter(Boolean) as number[]));
+  const managerMap: Record<number, string> = {};
+  for (const mid of managerIds) {
+    const mgr = await db.select({ name: employees.name }).from(employees).where(eq(employees.id, mid)).limit(1);
+    managerMap[mid] = mgr[0]?.name ?? "—";
+  }
+
+  return positions.map((p) => {
+    const emp = empMap[p.employeeId!] ?? {};
+    return {
+      ...p,
+      employeeName: (emp as any).name ?? "—",
+      employeeEmail: (emp as any).email ?? "—",
+      jobTitle: (emp as any).jobTitle ?? "—",
+      area: (emp as any).area ?? "—",
+      diretoria: (emp as any).diretoria ?? "—",
+      managerName: (emp as any).managerId ? (managerMap[(emp as any).managerId] ?? "—") : "—",
+    };
+  });
+}
+
+/** Relatório 4: Flash Feedbacks com dados de gestor e colaborador */
+export async function getFlashFeedbacksReportData() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const ffs = await getAllFlashFeedbacks();
+  if (ffs.length === 0) return [];
+
+  // Collect all unique employee IDs
+  const empIds = Array.from(new Set([
+    ...ffs.map((f) => f.requesterId),
+    ...ffs.map((f) => f.receiverId),
+  ].filter(Boolean) as number[]));
+
+  const empMap: Record<number, { name: string; email: string | null; jobTitle: string | null }> = {};
+  for (const eid of empIds) {
+    const emp = await db
+      .select({ name: employees.name, email: employees.email, jobTitle: employees.jobTitle })
+      .from(employees)
+      .where(eq(employees.id, eid))
+      .limit(1);
+    if (emp[0]) empMap[eid] = emp[0];
+  }
+
+  return ffs.map((f) => ({
+    ...f,
+    requesterName: f.requesterId ? (empMap[f.requesterId]?.name ?? "—") : "—",
+    requesterEmail: f.requesterId ? (empMap[f.requesterId]?.email ?? "—") : "—",
+    receiverName: f.receiverId ? (empMap[f.receiverId]?.name ?? "—") : "—",
+    receiverEmail: f.receiverId ? (empMap[f.receiverId]?.email ?? "—") : "—",
+    receiverJobTitle: f.receiverId ? (empMap[f.receiverId]?.jobTitle ?? "—") : "—",
+  }));
+}
+
+/** Relatório 6: Painel Geral — colaborador + avaliação + 9-Box + consequência */
+export async function getConsolidatedPanelData(cycleId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let cid = cycleId;
+  if (!cid) {
+    const cycle = await getActiveCycle();
+    cid = cycle?.id;
+  }
+  if (!cid) return [];
+
+  // Get all employees
+  const allEmps = await db
+    .select({
+      id: employees.id,
+      name: employees.name,
+      email: employees.email,
+      jobTitle: employees.jobTitle,
+      area: employees.area,
+      diretoria: employees.diretoria,
+      managerId: employees.managerId,
+      platformRole: employees.platformRole,
+      isActive: employees.isActive,
+    })
+    .from(employees)
+    .where(eq(employees.isActive, true))
+    .orderBy(employees.name);
+
+  // Manager name map
+  const managerIds = Array.from(new Set(allEmps.map((e) => e.managerId).filter(Boolean) as number[]));
+  const managerMap: Record<number, string> = {};
+  for (const mid of managerIds) {
+    const mgr = await db.select({ name: employees.name }).from(employees).where(eq(employees.id, mid)).limit(1);
+    managerMap[mid] = mgr[0]?.name ?? "—";
+  }
+
+  // 9-Box positions
+  const positions = await db.select().from(nineboxPositions).where(eq(nineboxPositions.cycleId, cid));
+  const posMap: Record<number, typeof positions[0]> = {};
+  for (const p of positions) posMap[p.employeeId!] = p;
+
+  // Manager evaluations
+  const evals = await db.select().from(managerEvaluations).where(eq(managerEvaluations.cycleId, cid));
+  const evalMap: Record<number, typeof evals[0]> = {};
+  for (const e of evals) evalMap[e.employeeId!] = e;
+
+  // Consequences
+  const consequences = await getConsequencesWithEmployeeData(cid);
+  const consMap: Record<string, typeof consequences[0]> = {};
+  for (const c of consequences) consMap[c.employeeEmail ?? ""] = c;
+
+  return allEmps.map((emp) => {
+    const pos = posMap[emp.id];
+    const ev = evalMap[emp.id];
+    const cons = consMap[emp.email ?? ""];
+    return {
+      employeeId: emp.id,
+      employeeName: emp.name,
+      employeeEmail: emp.email,
+      jobTitle: emp.jobTitle,
+      area: emp.area,
+      diretoria: emp.diretoria,
+      managerName: emp.managerId ? (managerMap[emp.managerId] ?? "—") : "—",
+      platformRole: emp.platformRole,
+      // 9-Box
+      quadranteInicial: pos?.quadrant ?? "—",
+      quadranteCalibracao: pos?.isManuallyAdjusted ? (pos?.adjustmentNote ?? pos?.quadrant ?? "—") : (pos?.quadrant ?? "—"),
+      performanceAxis: pos?.performanceAxis ?? "—",
+      potencialAxis: pos?.potencialAxis ?? "—",
+      // Avaliação
+      statusAvaliacao: ev?.status ?? "Não avaliado",
+      notaPerformance: ev?.performanceAxis ?? "—",
+      notaCultura: ev?.potencialAxis ?? "—",
+      feedbackGeral: ev?.feedbackGeral ?? "—",
+      // Consequência
+      consequencia: cons?.consequence ?? "—",
+      salaCalibração: cons?.roomName ?? "—",
+      observacoesConsequencia: cons?.notes ?? "—",
+    };
+  });
+}

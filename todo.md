@@ -255,3 +255,14 @@
 
 ## Correção Lista de Líderes (Abril 2026 - Lote 6)
 - [x] Lista suspensa "Líder Direto" deve incluir todos com papel gestor (primário OU secundário)
+
+## Aba Relatórios no Painel RH (Abril 2026 - Lote 7)
+- [x] Instalar biblioteca xlsx no backend
+- [x] Criar endpoint REST /api/reports/:type para geração de XLSX no servidor
+- [x] Relatório 1: Colaboradores (nome, e-mail, cargo, área, diretoria, líder, perfil, status)
+- [x] Relatório 2: Avaliações (notas por dimensão + média final por colaborador)
+- [x] Relatório 3: 9-Box (quadrante inicial e calibrado por colaborador)
+- [x] Relatório 4: Flash Feedbacks (data, gestor, colaborador, pauta estruturada)
+- [x] Relatório 5: Gestão de Consequência (colaborador + consequência definida)
+- [x] Relatório 6: Painel Geral do Ciclo (consolidado: colaborador + avaliação + 9-Box + consequência)
+- [x] Criar aba "Relatórios" no Painel RH com cards de cada relatório e botão de exportação
