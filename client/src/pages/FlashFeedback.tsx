@@ -26,6 +26,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Streamdown } from "streamdown";
+import { useViewMode } from "@/hooks/useViewMode";
+import { ViewModeTabs } from "@/components/ViewModeTabs";
 import {
   FLASH_FEEDBACK_NINEBOX_QUESTIONS,
   FLASH_FEEDBACK_ACTION_PLAN_FIELDS,
@@ -62,7 +64,10 @@ const ZONE_CONFIG = {
 
 export default function FlashFeedback() {
   const { user } = useStellarAuth();
+  const { viewMode, setViewMode, showTabs, isGestor } = useViewMode();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
+  // In team view, gestor sees team feedbacks; in self view, sees own feedbacks
+  const showTeamView = isGestor && viewMode === "team";
 
   // Schedule state
   const [showSchedule, setShowSchedule] = useState(false);
@@ -108,15 +113,16 @@ export default function FlashFeedback() {
   const { data: employees } = trpc.employees.all.useQuery();
   const { data: myProfile } = trpc.employees.myProfile.useQuery();
   const { data: directReports } = trpc.employees.directReports.useQuery(undefined, {
-    enabled: platformRole === "gestor" || platformRole === "rh",
+    enabled: isGestor,
   });
 
   const { data: myFeedbacks } = trpc.flashFeedback.myFeedbacks.useQuery();
   const { data: teamFeedbacks } = trpc.flashFeedback.teamFeedbacks.useQuery(undefined, {
-    enabled: platformRole === "gestor" || platformRole === "rh",
+    enabled: isGestor,
   });
 
-  const feedbacks = platformRole === "colaborador" ? myFeedbacks : teamFeedbacks;
+  // Show team feedbacks when in team view, own feedbacks when in self view
+  const feedbacks = showTeamView ? teamFeedbacks : myFeedbacks;
   const filteredFeedbacks = feedbacks?.filter((f) =>
     activeFilter === "all" ? true : f.status === activeFilter
   ) ?? [];
@@ -223,6 +229,9 @@ export default function FlashFeedback() {
   return (
     <StellarLayout title="Flash Feedbacks">
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-4xl">
+        {/* View mode tabs: Gestão do Time / Minhas Avaliações */}
+        <ViewModeTabs viewMode={viewMode} setViewMode={setViewMode} showTabs={showTabs} />
+
         {/* Header actions */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2 flex-wrap">

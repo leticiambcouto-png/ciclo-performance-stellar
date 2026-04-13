@@ -24,6 +24,7 @@ type EmployeeForm = {
   diretoria: string;
   managerId: string;
   platformRole: "rh" | "gestor" | "colaborador";
+  secondaryPlatformRole: "rh" | "gestor" | "colaborador" | "";
   accessPassword: string;
 };
 
@@ -36,6 +37,7 @@ const EMPTY_FORM: EmployeeForm = {
   diretoria: "",
   managerId: "",
   platformRole: "colaborador",
+  secondaryPlatformRole: "",
   accessPassword: "",
 };
 
@@ -162,6 +164,7 @@ export default function PainelRH() {
       diretoria: (emp as any).diretoria ?? "",
       managerId: emp.managerId ? String(emp.managerId) : "",
       platformRole: (emp.platformRole as any) ?? "colaborador",
+      secondaryPlatformRole: ((emp as any).secondaryPlatformRole as any) ?? "",
       accessPassword: (emp as any).accessPassword ?? "",
     });
   };
@@ -250,6 +253,7 @@ export default function PainelRH() {
         diretoria: form.diretoria || undefined,
         managerId: form.managerId ? Number(form.managerId) : null,
         platformRole: form.platformRole,
+        secondaryPlatformRole: (form.secondaryPlatformRole || null) as "rh" | "gestor" | "colaborador" | null | undefined,
         accessPassword: form.accessPassword || undefined,
       });
     } else {
@@ -262,6 +266,7 @@ export default function PainelRH() {
         diretoria: form.diretoria || undefined,
         managerId: form.managerId ? Number(form.managerId) : undefined,
         platformRole: form.platformRole,
+        secondaryPlatformRole: (form.secondaryPlatformRole || null) as "rh" | "gestor" | "colaborador" | null | undefined,
         accessPassword: form.accessPassword || undefined,
       });
     }
@@ -927,18 +932,37 @@ export default function PainelRH() {
                     </select>
                   </div>
             
-                  <div>
-                    <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Perfil de Acesso</label>
-                    <select
-                      value={form.platformRole}
-                      onChange={(e) => setForm((p) => ({ ...p, platformRole: e.target.value as any }))}
-                      className="w-full px-3 py-2 rounded-lg text-sm"
-                      style={inputStyle}
-                    >
-                      <option value="colaborador">Colaborador</option>
-                      <option value="gestor">Gestor</option>
-                      <option value="rh">RH</option>
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>Perfil Principal</label>
+                      <select
+                        value={form.platformRole}
+                        onChange={(e) => setForm((p) => ({ ...p, platformRole: e.target.value as any }))}
+                        className="w-full px-3 py-2 rounded-lg text-sm"
+                        style={inputStyle}
+                      >
+                        <option value="colaborador">Colaborador</option>
+                        <option value="gestor">Gestor</option>
+                        <option value="rh">RH</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1 block" style={labelStyle}>
+                        Papel Secundário <span style={{ color: '#4a6080', fontWeight: 400 }}>(opcional)</span>
+                      </label>
+                      <select
+                        value={form.secondaryPlatformRole}
+                        onChange={(e) => setForm((p) => ({ ...p, secondaryPlatformRole: e.target.value as any }))}
+                        className="w-full px-3 py-2 rounded-lg text-sm"
+                        style={inputStyle}
+                      >
+                        <option value="">Nenhum</option>
+                        {form.platformRole !== "colaborador" && <option value="colaborador">Colaborador</option>}
+                        {form.platformRole !== "gestor" && <option value="gestor">Gestor</option>}
+                        {form.platformRole !== "rh" && <option value="rh">RH</option>}
+                      </select>
+                      <p className="text-xs mt-1" style={{ color: '#4a6080' }}>Ex: RH que também lidera um time</p>
+                    </div>
                   </div>
             
                   <div>

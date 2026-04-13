@@ -1,0 +1,1 @@
+ALTER TABLE `employees` ADD `secondaryPlatformRole` enum('rh','gestor','colaborador');

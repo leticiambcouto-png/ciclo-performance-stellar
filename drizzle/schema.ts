@@ -43,6 +43,7 @@ export const employees = mysqlTable("employees", {
   accessPassword: varchar("accessPassword", { length: 255 }), // Senha de acesso à plataforma (hashed)
   mustChangePassword: boolean("mustChangePassword").default(true).notNull(), // Força troca de senha no primeiro acesso
   platformRole: mysqlEnum("platformRole", ["rh", "gestor", "colaborador"]).default("colaborador").notNull(),
+  secondaryPlatformRole: mysqlEnum("secondaryPlatformRole", ["rh", "gestor", "colaborador"]), // Optional secondary role (e.g., RH who is also a manager)
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

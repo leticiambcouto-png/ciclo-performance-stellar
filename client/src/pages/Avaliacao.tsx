@@ -7,6 +7,8 @@ import { ChevronDown, ChevronUp, CheckCircle, Save, Send, User } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useViewMode } from "@/hooks/useViewMode";
+import { ViewModeTabs } from "@/components/ViewModeTabs";
 
 type AxisValue = "below" | "within" | "above";
 
@@ -208,9 +210,12 @@ function CriterionCard({
 
 export default function Avaliacao() {
   const { user } = useStellarAuth();
+  const { viewMode, setViewMode, showTabs, isGestor } = useViewMode();
+  // isSelfEval = true when in "self" view (Minhas Avaliações)
+  // isSelfEval = false when in "team" view (Gestão do Time)
+  const isSelfEval = viewMode === "self";
   const platformRole = (user as any)?.platformRole ?? "colaborador";
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
-  const [isSelfEval, setIsSelfEval] = useState(true);
   const [formData, setFormData] = useState<Record<string, AxisValue | string>>({});
   const utils = trpc.useUtils();
 
@@ -231,7 +236,7 @@ export default function Avaliacao() {
   const isPhaseBlocked = isSelfEval ? !selfEvalOpen : !managerEvalOpen;
   const blockedPhase = isSelfEval ? selfEvalPhase : managerEvalPhase;
   const { data: directReports } = trpc.employees.directReports.useQuery(undefined, {
-    enabled: platformRole === "gestor" || platformRole === "rh",
+    enabled: isGestor,
   });
 
   const cycleId = cycle?.id ?? 0;
@@ -343,37 +348,15 @@ export default function Avaliacao() {
           </div>
         )}
 
-        {/* Role tabs for gestor */}
-        {(platformRole === "gestor" || platformRole === "rh") && (
-          <div
-            className="flex gap-2 p-1 rounded-xl"
-            style={{ backgroundColor: "#001830" }}
-          >
-            <button
-              onClick={() => { setIsSelfEval(true); setSelectedEmployee(null); }}
-              className="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: isSelfEval ? "#d9f22a" : "transparent",
-                color: isSelfEval ? "#001023" : "#8aa3c0",
-              }}
-            >
-              Minha Autoavaliação
-            </button>
-            <button
-              onClick={() => setIsSelfEval(false)}
-              className="flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: !isSelfEval ? "#d9f22a" : "transparent",
-                color: !isSelfEval ? "#001023" : "#8aa3c0",
-              }}
-            >
-              Avaliar Liderado
-            </button>
-          </div>
-        )}
+        {/* Role tabs for gestor / dual-role users */}
+        <ViewModeTabs
+          viewMode={viewMode}
+          setViewMode={(mode) => { setViewMode(mode); setSelectedEmployee(null); }}
+          showTabs={showTabs}
+        />
 
         {/* Employee selector for manager */}
-        {!isSelfEval && (platformRole === "gestor" || platformRole === "rh") && (
+        {!isSelfEval && isGestor && (
           <div
             className="p-4 rounded-xl border"
             style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}

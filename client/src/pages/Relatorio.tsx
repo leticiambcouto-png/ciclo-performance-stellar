@@ -9,10 +9,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Streamdown } from "streamdown";
 import { NINEBOX_QUADRANTS } from "../../../shared/nineboxData";
 import type { NineboxQuadrant } from "../../../shared/nineboxData";
+import { useViewMode } from "@/hooks/useViewMode";
+import { ViewModeTabs } from "@/components/ViewModeTabs";
 
 export default function Relatorio() {
   const { user } = useStellarAuth();
+  const { viewMode, setViewMode, showTabs, isGestor, isColaborador } = useViewMode();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
+  // showSelfView: gestor in "self" mode sees their own devolutiva (like colaborador)
+  const showSelfView = viewMode === "self";
+  const showTeamView = isGestor && viewMode === "team";
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
 
   const [finalContent, setFinalContent] = useState("");
@@ -36,33 +42,33 @@ export default function Relatorio() {
     new Date() < new Date(devolutivaPhase.startDate);
   const { data: myProfile } = trpc.employees.myProfile.useQuery();
   const { data: directReports } = trpc.employees.directReports.useQuery(undefined, {
-    enabled: platformRole !== "colaborador",
+    enabled: isGestor,
   });
   const { data: employees } = trpc.employees.all.useQuery();
 
-  // Colaborador: my report
+  // Colaborador or gestor in self-view: my report
   const { data: myReport } = trpc.feedbackReport.myReport.useQuery(
     { cycleId },
-    { enabled: cycleId > 0 && platformRole === "colaborador" }
+    { enabled: cycleId > 0 && (isColaborador || showSelfView) }
   );
   const { data: myNineboxPos } = trpc.ninebox.myPosition.useQuery(
     { cycleId },
-    { enabled: cycleId > 0 && platformRole === "colaborador" }
+    { enabled: cycleId > 0 && (isColaborador || showSelfView) }
   );
   // Avaliação do gestor sobre o colaborador (para exibir notas por dimensão na devolutiva)
   const { data: myManagerEval } = trpc.managerEvaluation.myEval.useQuery(
     { cycleId },
-    { enabled: cycleId > 0 && platformRole === "colaborador" }
+    { enabled: cycleId > 0 && (isColaborador || showSelfView) }
   );
 
-  // Gestor: team reports
+  // Gestor in team view: team reports
   const { data: teamReports } = trpc.feedbackReport.teamReports.useQuery(
     { cycleId },
-    { enabled: cycleId > 0 && platformRole !== "colaborador" }
+    { enabled: cycleId > 0 && showTeamView }
   );
   const { data: managerEval } = trpc.managerEvaluation.getForEmployee.useQuery(
     { employeeId: selectedEmployee ?? 0, cycleId },
-    { enabled: cycleId > 0 && selectedEmployee !== null && platformRole !== "colaborador" }
+    { enabled: cycleId > 0 && selectedEmployee !== null && showTeamView }
   );
 
   const saveDraft = trpc.feedbackReport.saveDraft.useMutation({
@@ -121,8 +127,8 @@ export default function Relatorio() {
     ? teamReports?.find((r) => r.employeeId === selectedEmployee)
     : null;
 
-  // Colaborador view
-  if (platformRole === "colaborador") {
+  // Colaborador view (or gestor in self-view)
+  if (isColaborador || showSelfView) {
     const qInfo = myNineboxPos?.quadrant
       ? NINEBOX_QUADRANTS[myNineboxPos.quadrant as NineboxQuadrant]
       : null;
@@ -147,8 +153,11 @@ export default function Relatorio() {
     const devolutivaReady = myReport && myReport.status !== "draft";
 
     return (
-      <StellarLayout title="Minha Devolutiva">
+      <StellarLayout title="Devolutiva">
         <div className="p-4 sm:p-6 max-w-3xl space-y-4 sm:space-y-6">
+          {/* View mode tabs */}
+          <ViewModeTabs viewMode={viewMode} setViewMode={setViewMode} showTabs={showTabs} />
+
           {/* Phase gating banner */}
           {isDevolutivaBlocked && devolutivaPhase && (
             <div
@@ -305,6 +314,9 @@ export default function Relatorio() {
   return (
     <StellarLayout title="Devolutivas">
       <div className="p-4 sm:p-6 max-w-4xl space-y-4 sm:space-y-6">
+        {/* View mode tabs */}
+        <ViewModeTabs viewMode={viewMode} setViewMode={setViewMode} showTabs={showTabs} />
+
         {/* Employee selector */}
         <div
           className="p-4 rounded-xl border"

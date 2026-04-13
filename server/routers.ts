@@ -150,6 +150,7 @@ export const appRouter = router({
           managerId: z.number().nullable().optional(),
           userId: z.number().nullable().optional(),
           platformRole: z.enum(["rh", "gestor", "colaborador"]).optional(),
+          secondaryPlatformRole: z.enum(["rh", "gestor", "colaborador"]).nullable().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -171,6 +172,7 @@ export const appRouter = router({
           accessPassword: z.string().optional(),
           managerId: z.number().optional(),
           platformRole: z.enum(["rh", "gestor", "colaborador"]).default("colaborador"),
+          secondaryPlatformRole: z.enum(["rh", "gestor", "colaborador"]).nullable().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -213,6 +215,7 @@ export const appRouter = router({
               diretoria: z.string().optional(),
               managerId: z.number().nullable().optional(),
               platformRole: z.enum(["rh", "gestor", "colaborador"]).default("colaborador"),
+              secondaryPlatformRole: z.enum(["rh", "gestor", "colaborador"]).nullable().optional(),
               accessPassword: z.string().optional(),
             })
           ),

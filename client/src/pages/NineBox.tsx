@@ -9,6 +9,8 @@ import { BrainCircuit, Info, Loader2, Play, X } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useViewMode } from "@/hooks/useViewMode";
+import { ViewModeTabs } from "@/components/ViewModeTabs";
 
 type AxisLevel = "low" | "medium" | "high";
 
@@ -43,7 +45,11 @@ const SIMULATION_CRITERIA = [
 
 export default function NineBox() {
   const { user } = useStellarAuth();
+  const { viewMode, setViewMode, showTabs, isGestor, isRH, isColaborador } = useViewMode();
   const platformRole = (user as any)?.platformRole ?? "colaborador";
+  // In "self" view, a gestor sees their own position (like a colaborador)
+  const showTeamView = isGestor && viewMode === "team";
+  const showSelfView = viewMode === "self";
   const [selectedQ, setSelectedQ] = useState<NineboxQuadrant | null>(null);
   const [simMode, setSimMode] = useState(false);
   const [simAnswers, setSimAnswers] = useState<Record<string, AxisValue>>({});
@@ -56,15 +62,15 @@ export default function NineBox() {
 
   const { data: teamPositions } = trpc.ninebox.teamPositions.useQuery(
     { cycleId },
-    { enabled: cycleId > 0 && (platformRole === "gestor" || platformRole === "rh") }
+    { enabled: cycleId > 0 && (isGestor || isRH) && showTeamView }
   );
   const { data: myPosition } = trpc.ninebox.myPosition.useQuery(
     { cycleId },
-    { enabled: cycleId > 0 && platformRole === "colaborador" }
+    { enabled: cycleId > 0 && (isColaborador || showSelfView) }
   );
   const { data: allPositions } = trpc.ninebox.allPositions.useQuery(
     { cycleId },
-    { enabled: cycleId > 0 && platformRole === "rh" }
+    { enabled: cycleId > 0 && isRH && showTeamView }
   );
   const { data: employees } = trpc.employees.all.useQuery();
 
@@ -82,8 +88,8 @@ export default function NineBox() {
     onError: () => toast.error("Erro ao gerar análise de IA."),
   });
 
-  // Collaborator sees only educational view — no personal position data shown
-  const positions = platformRole === "rh" ? allPositions : platformRole === "gestor" ? teamPositions : [];
+  // Collaborator / self-view sees only educational view — no personal position data shown
+  const positions = showTeamView ? (isRH ? allPositions : teamPositions) : [];
   const positionArray = Array.isArray(positions) ? positions : [];
 
   const quadrantCounts: Record<NineboxQuadrant, number> = {} as any;
@@ -141,8 +147,11 @@ export default function NineBox() {
   return (
     <StellarLayout title="9-Box">
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        {/* Tabs (only for gestor/RH) */}
-        {(platformRole === "gestor" || platformRole === "rh") && (
+        {/* View mode tabs: Gestão do Time / Minhas Avaliações */}
+        <ViewModeTabs viewMode={viewMode} setViewMode={setViewMode} showTabs={showTabs} />
+
+        {/* Inner tabs (only for gestor/RH in team view) */}
+        {showTeamView && (isGestor || isRH) && (
           <div className="flex gap-2">
             {["ninebox", "curve"].map((tab) => (
               <button
@@ -280,7 +289,7 @@ export default function NineBox() {
           </div>
         )}
 
-        {activeTab === "ninebox" && platformRole === "colaborador" && (
+        {activeTab === "ninebox" && (isColaborador || showSelfView) && (
           <div
             className="flex items-start gap-3 p-4 rounded-xl border"
             style={{ backgroundColor: "#1840eb10", borderColor: "#1840eb30" }}
