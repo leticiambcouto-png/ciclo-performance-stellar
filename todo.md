@@ -200,3 +200,31 @@
 - [x] E-mail: template HTML Stellar Gaming com link de redefinição e validade de 1 hora
 - [x] Segurança: tokens de uso único, expiração 1h, proteção contra enumeração de usuários
 - [ ] SMTP: configurar credenciais reais (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
+
+## Melhorias Gerais (Abril 2026 - Lote 2)
+
+### CicloOverview
+- [ ] Reordenar critérios: Performance primeiro, Potencial segundo
+- [ ] Acordeão por critério: ao clicar, expandir definições de Abaixo/Dentro/Acima do esperado
+- [ ] Fase Flash Feedback: incluir estrutura da pauta (4 perguntas com tempo) e periodicidade por quadrante
+- [ ] Reposicionar seção 9-Box para abaixo da página CicloOverview (após as 7 fases)
+
+### Calibração
+- [ ] Salas de calibração visíveis para todos os usuários com perfil RH (não apenas o criador)
+
+### Painel RH
+- [ ] Adicionar coluna: 9-Box inicial (pré-calibração)
+- [ ] Adicionar coluna: 9-Box calibrado (pós-calibração)
+- [ ] Adicionar coluna: Consequência definida (Promoção/Mérito/Desligamento/Plano)
+- [ ] Adicionar coluna: Flash Feedbacks realizados / total esperado no semestre
+
+### Dashboard
+- [ ] Indicadores de consequência por grupo: Talentos, Mantenedores e Críticos
+- [ ] 9-Box no dashboard: exibir contagem de ações de consequência por quadrante (promos, méritos etc.)
+
+### Flash Feedback
+- [ ] Formulário de criação de pauta com campos fixos da estrutura do FF:
+  - O que está funcionando e precisa continuar? (5 min)
+  - Qual é o gap prioritário do próximo trimestre? (10 min)
+  - Qual compromisso concreto a pessoa assume? (10 min)
+  - O que o gestor vai fazer para viabilizar? (5 min)

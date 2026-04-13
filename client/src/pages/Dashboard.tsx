@@ -33,10 +33,12 @@ function MiniNineBox({
   positions,
   selectedQ,
   onSelectQ,
+  consequenceByQuadrant,
 }: {
   positions: { quadrant: string; employeeName?: string; employeeId?: number }[];
   selectedQ?: string | null;
   onSelectQ?: (q: string | null) => void;
+  consequenceByQuadrant?: Record<string, { merito: number; promocao: number; desligamento: number; plano_recuperacao: number; total: number }>;
 }) {
   const countByQ = useMemo(() => {
     const map: Record<string, number> = {};
@@ -52,6 +54,7 @@ function MiniNineBox({
         row.map((q) => {
           const count = countByQ[q] ?? 0;
           const isSelected = selectedQ === q;
+          const consq = consequenceByQuadrant?.[q];
           return (
             <button
               key={q}
@@ -60,12 +63,23 @@ function MiniNineBox({
               style={{
                 backgroundColor: isSelected ? QUADRANT_COLORS[q] + "25" : count > 0 ? QUADRANT_BG[q] : "#001023",
                 border: `1px solid ${isSelected ? QUADRANT_COLORS[q] : count > 0 ? QUADRANT_COLORS[q] + "30" : "#0a3060"}`,
-                minHeight: "52px",
+                minHeight: "60px",
               }}
             >
-              <span className="text-xs font-bold" style={{ color: QUADRANT_COLORS[q], opacity: count > 0 ? 1 : 0.4 }}>
-                {q}
-              </span>
+              <div className="flex items-center justify-between w-full">
+                <span className="text-xs font-bold" style={{ color: QUADRANT_COLORS[q], opacity: count > 0 ? 1 : 0.4 }}>
+                  {q}
+                </span>
+                {consq && consq.total > 0 && (
+                  <span
+                    className="text-xs font-bold px-1 py-0.5 rounded"
+                    style={{ backgroundColor: QUADRANT_COLORS[q] + "30", color: QUADRANT_COLORS[q], fontSize: "9px" }}
+                    title={`${consq.merito} méritos, ${consq.promocao} promoções, ${consq.desligamento} desligamentos, ${consq.plano_recuperacao} planos`}
+                  >
+                    {consq.total} ações
+                  </span>
+                )}
+              </div>
               <span
                 className="text-xl font-black leading-none"
                 style={{ color: count > 0 ? QUADRANT_COLORS[q] : "#2a4a6b" }}
@@ -201,6 +215,44 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
     };
   }, [allConsequences]);
 
+  // Consequence by group (talentos Q7-Q9, mantenedores Q4-Q6, criticos Q1-Q3)
+  const consequenceByGroup = useMemo(() => {
+    const cons = allConsequences ?? [];
+    const posMap = new Map<number, string>();
+    for (const p of positions) posMap.set(p.employeeId, p.quadrant);
+    const talentos = cons.filter((c) => ["Q7","Q8","Q9"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
+    const mantenedores = cons.filter((c) => ["Q4","Q5","Q6"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
+    const criticos = cons.filter((c) => ["Q1","Q2","Q3"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
+    const groupStats = (list: typeof cons) => ({
+      total: list.length,
+      merito: list.filter((c) => c.consequence === "merito").length,
+      promocao: list.filter((c) => c.consequence === "promocao").length,
+      desligamento: list.filter((c) => c.consequence === "desligamento").length,
+      plano_recuperacao: list.filter((c) => c.consequence === "plano_recuperacao").length,
+    });
+    return {
+      talentos: groupStats(talentos),
+      mantenedores: groupStats(mantenedores),
+      criticos: groupStats(criticos),
+    };
+  }, [allConsequences, positions]);
+
+  // Consequence count by quadrant
+  const consequenceByQuadrant = useMemo(() => {
+    const cons = allConsequences ?? [];
+    const posMap = new Map<number, string>();
+    for (const p of positions) posMap.set(p.employeeId, p.quadrant);
+    const map: Record<string, { merito: number; promocao: number; desligamento: number; plano_recuperacao: number; total: number }> = {};
+    for (const c of cons) {
+      const q = posMap.get(c.employeeId);
+      if (!q || c.consequence === "nenhuma") continue;
+      if (!map[q]) map[q] = { merito: 0, promocao: 0, desligamento: 0, plano_recuperacao: 0, total: 0 };
+      map[q][c.consequence as keyof typeof map[string]]++;
+      map[q].total++;
+    }
+    return map;
+  }, [allConsequences, positions]);
+
   return (
     <div className="space-y-5">
       {/* Cycle + title */}
@@ -278,7 +330,7 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
             </div>
           ) : (
             <>
-              <MiniNineBox positions={positionsWithNames} selectedQ={selectedQ} onSelectQ={setSelectedQ} />
+              <MiniNineBox positions={positionsWithNames} selectedQ={selectedQ} onSelectQ={setSelectedQ} consequenceByQuadrant={isRH ? consequenceByQuadrant : undefined} />
               {selectedQ && peopleInSelectedQ.length > 0 && (
                 <div className="mt-3 rounded-xl overflow-hidden" style={{ border: `1px solid ${QUADRANT_COLORS[selectedQ]}30` }}>
                   <div className="px-3 py-2" style={{ backgroundColor: QUADRANT_COLORS[selectedQ] + "15" }}>
@@ -492,18 +544,49 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
                 <p className="text-xs" style={{ color: "#4a7ab5" }}>Nenhuma decisão registrada ainda</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { key: "merito", label: "Mérito", count: consequenceSummary.merito, color: "#22c55e" },
-                  { key: "promocao", label: "Promoção", count: consequenceSummary.promocao, color: "#d9f22a" },
-                  { key: "plano_recuperacao", label: "Plano Recuperação", count: consequenceSummary.plano_recuperacao, color: "#f59e0b" },
-                  { key: "desligamento", label: "Desligamento", count: consequenceSummary.desligamento, color: "#ef4444" },
-                ].map(({ key, label, count, color }) => (
-                  <div key={key} className="p-3 rounded-xl" style={{ backgroundColor: "#001023", border: `1px solid ${color}20` }}>
-                    <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>{label}</p>
-                    <p className="text-2xl font-black" style={{ color, fontFamily: "Space Grotesk" }}>{count}</p>
+              <div className="space-y-3">
+                {/* Total summary */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: "merito", label: "Mérito", count: consequenceSummary.merito, color: "#22c55e" },
+                    { key: "promocao", label: "Promoção", count: consequenceSummary.promocao, color: "#d9f22a" },
+                    { key: "plano_recuperacao", label: "Plano Recuperação", count: consequenceSummary.plano_recuperacao, color: "#f59e0b" },
+                    { key: "desligamento", label: "Desligamento", count: consequenceSummary.desligamento, color: "#ef4444" },
+                  ].map(({ key, label, count, color }) => (
+                    <div key={key} className="p-3 rounded-xl" style={{ backgroundColor: "#001023", border: `1px solid ${color}20` }}>
+                      <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>{label}</p>
+                      <p className="text-2xl font-black" style={{ color, fontFamily: "Space Grotesk" }}>{count}</p>
+                    </div>
+                  ))}
+                </div>
+                {/* By group */}
+                <div className="pt-2" style={{ borderTop: "1px solid #0a3060" }}>
+                  <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#8aa3c0" }}>Por Grupo</p>
+                  <div className="space-y-2">
+                    {[
+                      { label: "Talentos", data: consequenceByGroup.talentos, color: "#22c55e" },
+                      { label: "Mantenedores", data: consequenceByGroup.mantenedores, color: "#d9f22a" },
+                      { label: "Críticos", data: consequenceByGroup.criticos, color: "#ef4444" },
+                    ].map(({ label, data, color }) => (
+                      <div key={label} className="flex items-center gap-3 p-2 rounded-lg" style={{ backgroundColor: "#001023", border: `1px solid ${color}20` }}>
+                        <div className="flex items-center gap-1.5 w-24 flex-shrink-0">
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                          <span className="text-xs font-semibold" style={{ color }}>{label}</span>
+                        </div>
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="text-xs font-black" style={{ color, fontFamily: "Space Grotesk" }}>{data.total}</span>
+                          <div className="flex items-center gap-2 text-xs" style={{ color: "#8aa3c0" }}>
+                            {data.promocao > 0 && <span style={{ color: "#d9f22a" }}>↑{data.promocao} promo</span>}
+                            {data.merito > 0 && <span style={{ color: "#22c55e" }}>★{data.merito} mérito</span>}
+                            {data.plano_recuperacao > 0 && <span style={{ color: "#f59e0b" }}>⚠{data.plano_recuperacao} plano</span>}
+                            {data.desligamento > 0 && <span style={{ color: "#ef4444" }}>✕{data.desligamento} deslig.</span>}
+                            {data.total === 0 && <span style={{ color: "#4a6080" }}>Sem ações</span>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             )}
           </div>

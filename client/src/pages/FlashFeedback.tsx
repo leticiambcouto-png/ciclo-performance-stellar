@@ -67,6 +67,13 @@ export default function FlashFeedback() {
   // Schedule state
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduleData, setScheduleData] = useState({ receiverId: 0, scheduledAt: "", agenda: "" });
+  // Structured agenda fields
+  const [agendaFields, setAgendaFields] = useState({
+    oQueEstaFuncionando: "",
+    gapPrioritario: "",
+    compromisso: "",
+    apoioGestor: "",
+  });
 
   // Formalize state (multi-step for manager)
   const [showFormalize, setShowFormalize] = useState<number | null>(null);
@@ -119,6 +126,7 @@ export default function FlashFeedback() {
       toast.success("Flash feedback agendado!");
       setShowSchedule(false);
       setScheduleData({ receiverId: 0, scheduledAt: "", agenda: "" });
+      setAgendaFields({ oQueEstaFuncionando: "", gapPrioritario: "", compromisso: "", apoioGestor: "" });
       utils.flashFeedback.myFeedbacks.invalidate();
       utils.flashFeedback.teamFeedbacks.invalidate();
     },
@@ -399,26 +407,76 @@ export default function FlashFeedback() {
                   style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" }}
                 />
               </div>
-              <div>
-                <label className="text-xs font-semibold mb-1.5 block" style={{ color: "#8aa3c0" }}>
-                  Pauta (opcional)
-                </label>
-                <Textarea
-                  placeholder="Descreva os pontos que quer abordar..."
-                  value={scheduleData.agenda}
-                  onChange={(e) => setScheduleData((p) => ({ ...p, agenda: e.target.value }))}
-                  rows={3}
-                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" }}
-                />
+              {/* Structured agenda fields */}
+              <div className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap size={14} style={{ color: "#d9f22a" }} />
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#d9f22a" }}>Pauta do Flash Feedback</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>
+                    O que está funcionando e precisa continuar? <span style={{ color: "#4a6080" }}>(5 min)</span>
+                  </label>
+                  <Textarea
+                    placeholder="Descreva os pontos positivos que devem ser mantidos..."
+                    value={agendaFields.oQueEstaFuncionando}
+                    onChange={(e) => setAgendaFields((p) => ({ ...p, oQueEstaFuncionando: e.target.value }))}
+                    rows={2}
+                    style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>
+                    Qual é o gap prioritário do próximo trimestre? <span style={{ color: "#4a6080" }}>(10 min)</span>
+                  </label>
+                  <Textarea
+                    placeholder="Identifique o principal gap a ser trabalhado..."
+                    value={agendaFields.gapPrioritario}
+                    onChange={(e) => setAgendaFields((p) => ({ ...p, gapPrioritario: e.target.value }))}
+                    rows={2}
+                    style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>
+                    Qual compromisso concreto a pessoa assume? <span style={{ color: "#4a6080" }}>(10 min)</span>
+                  </label>
+                  <Textarea
+                    placeholder="Descreva o compromisso específico que será assumido..."
+                    value={agendaFields.compromisso}
+                    onChange={(e) => setAgendaFields((p) => ({ ...p, compromisso: e.target.value }))}
+                    rows={2}
+                    style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>
+                    O que o gestor vai fazer para viabilizar? <span style={{ color: "#4a6080" }}>(5 min)</span>
+                  </label>
+                  <Textarea
+                    placeholder="Descreva o suporte que o gestor vai oferecer..."
+                    value={agendaFields.apoioGestor}
+                    onChange={(e) => setAgendaFields((p) => ({ ...p, apoioGestor: e.target.value }))}
+                    rows={2}
+                    style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+                  />
+                </div>
               </div>
               <Button
                 onClick={() => {
                   if (!scheduleData.receiverId || !scheduleData.scheduledAt)
                     return toast.error("Preencha todos os campos obrigatórios.");
+                  // Build structured agenda string
+                  const structuredAgenda = [
+                    agendaFields.oQueEstaFuncionando ? `O que está funcionando: ${agendaFields.oQueEstaFuncionando}` : "",
+                    agendaFields.gapPrioritario ? `Gap prioritário: ${agendaFields.gapPrioritario}` : "",
+                    agendaFields.compromisso ? `Compromisso: ${agendaFields.compromisso}` : "",
+                    agendaFields.apoioGestor ? `Apoio do gestor: ${agendaFields.apoioGestor}` : "",
+                  ].filter(Boolean).join("\n\n");
                   scheduleMutation.mutate({
                     receiverId: scheduleData.receiverId,
                     scheduledAt: new Date(scheduleData.scheduledAt).toISOString(),
-                    agenda: scheduleData.agenda || undefined,
+                    agenda: structuredAgenda || undefined,
                     cycleId: cycle?.id,
                   });
                 }}

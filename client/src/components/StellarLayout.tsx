@@ -51,6 +51,12 @@ const navItems: NavItem[] = [
     roles: ["rh", "gestor", "colaborador"],
   },
   {
+    label: "9-Box",
+    href: "/9box",
+    icon: <Grid3x3 size={18} />,
+    roles: ["rh", "gestor", "colaborador"],
+  },
+  {
     label: "Dashboard",
     href: "/dashboard",
     icon: <LayoutDashboard size={18} />,
@@ -60,12 +66,6 @@ const navItems: NavItem[] = [
     label: "Avaliação",
     href: "/avaliacao",
     icon: <ClipboardList size={18} />,
-    roles: ["rh", "gestor", "colaborador"],
-  },
-  {
-    label: "9-Box",
-    href: "/9box",
-    icon: <Grid3x3 size={18} />,
     roles: ["rh", "gestor", "colaborador"],
   },
   {

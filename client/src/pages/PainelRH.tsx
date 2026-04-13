@@ -65,6 +65,15 @@ export default function PainelRH() {
     { cycleId: activeCycle?.id ?? 0 },
     { enabled: !!activeCycle?.id }
   );
+  const { data: allNineboxPositions } = trpc.ninebox.allPositions.useQuery(
+    { cycleId: activeCycle?.id ?? 0 },
+    { enabled: !!activeCycle?.id }
+  );
+  const { data: allConsequences } = trpc.calibration.allConsequences.useQuery(
+    { cycleId: activeCycle?.id ?? 0 },
+    { enabled: !!activeCycle?.id }
+  );
+  const { data: allFlashFeedbacks } = trpc.flashFeedback.allFeedbacks.useQuery();
 
   const updatePhase = trpc.cyclePhases.update.useMutation({
     onSuccess: () => {
@@ -289,6 +298,49 @@ export default function PainelRH() {
     (e as any).diretoria?.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Helper maps for new columns
+  const nineboxByEmployee = new Map<number, { quadrant: string; isManuallyAdjusted: boolean }>();
+  (allNineboxPositions ?? []).forEach((p) => {
+    nineboxByEmployee.set(p.employeeId, { quadrant: p.quadrant, isManuallyAdjusted: p.isManuallyAdjusted });
+  });
+
+  const consequenceByEmployee = new Map<number, string>();
+  (allConsequences ?? []).forEach((c) => {
+    consequenceByEmployee.set(c.employeeId, c.consequence);
+  });
+
+  // Flash feedbacks: count completed per receiverId in current cycle
+  const ffCompletedByEmployee = new Map<number, number>();
+  const ffTotalByEmployee = new Map<number, number>();
+  (allFlashFeedbacks ?? []).forEach((ff) => {
+    const rid = ff.receiverId;
+    ffTotalByEmployee.set(rid, (ffTotalByEmployee.get(rid) ?? 0) + 1);
+    if (ff.status === "completed") {
+      ffCompletedByEmployee.set(rid, (ffCompletedByEmployee.get(rid) ?? 0) + 1);
+    }
+  });
+
+  // Expected flash feedbacks per semester by quadrant
+  const ffExpectedBySemester = (quadrant: string): number => {
+    if (quadrant === "Q1") return 6; // weekly ~6/semester
+    if (quadrant === "Q2" || quadrant === "Q8" || quadrant === "Q9") return 3; // monthly
+    return 2; // bimestral
+  };
+
+  const consequenceLabel: Record<string, { label: string; color: string }> = {
+    merito: { label: "Mérito", color: "#22c55e" },
+    promocao: { label: "Promoção", color: "#1840eb" },
+    desligamento: { label: "Desligamento", color: "#ef4444" },
+    plano_recuperacao: { label: "Plano de Rec.", color: "#f97316" },
+    nenhuma: { label: "Nenhuma", color: "#8aa3c0" },
+  };
+
+  const quadrantColor = (q: string): string => {
+    if (["Q7", "Q8", "Q9"].includes(q)) return "#22c55e";
+    if (["Q4", "Q5", "Q6"].includes(q)) return "#eab308";
+    return "#ef4444";
+  };
+
   const roleColors = {
     rh: { color: "#d9f22a", bg: "#d9f22a15", label: "RH" },
     gestor: { color: "#1840eb", bg: "#1840eb15", label: "Gestor" },
@@ -413,20 +465,23 @@ export default function PainelRH() {
         {/* Employee table */}
         <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "#0a3060" }}>
         <div
-          className="rounded-xl overflow-hidden min-w-[640px]"
-          style={{ backgroundColor: "#001830" }}
+          className="rounded-xl overflow-hidden"
+          style={{ backgroundColor: "#001830", minWidth: "1100px" }}
         >
           <div
             className="px-4 py-3 text-xs font-semibold uppercase tracking-wider"
             style={{ color: "#8aa3c0", borderBottom: "1px solid #0a3060", backgroundColor: "#001023" }}
           >
-            <div className="grid grid-cols-12 gap-2">
-              <span className="col-span-3">Nome</span>
-              <span className="col-span-2">Cargo</span>
-              <span className="col-span-2">Área / Diretoria</span>
-              <span className="col-span-2">Líder Direto</span>
-              <span className="col-span-2">Perfil</span>
-              <span className="col-span-1 text-right">Ações</span>
+            <div className="grid gap-2" style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1.5fr 1fr 1fr 1fr 1.5fr 0.8fr" }}>
+              <span>Nome</span>
+              <span>Cargo / Área</span>
+              <span>Líder Direto</span>
+              <span>Perfil</span>
+              <span>9-Box Inicial</span>
+              <span>9-Box Calibrado</span>
+              <span>Consequência</span>
+              <span>Flash Feedbacks</span>
+              <span className="text-right">Ações</span>
             </div>
           </div>
 
@@ -442,46 +497,55 @@ export default function PainelRH() {
               const role = (emp.platformRole ?? "colaborador") as keyof typeof roleColors;
               const rc = roleColors[role] ?? roleColors.colaborador;
               const isInactive = (emp as any).isActive === false;
+              const nineboxData = nineboxByEmployee.get(emp.id);
+              const initialQuadrant = nineboxData && !nineboxData.isManuallyAdjusted ? nineboxData.quadrant : null;
+              const calibratedQuadrant = nineboxData && nineboxData.isManuallyAdjusted ? nineboxData.quadrant : null;
+              // If manually adjusted, initial is unknown; if not adjusted, both show same
+              const displayInitial = nineboxData ? (nineboxData.isManuallyAdjusted ? "—" : nineboxData.quadrant) : "—";
+              const displayCalibrated = nineboxData && nineboxData.isManuallyAdjusted ? nineboxData.quadrant : (nineboxData ? nineboxData.quadrant : "—");
+              const consq = consequenceByEmployee.get(emp.id) ?? null;
+              const consqInfo = consq ? (consequenceLabel[consq] ?? null) : null;
+              const ffCompleted = ffCompletedByEmployee.get(emp.id) ?? 0;
+              const ffTotal = ffTotalByEmployee.get(emp.id) ?? 0;
+              const ffExpected = nineboxData ? ffExpectedBySemester(nineboxData.quadrant) : 2;
 
               return (
                 <div
                   key={emp.id}
-                  className="grid grid-cols-12 gap-2 px-4 py-3 items-center"
+                  className="grid gap-2 px-4 py-3 items-center"
                   style={{
+                    gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr 1fr 1fr 1.5fr 0.8fr",
                     borderBottom: i < filtered.length - 1 ? "1px solid #0a3060" : "none",
                     opacity: isInactive ? 0.5 : 1,
                   }}
                 >
-                  <div className="col-span-3 flex items-center gap-3 min-w-0">
+                  {/* Nome */}
+                  <div className="flex items-center gap-2 min-w-0">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                       style={{ backgroundColor: "#001023", color: "#d9f22a" }}
                     >
                       {emp.name?.charAt(0)}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: "#fdffdf" }}>{emp.name}</p>
-                      <p className="text-xs truncate" style={{ color: "#8aa3c0" }}>{emp.email}</p>
+                      <p className="text-xs font-medium truncate" style={{ color: "#fdffdf" }}>{emp.name}</p>
+                      <p className="text-xs truncate" style={{ color: "#4a6080" }}>{emp.email}</p>
                     </div>
                   </div>
 
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-xs truncate" style={{ color: "#8aa3c0" }}>{emp.jobTitle ?? "Não informado"}</p>
-                    <p className="text-xs truncate" style={{ color: "#4a6080" }}>{emp.department ?? ""}</p>
+                  {/* Cargo / Área */}
+                  <div className="min-w-0">
+                    <p className="text-xs truncate" style={{ color: "#8aa3c0" }}>{emp.jobTitle ?? "—"}</p>
+                    <p className="text-xs truncate" style={{ color: "#4a6080" }}>{(emp as any).area ?? ""}</p>
                   </div>
 
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-xs truncate" style={{ color: "#8aa3c0" }}>{(emp as any).area ?? "Não informado"}</p>
-                    <p className="text-xs truncate" style={{ color: "#4a6080" }}>{(emp as any).diretoria ?? ""}</p>
+                  {/* Líder */}
+                  <div className="min-w-0">
+                    <p className="text-xs truncate" style={{ color: "#8aa3c0" }}>{(emp as any).managerName ?? "Sem líder"}</p>
                   </div>
 
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-xs truncate" style={{ color: "#8aa3c0" }}>
-                      {(emp as any).managerName ?? "Sem líder"}
-                    </p>
-                  </div>
-
-                  <div className="col-span-2">
+                  {/* Perfil */}
+                  <div>
                     <span
                       className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold"
                       style={{ backgroundColor: rc.bg, color: rc.color }}
@@ -490,7 +554,75 @@ export default function PainelRH() {
                     </span>
                   </div>
 
-                  <div className="col-span-1 flex items-center justify-end gap-1">
+                  {/* 9-Box Inicial */}
+                  <div>
+                    {displayInitial !== "—" ? (
+                      <span
+                        className="inline-block text-xs px-2 py-0.5 rounded-full font-bold"
+                        style={{ backgroundColor: `${quadrantColor(displayInitial)}20`, color: quadrantColor(displayInitial), border: `1px solid ${quadrantColor(displayInitial)}40` }}
+                      >
+                        {displayInitial}
+                      </span>
+                    ) : (
+                      <span className="text-xs" style={{ color: "#4a6080" }}>—</span>
+                    )}
+                  </div>
+
+                  {/* 9-Box Calibrado */}
+                  <div>
+                    {displayCalibrated !== "—" ? (
+                      <span
+                        className="inline-block text-xs px-2 py-0.5 rounded-full font-bold"
+                        style={{ backgroundColor: `${quadrantColor(displayCalibrated)}20`, color: quadrantColor(displayCalibrated), border: `1px solid ${quadrantColor(displayCalibrated)}40` }}
+                      >
+                        {displayCalibrated}
+                        {nineboxData?.isManuallyAdjusted && (
+                          <span className="ml-1 text-xs" title="Calibrado manualmente">✓</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-xs" style={{ color: "#4a6080" }}>—</span>
+                    )}
+                  </div>
+
+                  {/* Consequência */}
+                  <div>
+                    {consqInfo ? (
+                      <span
+                        className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold"
+                        style={{ backgroundColor: `${consqInfo.color}20`, color: consqInfo.color, border: `1px solid ${consqInfo.color}40` }}
+                      >
+                        {consqInfo.label}
+                      </span>
+                    ) : (
+                      <span className="text-xs" style={{ color: "#4a6080" }}>Pendente</span>
+                    )}
+                  </div>
+
+                  {/* Flash Feedbacks */}
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="text-xs font-bold"
+                        style={{ color: ffCompleted >= ffExpected ? "#22c55e" : ffCompleted > 0 ? "#eab308" : "#ef4444" }}
+                      >
+                        {ffCompleted}/{ffExpected}
+                      </span>
+                      <span className="text-xs" style={{ color: "#4a6080" }}>realizados</span>
+                    </div>
+                    <div className="w-full rounded-full h-1 mt-1" style={{ backgroundColor: "#0a3060" }}>
+                      <div
+                        className="h-1 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, (ffCompleted / ffExpected) * 100)}%`,
+                          backgroundColor: ffCompleted >= ffExpected ? "#22c55e" : ffCompleted > 0 ? "#eab308" : "#ef4444",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Ações */}
+                  <div className="flex items-center justify-end gap-1">
                     {!isInactive && (
                       <button
                         onClick={() => { openEditEmployee(emp); setShowAddDialog(true); }}
