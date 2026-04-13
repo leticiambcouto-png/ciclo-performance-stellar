@@ -446,7 +446,7 @@ export default function Avaliacao() {
               </div>
             )}
 
-            {/* Potencial */}
+            {/* Cultura */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div
@@ -454,7 +454,7 @@ export default function Avaliacao() {
                   style={{ backgroundColor: "#1840eb" }}
                 />
                 <h3 className="font-bold" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
-                  Eixo de Potencial
+                  Eixo de Cultura
                 </h3>
                 <span className="text-xs" style={{ color: "#8aa3c0" }}>
                   Valores e comportamentos
@@ -524,7 +524,7 @@ export default function Avaliacao() {
                   )}
                 </div>
                 <Textarea
-                  placeholder="Escreva um feedback geral consolidado sobre o desempenho e potencial deste colaborador no semestre. Este texto será exibido na devolutiva junto com as notas por dimensão..."
+                  placeholder="Escreva um feedback geral consolidado sobre o desempenho e cultura deste colaborador no semestre. Este texto será exibido na devolutiva junto com as notas por dimensão..."
                   value={(formData.feedbackGeral as string) ?? ""}
                   onChange={(e) => !isSubmitted && completion === 8 && setFormData((p) => ({ ...p, feedbackGeral: e.target.value }))}
                   rows={5}

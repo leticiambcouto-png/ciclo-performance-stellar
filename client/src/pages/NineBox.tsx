@@ -12,12 +12,12 @@ import { toast } from "sonner";
 
 type AxisLevel = "low" | "medium" | "high";
 
-// 9-box grid layout (renumbered):
-//   Performance ↑
+// 9-box grid layout:
+//   Cultura ↑
 //   Alta  │ Q7  Q8  Q9
 //   Média │ Q4  Q5  Q6
 //   Baixa │ Q1  Q2  Q3
-//          ──────────────→ Potencial (Baixo → Médio → Alto)
+//          ──────────────→ Performance (Baixa → Média → Alta)
 const GRID_LAYOUT: NineboxQuadrant[][] = [
   ["Q7", "Q8", "Q9"],
   ["Q4", "Q5", "Q6"],
@@ -31,10 +31,10 @@ const AXIS_LABELS_SIM: Record<AxisValue, string> = {
 };
 
 const SIMULATION_CRITERIA = [
-  { key: "ambicao", label: "Ambição", axis: "potencial" },
-  { key: "sonharGrande", label: "Sonhar Grande", axis: "potencial" },
-  { key: "accountability", label: "Accountability", axis: "potencial" },
-  { key: "juntosSomosMaisFortes", label: "Juntos Somos Mais Fortes", axis: "potencial" },
+  { key: "ambicao", label: "Ambição", axis: "cultura" },
+  { key: "sonharGrande", label: "Sonhar Grande", axis: "cultura" },
+  { key: "accountability", label: "Accountability", axis: "cultura" },
+  { key: "juntosSomosMaisFortes", label: "Juntos Somos Mais Fortes", axis: "cultura" },
   { key: "qualidade", label: "Qualidade e Consistência", axis: "performance" },
   { key: "contribuicao", label: "Contribuição para o Negócio", axis: "performance" },
   { key: "adaptacao", label: "Adaptação e Velocidade", axis: "performance" },
@@ -186,13 +186,13 @@ export default function NineBox() {
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {["potencial", "performance"].map((axis) => (
+              {["cultura", "performance"].map((axis) => (
                 <div key={axis}>
                   <p
                     className="text-xs font-bold mb-2 uppercase tracking-wider"
-                    style={{ color: axis === "potencial" ? "#1840eb" : "#d9f22a" }}
+                    style={{ color: axis === "cultura" ? "#1840eb" : "#d9f22a" }}
                   >
-                    Eixo de {axis === "potencial" ? "Potencial" : "Performance"}
+                    Eixo de {axis === "cultura" ? "Cultura" : "Performance"}
                   </p>
                   <div className="space-y-2">
                     {SIMULATION_CRITERIA.filter((c) => c.axis === axis).map((c) => (
@@ -308,7 +308,7 @@ export default function NineBox() {
                   className="hidden sm:block absolute -left-8 top-1/2 -translate-y-1/2 -rotate-90 text-xs font-semibold whitespace-nowrap"
                   style={{ color: "#8aa3c0" }}
                 >
-                  Performance (Baixo → Alto)
+                  Cultura (Baixa → Alta)
                 </div>
 
                 <div className="grid grid-cols-3 gap-1 sm:gap-1.5 ml-0 sm:ml-4 min-w-[280px]">
@@ -392,7 +392,7 @@ export default function NineBox() {
                   className="text-center mt-2 text-xs font-semibold ml-4"
                   style={{ color: "#8aa3c0" }}
                 >
-                  Potencial (Baixo → Alto)
+                  Performance (Baixa → Alta)
                 </div>
               </div>
             </div>

@@ -42,7 +42,7 @@ const STATUS_CONFIG = {
 };
 
 const ALL_QUESTIONS = [
-  ...FLASH_FEEDBACK_NINEBOX_QUESTIONS.potencial,
+  ...FLASH_FEEDBACK_NINEBOX_QUESTIONS.cultura,
   ...FLASH_FEEDBACK_NINEBOX_QUESTIONS.performance,
 ];
 
@@ -528,12 +528,12 @@ export default function FlashFeedback() {
                   <span
                     className="text-xs px-2 py-0.5 rounded-full font-semibold border"
                     style={
-                      currentQ.eixo === "potencial"
+                      currentQ.eixo === "cultura"
                         ? { backgroundColor: "#1840eb15", borderColor: "#1840eb40", color: "#7ba7ff" }
                         : { backgroundColor: "#d9f22a15", borderColor: "#d9f22a40", color: "#d9f22a" }
                     }
                   >
-                    {currentQ.eixo === "potencial" ? "Potencial" : "Performance"}: {currentQ.criterio}
+                    {currentQ.eixo === "cultura" ? "Cultura" : "Performance"}: {currentQ.criterio}
                   </span>
                 </div>
 

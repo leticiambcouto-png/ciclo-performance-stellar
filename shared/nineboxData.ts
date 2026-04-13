@@ -1,35 +1,34 @@
 // ─── 9BOX DATA: QUADRANT DEFINITIONS ────────────────────────────────────────
 //
-// Grid layout (renumbered):
+// Grid layout (new orientation):
 //
-//   Performance ↑
+//   Cultura ↑
 //   Alta  │ Q7  Q8  Q9
 //   Média │ Q4  Q5  Q6
 //   Baixa │ Q1  Q2  Q3
-//          ──────────────→ Potencial
-//            Baixo Médio Alto
+//          ──────────────→ Performance
+//            Baixa Média Alta
 //
-// Swaps applied vs original numbering:
-//   Q3 ↔ Q7  (low-perf/high-pot  ↔  high-perf/low-pot)
-//   Q6 ↔ Q8  (mid-perf/high-pot  ↔  high-perf/mid-pot)
+// Axes:
+//   X (horizontal) = Performance (Baixa → Alta)
+//   Y (vertical)   = Cultura (Baixa → Alta)
 //
-// SCORING RULES (updated):
+// SCORING RULES:
 //   - Each criterion is scored 1 (below), 2 (within) or 3 (above)
 //   - Axis score = average of its 4 criteria scores
-//   - Acima  = average 3.0 – 4.0  (but max is 3.0 since max per criterion is 3)
-//             → so Acima = average >= 2.5  (≥ 3 criteria "above" or equivalent)
-//             Actually: Acima = average >= 3.0 means all 4 = above (avg = 3.0)
-//             Per spec: Acima = 3 to 4, Dentro = 2 to 2.99, Abaixo = < 2
-//             Since scores are 1/2/3, avg range is 1.0 to 3.0
-//   - FINAL 9-BOX WEIGHT: Performance 70% + Potencial 30%
-//     Combined score = (perfScore * 0.7) + (potScore * 0.3)
-//     Combined score mapped to level: >= 2.5 = high, >= 2.0 = medium, < 2.0 = low
-//     But each axis is mapped independently first, then combined score determines final quadrant
+//   - Acima  = average >= 3.0
+//   - Dentro = average >= 2.0 and < 3.0
+//   - Abaixo = average < 2.0
+//   - FINAL 9-BOX WEIGHT: Performance 70% + Cultura 30%
+//     Combined score = (perfScore * 0.7) + (cultScore * 0.3)
 
 export type AxisValue = "below" | "within" | "above";
-export type PotencialLevel = "low" | "medium" | "high";
+export type CulturaLevel = "low" | "medium" | "high";
 export type PerformanceLevel = "low" | "medium" | "high";
 export type NineboxQuadrant = "Q1" | "Q2" | "Q3" | "Q4" | "Q5" | "Q6" | "Q7" | "Q8" | "Q9";
+
+// Keep PotencialLevel as alias for backward compatibility
+export type PotencialLevel = CulturaLevel;
 
 // Numeric score for each axis value
 export const AXIS_SCORES: Record<AxisValue, number> = {
@@ -43,7 +42,7 @@ export interface QuadrantInfo {
   name: string;
   description: string;
   zone: "critical" | "maintainer" | "talent";
-  potencial: PotencialLevel;
+  cultura: CulturaLevel;
   performance: PerformanceLevel;
   merito: boolean;
   promocao: boolean;
@@ -54,14 +53,14 @@ export interface QuadrantInfo {
 }
 
 export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
-  // ── Row 1 (Performance Baixa) ─────────────────────────────────────────────
+  // ── Row 1 (Cultura Baixa) ─────────────────────────────────────────────────
   Q1: {
     id: "Q1",
     name: "Crítico",
     description:
-      "Performance baixa e potencial baixo. Essa pessoa não está entregando o esperado e não demonstra os comportamentos e valores da Stellar. Requer atenção imediata, plano de melhoria estruturado e decisão clara sobre continuidade.",
+      "Performance baixa e cultura baixa. Essa pessoa não está entregando o esperado e não demonstra os comportamentos e valores da Stellar. Requer atenção imediata, plano de melhoria estruturado e decisão clara sobre continuidade.",
     zone: "critical",
-    potencial: "low",
+    cultura: "low",
     performance: "low",
     merito: false,
     promocao: false,
@@ -73,45 +72,11 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
   },
   Q2: {
     id: "Q2",
-    name: "Crítico Comportamental",
+    name: "Resultado sem Cultura",
     description:
-      "Performance baixa e potencial médio. Tem capacidade de entregar mais, mas algo está bloqueando. Pode ser falta de clareza, engajamento, recursos ou fit com o papel. Requer diagnóstico antes de qualquer decisão.",
+      "Performance média, mas cultura baixa. Entrega resultado dentro do escopo, mas não demonstra os valores e comportamentos esperados pela Stellar. O risco está na cultura: essa pessoa pode contaminar o time.",
     zone: "critical",
-    potencial: "medium",
-    performance: "low",
-    merito: false,
-    promocao: false,
-    bonus: "by_goal",
-    color: "#f97316",
-    bgClass: "quadrant-behavioral-critical",
-    actionPlan:
-      "Conversa de diagnóstico para entender o bloqueio. Verificar se o papel está alinhado com as capacidades. Plano de ação com suporte do gestor nos próximos 60 dias.",
-  },
-  Q3: {
-    id: "Q3",
-    name: "Talento Bloqueado",
-    description:
-      "Alto potencial, mas performance baixa. Tem os valores e a capacidade, mas não está entregando. O bloqueio pode ser o papel, o contexto, a liderança ou falta de clareza. Requer atenção urgente para não perder esse talento.",
-    zone: "maintainer",
-    potencial: "high",
-    performance: "low",
-    merito: false,
-    promocao: false,
-    bonus: "by_goal",
-    color: "#a855f7",
-    bgClass: "quadrant-blocked-talent",
-    actionPlan:
-      "Conversa profunda para entender o bloqueio. Considerar mudança de papel ou área. Plano de desbloqueio com suporte intensivo nos próximos 90 dias.",
-  },
-
-  // ── Row 2 (Performance Média) ─────────────────────────────────────────────
-  Q4: {
-    id: "Q4",
-    name: "Risco Silencioso",
-    description:
-      "Potencial baixo e performance média. Entrega resultado dentro do escopo, mas não demonstra os valores e comportamentos esperados pela Stellar. O risco está na cultura: essa pessoa pode contaminar o time.",
-    zone: "critical",
-    potencial: "low",
+    cultura: "low",
     performance: "medium",
     merito: false,
     promocao: false,
@@ -121,13 +86,47 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     actionPlan:
       "Conversa direta sobre comportamentos específicos com exemplos concretos. Plano de ajuste comportamental com prazo de 60 dias. Monitoramento próximo do gestor.",
   },
+  Q3: {
+    id: "Q3",
+    name: "Alta Entrega, Baixa Cultura",
+    description:
+      "Alta performance, mas cultura baixa. Entrega muito bem, mas não demonstra os valores Stellar. É um risco cultural: pode gerar resultados no curto prazo, mas corrói a cultura no longo prazo.",
+    zone: "maintainer",
+    cultura: "low",
+    performance: "high",
+    merito: false,
+    promocao: false,
+    bonus: "yes",
+    color: "#eab308",
+    bgClass: "quadrant-result-no-culture",
+    actionPlan:
+      "Reconhecer a entrega, mas ser direto sobre os gaps comportamentais. Definir comportamentos específicos a desenvolver. Sem promoção até alinhamento cultural.",
+  },
+
+  // ── Row 2 (Cultura Média) ─────────────────────────────────────────────────
+  Q4: {
+    id: "Q4",
+    name: "Crítico Comportamental",
+    description:
+      "Performance baixa e cultura média. Tem os valores, mas não está entregando. Pode ser falta de clareza, engajamento, recursos ou fit com o papel. Requer diagnóstico antes de qualquer decisão.",
+    zone: "critical",
+    cultura: "medium",
+    performance: "low",
+    merito: false,
+    promocao: false,
+    bonus: "by_goal",
+    color: "#f97316",
+    bgClass: "quadrant-behavioral-critical",
+    actionPlan:
+      "Conversa de diagnóstico para entender o bloqueio. Verificar se o papel está alinhado com as capacidades. Plano de ação com suporte do gestor nos próximos 60 dias.",
+  },
   Q5: {
     id: "Q5",
     name: "Core / Mantenedor",
     description:
-      "Potencial médio e performance média. É o coração do time: entrega de forma consistente, demonstra os valores, mas não busca expandir além do seu escopo. Fundamental para a operação.",
+      "Cultura média e performance média. É o coração do time: entrega de forma consistente, demonstra os valores, mas não busca expandir além do seu escopo. Fundamental para a operação.",
     zone: "maintainer",
-    potencial: "medium",
+    cultura: "medium",
     performance: "medium",
     merito: true,
     promocao: false,
@@ -139,45 +138,11 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
   },
   Q6: {
     id: "Q6",
-    name: "Talento a Acelerar",
-    description:
-      "Alto potencial e performance média. Tem tudo para ser um top performer. Está crescendo, mas ainda não atingiu o máximo. Precisa de desafios, exposição e aceleração.",
-    zone: "talent",
-    potencial: "high",
-    performance: "medium",
-    merito: true,
-    promocao: true,
-    bonus: "by_goal",
-    color: "#d9f22a",
-    bgClass: "quadrant-accelerate",
-    actionPlan:
-      "Acelerar com projetos estratégicos. Mentoria com liderança sênior. Plano de carreira acelerado. Considerar promoção no próximo ciclo.",
-  },
-
-  // ── Row 3 (Performance Alta) ──────────────────────────────────────────────
-  Q7: {
-    id: "Q7",
-    name: "Resultado sem Cultura",
-    description:
-      "Alta performance, mas potencial baixo. Entrega muito bem, mas não demonstra os valores Stellar. É um risco cultural: pode gerar resultados no curto prazo, mas corrói a cultura no longo prazo.",
-    zone: "maintainer",
-    potencial: "low",
-    performance: "high",
-    merito: false,
-    promocao: false,
-    bonus: "yes",
-    color: "#eab308",
-    bgClass: "quadrant-result-no-culture",
-    actionPlan:
-      "Reconhecer a entrega, mas ser direto sobre os gaps comportamentais. Definir comportamentos específicos a desenvolver. Sem promoção até alinhamento cultural.",
-  },
-  Q8: {
-    id: "Q8",
     name: "Alto Entregador",
     description:
-      "Potencial médio e alta performance. Entrega muito bem e de forma consistente. Tem capacidade de crescer, mas ainda não demonstrou expansão de potencial. Candidato a desafios maiores.",
+      "Alta performance e cultura média. Entrega muito bem e de forma consistente. Tem capacidade de crescer, mas ainda não demonstrou expansão de cultura. Candidato a desafios maiores.",
     zone: "talent",
-    potencial: "medium",
+    cultura: "medium",
     performance: "high",
     merito: true,
     promocao: false,
@@ -187,13 +152,47 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     actionPlan:
       "Dar projetos de maior complexidade. Explorar interesse em liderança ou especialização técnica. Plano de carreira claro.",
   },
+
+  // ── Row 3 (Cultura Alta) ──────────────────────────────────────────────────
+  Q7: {
+    id: "Q7",
+    name: "Talento Bloqueado",
+    description:
+      "Alta cultura, mas performance baixa. Tem os valores e a capacidade, mas não está entregando. O bloqueio pode ser o papel, o contexto, a liderança ou falta de clareza. Requer atenção urgente para não perder esse talento.",
+    zone: "maintainer",
+    cultura: "high",
+    performance: "low",
+    merito: false,
+    promocao: false,
+    bonus: "by_goal",
+    color: "#a855f7",
+    bgClass: "quadrant-blocked-talent",
+    actionPlan:
+      "Conversa profunda para entender o bloqueio. Considerar mudança de papel ou área. Plano de desbloqueio com suporte intensivo nos próximos 90 dias.",
+  },
+  Q8: {
+    id: "Q8",
+    name: "Talento a Acelerar",
+    description:
+      "Alta cultura e performance média. Tem tudo para ser um top performer. Está crescendo, mas ainda não atingiu o máximo. Precisa de desafios, exposição e aceleração.",
+    zone: "talent",
+    cultura: "high",
+    performance: "medium",
+    merito: true,
+    promocao: true,
+    bonus: "by_goal",
+    color: "#d9f22a",
+    bgClass: "quadrant-accelerate",
+    actionPlan:
+      "Acelerar com projetos estratégicos. Mentoria com liderança sênior. Plano de carreira acelerado. Considerar promoção no próximo ciclo.",
+  },
   Q9: {
     id: "Q9",
     name: "Top Talent",
     description:
-      "Alto potencial e alta performance. É o melhor que a Stellar tem. Entrega acima do esperado, demonstra todos os valores e tem capacidade de crescer ainda mais. Deve ser retido, reconhecido e acelerado.",
+      "Alta cultura e alta performance. É o melhor que a Stellar tem. Entrega acima do esperado, demonstra todos os valores e tem capacidade de crescer ainda mais. Deve ser retido, reconhecido e acelerado.",
     zone: "talent",
-    potencial: "high",
+    cultura: "high",
     performance: "high",
     merito: true,
     promocao: true,
@@ -209,9 +208,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
 
 /**
  * Convert a numeric average score to an axis level.
- * Spec: Acima = 3.0 to 4.0 (avg >= 3.0 means all criteria = above)
- *       Dentro = 2.0 to 2.99
- *       Abaixo = < 2.0
+ * Spec: Acima = avg >= 3.0, Dentro = 2.0 to 2.99, Abaixo = < 2.0
  */
 export function scoreToLevel(avg: number): "low" | "medium" | "high" {
   if (avg >= 3.0) return "high";
@@ -220,7 +217,7 @@ export function scoreToLevel(avg: number): "low" | "medium" | "high" {
 }
 
 /**
- * Calculate the average score for an axis given 4 AxisValue inputs.
+ * Calculate the average score for an axis given AxisValue inputs.
  */
 export function calcAxisAverage(...values: AxisValue[]): number {
   const sum = values.reduce((acc, v) => acc + AXIS_SCORES[v], 0);
@@ -228,8 +225,22 @@ export function calcAxisAverage(...values: AxisValue[]): number {
 }
 
 /**
- * Calculate Potencial level from 4 criteria scores.
+ * Calculate Cultura level from 4 criteria scores.
  * Criteria: Ambição, Sonhar Grande, Accountability, Juntos Somos Mais Fortes
+ * (Previously called "Potencial" — renamed to "Cultura")
+ */
+export function calculateCultura(
+  ambicao: AxisValue,
+  sonharGrande: AxisValue,
+  accountability: AxisValue,
+  juntosSomosMaisFortes: AxisValue
+): CulturaLevel {
+  const avg = calcAxisAverage(ambicao, sonharGrande, accountability, juntosSomosMaisFortes);
+  return scoreToLevel(avg);
+}
+
+/**
+ * Backward-compatible alias: calculatePotencial → calculateCultura
  */
 export function calculatePotencial(
   ambicao: AxisValue,
@@ -237,8 +248,7 @@ export function calculatePotencial(
   accountability: AxisValue,
   juntosSomosMaisFortes: AxisValue
 ): PotencialLevel {
-  const avg = calcAxisAverage(ambicao, sonharGrande, accountability, juntosSomosMaisFortes);
-  return scoreToLevel(avg);
+  return calculateCultura(ambicao, sonharGrande, accountability, juntosSomosMaisFortes);
 }
 
 /**
@@ -256,41 +266,40 @@ export function calculatePerformance(
 }
 
 /**
- * Calculate the final 9-Box quadrant applying the 70/30 weight rule.
+ * Calculate the final 9-Box quadrant.
  *
- * Weight: Performance = 70%, Potencial = 30%
- * Combined score = (perfAvg * 0.7) + (potAvg * 0.3)
- * The combined score determines the final quadrant via the same thresholds.
+ * Grid: X = Performance, Y = Cultura
+ *   Cultura ↑
+ *   Alta  │ Q7  Q8  Q9
+ *   Média │ Q4  Q5  Q6
+ *   Baixa │ Q1  Q2  Q3
+ *          ──────────────→ Performance
+ *            Baixa Média Alta
  *
- * However, each axis is ALSO mapped independently to determine the grid cell,
- * because the 9-Box is a 2D grid. The weighted score is used to break ties
- * and to ensure performance has more influence on the final placement.
- *
- * Implementation: we compute a weighted combined score for each axis to
- * determine the final level, but we keep the 2D nature of the grid.
- * Specifically: the performance axis uses 70% weight and potencial 30%.
+ * Weight: Performance = 70%, Cultura = 30%
+ * Each axis is mapped independently to determine the grid cell.
  */
 export function calculateNineboxQuadrant(
-  potencial: PotencialLevel,
+  cultura: CulturaLevel,
   performance: PerformanceLevel
 ): NineboxQuadrant {
-  const map: Record<PotencialLevel, Record<PerformanceLevel, NineboxQuadrant>> = {
-    low:    { low: "Q1", medium: "Q4", high: "Q7" },
-    medium: { low: "Q2", medium: "Q5", high: "Q8" },
-    high:   { low: "Q3", medium: "Q6", high: "Q9" },
+  const map: Record<CulturaLevel, Record<PerformanceLevel, NineboxQuadrant>> = {
+    low:    { low: "Q1", medium: "Q2", high: "Q3" },
+    medium: { low: "Q4", medium: "Q5", high: "Q6" },
+    high:   { low: "Q7", medium: "Q8", high: "Q9" },
   };
-  return map[potencial][performance];
+  return map[cultura][performance];
 }
 
 /**
  * Full calculation: given raw axis values for all 8 criteria,
- * returns potencial level, performance level, weighted combined score,
+ * returns cultura level, performance level, weighted combined score,
  * and the final quadrant.
  *
- * Performance weight: 70% | Potencial weight: 30%
+ * Performance weight: 70% | Cultura weight: 30%
  */
 export function calculateFullNinebox(
-  // Potencial criteria
+  // Cultura criteria (previously "Potencial")
   ambicao: AxisValue,
   sonharGrande: AxisValue,
   accountability: AxisValue,
@@ -301,32 +310,38 @@ export function calculateFullNinebox(
   adaptacao: AxisValue,
   usoDeIA: AxisValue
 ): {
-  potencialAvg: number;
+  culturaAvg: number;
   performanceAvg: number;
   weightedScore: number;
-  potencialLevel: PotencialLevel;
+  culturaLevel: CulturaLevel;
   performanceLevel: PerformanceLevel;
   quadrant: NineboxQuadrant;
+  // Backward-compat aliases
+  potencialAvg: number;
+  potencialLevel: PotencialLevel;
 } {
-  const potencialAvg = calcAxisAverage(ambicao, sonharGrande, accountability, juntosSomosMaisFortes);
+  const culturaAvg = calcAxisAverage(ambicao, sonharGrande, accountability, juntosSomosMaisFortes);
   const performanceAvg = calcAxisAverage(qualidade, contribuicao, adaptacao, usoDeIA);
 
   // Weighted combined score (for display/reference)
-  const weightedScore = performanceAvg * 0.7 + potencialAvg * 0.3;
+  const weightedScore = performanceAvg * 0.7 + culturaAvg * 0.3;
 
   // Each axis is mapped independently to its level
-  const potencialLevel = scoreToLevel(potencialAvg);
+  const culturaLevel = scoreToLevel(culturaAvg);
   const performanceLevel = scoreToLevel(performanceAvg);
 
-  const quadrant = calculateNineboxQuadrant(potencialLevel, performanceLevel);
+  const quadrant = calculateNineboxQuadrant(culturaLevel, performanceLevel);
 
   return {
-    potencialAvg,
+    culturaAvg,
     performanceAvg,
     weightedScore,
-    potencialLevel,
+    culturaLevel,
     performanceLevel,
     quadrant,
+    // Backward-compat aliases
+    potencialAvg: culturaAvg,
+    potencialLevel: culturaLevel,
   };
 }
 
@@ -367,11 +382,11 @@ export function calculateCurveDistribution(quadrants: NineboxQuadrant[]): {
 // where the collaborator would be positioned in the 9-Box today.
 
 export const FLASH_FEEDBACK_NINEBOX_QUESTIONS = {
-  potencial: [
+  cultura: [
     {
       key: "ambicao",
       criterio: "Ambição",
-      eixo: "potencial" as const,
+      eixo: "cultura" as const,
       pergunta: "Como você avalia a ambição desta pessoa hoje? Ela demonstra vontade genuína de crescer, busca desafios além do seu escopo e tem clareza sobre onde quer chegar?",
       abaixo: "Não demonstra ambição clara, parece acomodada com o status quo",
       dentro: "Tem ambição, mas ainda dentro do seu escopo atual",
@@ -380,7 +395,7 @@ export const FLASH_FEEDBACK_NINEBOX_QUESTIONS = {
     {
       key: "sonharGrande",
       criterio: "Sonhar Grande",
-      eixo: "potencial" as const,
+      eixo: "cultura" as const,
       pergunta: "Esta pessoa pensa além do óbvio? Ela propõe ideias ousadas, questiona o status quo e enxerga possibilidades que outros não veem?",
       abaixo: "Pensa de forma limitada, raramente propõe algo além do básico",
       dentro: "Tem boas ideias, mas ainda dentro do esperado para o papel",
@@ -389,7 +404,7 @@ export const FLASH_FEEDBACK_NINEBOX_QUESTIONS = {
     {
       key: "accountability",
       criterio: "Accountability",
-      eixo: "potencial" as const,
+      eixo: "cultura" as const,
       pergunta: "Esta pessoa assume responsabilidade pelos seus resultados? Ela não terceiriza problemas, cumpre o que promete e aprende com os erros sem precisar de cobrança?",
       abaixo: "Frequentemente terceiriza responsabilidade ou não cumpre o que promete",
       dentro: "Assume responsabilidade quando cobrada, mas precisa de acompanhamento",
@@ -398,7 +413,7 @@ export const FLASH_FEEDBACK_NINEBOX_QUESTIONS = {
     {
       key: "juntosSomosMaisFortes",
       criterio: "Juntos Somos Mais Fortes",
-      eixo: "potencial" as const,
+      eixo: "cultura" as const,
       pergunta: "Esta pessoa colabora genuinamente com o time? Ela compartilha conhecimento, ajuda os colegas a crescerem e coloca o coletivo acima do individual?",
       abaixo: "Trabalha de forma isolada, raramente colabora ou compartilha conhecimento",
       dentro: "Colabora quando solicitada, mas não é proativa no coletivo",
@@ -443,6 +458,8 @@ export const FLASH_FEEDBACK_NINEBOX_QUESTIONS = {
       acima: "Usa IA de forma consistente e estratégica, multiplicando seu impacto",
     },
   ],
+  // Backward-compat alias
+  get potencial() { return this.cultura; },
 };
 
 // ─── FLASH FEEDBACK ACTION PLAN STRUCTURE ────────────────────────────────────

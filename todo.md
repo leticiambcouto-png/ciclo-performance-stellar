@@ -230,7 +230,15 @@
   - O que o gestor vai fazer para viabilizar? (5 min)
 
 ## Devolutiva Simplificada (Abril 2026 - Lote 3)
-- [ ] Avaliação do gestor: adicionar campo "Feedback Geral" ao final (após as 8 dimensões), habilitado quando todas as dimensões estiverem preenchidas
-- [ ] Persistir feedbackGeral na tabela manager_evaluations (nova coluna)
-- [ ] Devolutiva do colaborador: exibir quadrante calibrado no topo + notas/comentários por dimensão + Feedback Geral
-- [ ] Remover gestão de consequência da visão do colaborador (informação confidencial apenas para gestores)
+- [x] Avaliação do gestor: adicionar campo "Feedback Geral" ao final (após as 8 dimensões), habilitado quando todas as dimensões estiverem preenchidas
+- [x] Persistir feedbackGeral na tabela manager_evaluations (nova coluna)
+- [x] Devolutiva do colaborador: exibir quadrante calibrado no topo + notas/comentários por dimensão + Feedback Geral
+- [x] Remover gestão de consequência da visão do colaborador (informação confidencial apenas para gestores)
+
+## Reorganização Eixos 9-Box (Abril 2026 - Lote 4)
+- [x] Eixo horizontal = Performance (X), eixo vertical = Cultura (Y, antes Potencial)
+- [x] Renomear "Potencial" para "Cultura" em toda a interface e lógica
+- [x] Reposicionar quadrantes Q1-Q9 conforme nova orientação dos eixos
+- [x] Atualizar rótulos dos eixos em NineBox.tsx, Dashboard.tsx, CicloOverview.tsx
+- [x] Atualizar lógica de cálculo: Performance = eixo X, Cultura = eixo Y
+- [x] Atualizar testes unitários para refletir nova nomenclatura

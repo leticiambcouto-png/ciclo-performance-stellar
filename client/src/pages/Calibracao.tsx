@@ -472,7 +472,7 @@ export default function Calibracao() {
                               </div>
                             ) : null;
                           })}
-                          <p className="text-xs font-medium mb-1 mt-2" style={{ color: "#d9f22a" }}>Potencial (30%)</p>
+                           <p className="text-xs font-medium mb-1 mt-2" style={{ color: "#7ba7ff" }}>Cultura (30%)</p>
                           {POT_KEYS.map((key) => {
                             const val = (selectedEmployeeEval as any)[key];
                             return val ? (

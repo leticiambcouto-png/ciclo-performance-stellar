@@ -57,14 +57,14 @@ const FASES = [
     icone: ClipboardList,
     titulo: "Autoavaliação",
     periodo: "Julho/2026",
-    objetivo:
-      "Cada colaborador e gestor reflete sobre sua própria performance e potencial ao longo do semestre, respondendo 8 perguntas-âncora divididas em dois eixos: Potencial (comportamento/valores) e Performance (entrega/resultado).",
+      objetivo:
+        "Cada colaborador e gestor reflete sobre sua própria performance e cultura ao longo do semestre, respondendo 8 perguntas-âncora divididas em dois eixos: Cultura (comportamento/valores) e Performance (entrega/resultado).",
     cor: "#d9f22a",
     corBg: "#d9f22a15",
     corBorda: "#d9f22a40",
     gestor: [
       "Realizar a própria autoavaliação com honestidade e evidências concretas",
-      "Responder os 4 critérios de Potencial: Ambição, Sonhar Grande, Accountability, Juntos Somos Mais Fortes",
+      "Responder os 4 critérios de Cultura: Ambição, Sonhar Grande, Accountability, Juntos Somos Mais Fortes",
       "Responder os 4 critérios de Performance: Qualidade, Contribuição, Adaptação, Uso de IA",
       "Adicionar comentários com exemplos reais para cada critério",
     ],
@@ -241,7 +241,7 @@ const FASES = [
     ],
     periodicidadePorQuadrante: [
       { quadrante: "Q9 — Estrela", frequencia: "Mensal", cor: "#22c55e" },
-      { quadrante: "Q8 — Alto Potencial", frequencia: "Mensal", cor: "#22c55e" },
+      { quadrante: "Q8 — Talento a Acelerar", frequencia: "Mensal", cor: "#22c55e" },
       { quadrante: "Q7 — Talento Consistente", frequencia: "Bimestral", cor: "#22c55e" },
       { quadrante: "Q6 — Promissor", frequencia: "Bimestral", cor: "#eab308" },
       { quadrante: "Q5 — Mantenedor", frequencia: "Bimestral", cor: "#eab308" },
@@ -482,9 +482,9 @@ export default function CicloOverview() {
           </div>
           <div className="flex-1 p-4 rounded-xl" style={{ backgroundColor: "#d9f22a10", border: "1px solid #d9f22a30" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#d9f22a" }}>AVD: Ciclo de Performance</p>
-            <p className="text-sm font-semibold mb-1" style={{ color: "#fdffdf" }}>Avalia como a pessoa performou e qual é o seu potencial</p>
+            <p className="text-sm font-semibold mb-1" style={{ color: "#fdffdf" }}>Avalia como a pessoa performou e qual é a sua cultura</p>
             <p className="text-xs" style={{ color: "#8aa3c0" }}>
-              Medido em dois eixos independentes: Potencial (comportamento/valores) e Performance (entrega/resultado).
+              Medido em dois eixos independentes: Cultura (comportamento/valores) e Performance (entrega/resultado).
             </p>
           </div>
         </div>
@@ -712,7 +712,7 @@ export default function CicloOverview() {
               style={{ backgroundColor: "#1840eb15", border: "1px solid #1840eb40", color: "#7ba7ff" }}
             >
               <span className="text-base font-black">30%</span>
-              <span>Potencial</span>
+              <span>Cultura</span>
             </div>
             <span style={{ color: "#0a3060" }}>=</span>
             <div
@@ -771,13 +771,13 @@ export default function CicloOverview() {
               </div>
             </div>
 
-            {/* Potencial — SEGUNDO */}
+            {/* Cultura — SEGUNDO */}
             <div className="p-5 rounded-2xl" style={{ backgroundColor: "#001830", border: "1px solid #1840eb40" }}>
               <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#1840eb" }} />
                   <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#7ba7ff" }}>
-                    Eixo de Potencial: Comportamento &amp; Valores
+                    Eixo de Cultura: Comportamento &amp; Valores
                   </p>
                 </div>
                 <span
@@ -796,7 +796,7 @@ export default function CicloOverview() {
                 className="mt-3 p-3 rounded-xl text-xs space-y-2"
                 style={{ backgroundColor: "#1840eb10", color: "#7ba7ff", border: "1px solid #1840eb20" }}
               >
-                <p><strong>Como é calculado:</strong> A média das notas dos 4 critérios de Potencial define o nível do eixo.</p>
+                <p><strong>Como é calculado:</strong> A média das notas dos 4 critérios de Cultura define o nível do eixo.</p>
                 <div className="grid grid-cols-3 gap-1 text-center">
                   <div className="p-1.5 rounded-lg" style={{ backgroundColor: "#1840eb20" }}>
                     <p className="font-black text-sm" style={{ color: "#7ba7ff" }}>Alto</p>

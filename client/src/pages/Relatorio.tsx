@@ -134,10 +134,10 @@ export default function Relatorio() {
     };
 
     const DIMENSIONS = [
-      { key: "ambicao", label: "Ambição", axis: "Potencial" },
-      { key: "sonharGrande", label: "Sonhar Grande", axis: "Potencial" },
-      { key: "accountability", label: "Accountability", axis: "Potencial" },
-      { key: "juntosSomosMaisFortes", label: "Juntos Somos Mais Fortes", axis: "Potencial" },
+      { key: "ambicao", label: "Ambição", axis: "Cultura" },
+      { key: "sonharGrande", label: "Sonhar Grande", axis: "Cultura" },
+      { key: "accountability", label: "Accountability", axis: "Cultura" },
+      { key: "juntosSomosMaisFortes", label: "Juntos Somos Mais Fortes", axis: "Cultura" },
       { key: "qualidade", label: "Qualidade e Consistência", axis: "Performance" },
       { key: "contribuicao", label: "Contribuição para o Negócio", axis: "Performance" },
       { key: "adaptacao", label: "Adaptação e Velocidade", axis: "Performance" },
@@ -236,7 +236,7 @@ export default function Relatorio() {
               {myManagerEval && (
                 <div>
                   <h3 className="text-sm font-bold mb-3" style={{ color: "#fdffdf" }}>Avaliação por Dimensão</h3>
-                  {["Potencial", "Performance"].map((axis) => (
+                  {["Cultura", "Performance"].map((axis) => (
                     <div key={axis} className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-2 h-5 rounded-full" style={{ backgroundColor: axis === "Performance" ? "#d9f22a" : "#1840eb" }} />

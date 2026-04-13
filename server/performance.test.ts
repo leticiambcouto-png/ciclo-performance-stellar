@@ -103,9 +103,9 @@ describe("scoreToLevel", () => {
   });
 });
 
-// ─── POTENCIAL CALCULATION ────────────────────────────────────────────────────
+// // ─── CULTURA CALCULATION (antes Potencial) ───────────────────────────────
 
-describe("calculatePotencial", () => {
+describe("calculatePotencial (alias de Cultura)", () => {
   it("returns high when all above (avg = 3.0)", () => {
     expect(calculatePotencial("above", "above", "above", "above")).toBe("high");
   });
@@ -147,34 +147,40 @@ describe("calculatePerformance", () => {
   });
 });
 
-// ─── NINEBOX QUADRANT MAPPING ─────────────────────────────────────────────────
+// ─── NINEBOX QUADRANT MAPPING ──────────────────────────────────────────────
+// Nova orientação: X = Performance, Y = Cultura
+// Cultura ↑
+// Alta  │ Q7  Q8  Q9
+// Média │ Q4  Q5  Q6
+// Baixa │ Q1  Q2  Q3
+//        ──────────────→ Performance
 
 describe("calculateNineboxQuadrant", () => {
-  it("Q1: low potencial + low performance", () => {
+  it("Q1: low cultura + low performance", () => {
     expect(calculateNineboxQuadrant("low", "low")).toBe("Q1");
   });
-  it("Q2: medium potencial + low performance", () => {
-    expect(calculateNineboxQuadrant("medium", "low")).toBe("Q2");
+  it("Q2: low cultura + medium performance", () => {
+    expect(calculateNineboxQuadrant("low", "medium")).toBe("Q2");
   });
-  it("Q3: high potencial + low performance", () => {
-    expect(calculateNineboxQuadrant("high", "low")).toBe("Q3");
+  it("Q3: low cultura + high performance", () => {
+    expect(calculateNineboxQuadrant("low", "high")).toBe("Q3");
   });
-  it("Q4: low potencial + medium performance", () => {
-    expect(calculateNineboxQuadrant("low", "medium")).toBe("Q4");
+  it("Q4: medium cultura + low performance", () => {
+    expect(calculateNineboxQuadrant("medium", "low")).toBe("Q4");
   });
-  it("Q5: medium potencial + medium performance", () => {
+  it("Q5: medium cultura + medium performance", () => {
     expect(calculateNineboxQuadrant("medium", "medium")).toBe("Q5");
   });
-  it("Q6: high potencial + medium performance", () => {
-    expect(calculateNineboxQuadrant("high", "medium")).toBe("Q6");
+  it("Q6: medium cultura + high performance", () => {
+    expect(calculateNineboxQuadrant("medium", "high")).toBe("Q6");
   });
-  it("Q7: low potencial + high performance", () => {
-    expect(calculateNineboxQuadrant("low", "high")).toBe("Q7");
+  it("Q7: high cultura + low performance", () => {
+    expect(calculateNineboxQuadrant("high", "low")).toBe("Q7");
   });
-  it("Q8: medium potencial + high performance", () => {
-    expect(calculateNineboxQuadrant("medium", "high")).toBe("Q8");
+  it("Q8: high cultura + medium performance", () => {
+    expect(calculateNineboxQuadrant("high", "medium")).toBe("Q8");
   });
-  it("Q9: high potencial + high performance", () => {
+  it("Q9: high cultura + high performance", () => {
     expect(calculateNineboxQuadrant("high", "high")).toBe("Q9");
   });
 });
@@ -206,8 +212,8 @@ describe("calculateFullNinebox", () => {
     expect(result.weightedScore).toBeCloseTo(1.0);
   });
 
-  it("calculates weighted score correctly: perf 70% + pot 30%", () => {
-    // potencial all within (avg=2.0), performance all above (avg=3.0)
+  it("calculates weighted score correctly: perf 70% + cultura 30%", () => {
+    // cultura all within (avg=2.0), performance all above (avg=3.0)
     const result = calculateFullNinebox(
       "within", "within", "within", "within",
       "above", "above", "above", "above"
@@ -215,8 +221,9 @@ describe("calculateFullNinebox", () => {
     // weighted = 3.0 * 0.7 + 2.0 * 0.3 = 2.1 + 0.6 = 2.7
     expect(result.weightedScore).toBeCloseTo(2.7);
     expect(result.performanceLevel).toBe("high");
-    expect(result.potencialLevel).toBe("medium");
-    expect(result.quadrant).toBe("Q8");
+    expect(result.potencialLevel).toBe("medium"); // backward-compat alias
+    // cultura=medium + performance=high → Q6 (new mapping)
+    expect(result.quadrant).toBe("Q6");
   });
 
   it("returns Q5 for all within criteria", () => {
