@@ -272,6 +272,7 @@ export default function Avaliacao() {
         if ((source as any)[f]) data[f] = (source as any)[f];
         if ((source as any)[`${f}Comment`]) data[`${f}Comment`] = (source as any)[`${f}Comment`];
       }
+      if ((source as any).feedbackGeral) data.feedbackGeral = (source as any).feedbackGeral;
       setFormData(data);
     } else {
       setFormData({});
@@ -306,6 +307,7 @@ export default function Avaliacao() {
       adaptacaoComment: formData.adaptacaoComment as string,
       usoDeIA: formData.usoDeIA as AxisValue,
       usoDeIAComment: formData.usoDeIAComment as string,
+      feedbackGeral: formData.feedbackGeral as string,
       status: submit ? ("submitted" as const) : ("draft" as const),
     };
 
@@ -499,6 +501,43 @@ export default function Avaliacao() {
                 ))}
               </div>
             </div>
+
+            {/* Feedback Geral — apenas para gestor avaliando liderado, habilitado quando todas as 8 dimensões estiverem preenchidas */}
+            {!isSelfEval && (
+              <div
+                className="p-5 rounded-2xl border"
+                style={{
+                  backgroundColor: completion === 8 ? "#001830" : "#001023",
+                  borderColor: completion === 8 ? "#d9f22a40" : "#0a3060",
+                  opacity: completion === 8 ? 1 : 0.5,
+                }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-6 rounded-full" style={{ backgroundColor: "#d9f22a" }} />
+                  <h3 className="font-bold" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
+                    Feedback Geral
+                  </h3>
+                  {completion < 8 && (
+                    <span className="text-xs" style={{ color: "#8aa3c0" }}>
+                      Preencha todas as {8 - completion} dimensões restantes para habilitar
+                    </span>
+                  )}
+                </div>
+                <Textarea
+                  placeholder="Escreva um feedback geral consolidado sobre o desempenho e potencial deste colaborador no semestre. Este texto será exibido na devolutiva junto com as notas por dimensão..."
+                  value={(formData.feedbackGeral as string) ?? ""}
+                  onChange={(e) => !isSubmitted && completion === 8 && setFormData((p) => ({ ...p, feedbackGeral: e.target.value }))}
+                  rows={5}
+                  disabled={completion < 8 || isSubmitted}
+                  className="text-sm resize-none"
+                  style={{
+                    backgroundColor: "#001023",
+                    borderColor: completion === 8 ? "#d9f22a30" : "#0a3060",
+                    color: "#fdffdf",
+                  }}
+                />
+              </div>
+            )}
 
             {/* Actions */}
             {!isSubmitted && (

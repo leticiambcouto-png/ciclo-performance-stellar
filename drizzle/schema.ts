@@ -125,6 +125,8 @@ export const managerEvaluations = mysqlTable("manager_evaluations", {
   adaptacaoComment: text("adaptacaoComment"),
   usoDeIA: mysqlEnum("usoDeIA", ["below", "within", "above"]),
   usoDeIAComment: text("usoDeIAComment"),
+  // Feedback geral (habilitado após preencher todas as 8 dimensões)
+  feedbackGeral: text("feedbackGeral"),
   // Calculated positions
   potencialAxis: mysqlEnum("potencialAxis", ["low", "medium", "high"]),
   performanceAxis: mysqlEnum("performanceAxis", ["low", "medium", "high"]),

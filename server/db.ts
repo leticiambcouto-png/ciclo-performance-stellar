@@ -212,6 +212,23 @@ export async function getAllManagerEvaluations(cycleId: number) {
   if (!db) return [];
   return db.select().from(managerEvaluations).where(eq(managerEvaluations.cycleId, cycleId));
 }
+
+export async function getManagerEvaluationByEmployee(employeeId: number, cycleId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(managerEvaluations)
+    .where(
+      and(
+        eq(managerEvaluations.employeeId, employeeId),
+        eq(managerEvaluations.cycleId, cycleId),
+        eq(managerEvaluations.status, "submitted")
+      )
+    )
+    .limit(1);
+  return result[0];
+}
 export async function upsertManagerEvaluation(
   data: typeof managerEvaluations.$inferInsert
 ) {

@@ -1,0 +1,1 @@
+ALTER TABLE `manager_evaluations` ADD `feedbackGeral` text;

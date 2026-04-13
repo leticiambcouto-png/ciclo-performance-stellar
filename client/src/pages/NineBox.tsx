@@ -291,7 +291,7 @@ export default function NineBox() {
                 9-Box: Guia de Quadrantes
               </p>
               <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#8aa3c0" }}>
-                Aqui você pode explorar o que cada quadrante do 9-Box significa, sua descrição e a gestão de consequência associada.
+                Aqui você pode explorar o que cada quadrante do 9-Box significa e sua descrição.
                 Clique em qualquer quadrante para ver os detalhes. Seu posicionamento será compartilhado pelo seu gestor após a avaliação.
               </p>
             </div>
@@ -439,33 +439,36 @@ export default function NineBox() {
                   {qInfo.description}
                 </p>
 
-                <div className="space-y-2 mb-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#8aa3c0" }}>
-                    Gestão de Consequência
-                  </p>
-                  {[
-                    { label: "Mérito", val: qInfo.merito },
-                    { label: "Promoção", val: qInfo.promocao },
-                    { label: "Bônus", val: qInfo.bonus === "yes" ? true : qInfo.bonus === "no" ? false : null },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-center justify-between">
-                      <span className="text-sm" style={{ color: "#fdffdf" }}>{item.label}</span>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full border"
-                        style={{
-                          backgroundColor:
-                            item.val === true ? "#22c55e15" : item.val === false ? "#ef444415" : "#f59e0b15",
-                          borderColor:
-                            item.val === true ? "#22c55e30" : item.val === false ? "#ef444430" : "#f59e0b30",
-                          color:
-                            item.val === true ? "#22c55e" : item.val === false ? "#ef4444" : "#f59e0b",
-                        }}
-                      >
-                        {item.val === true ? "Sim" : item.val === false ? "Não" : "Por meta"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {/* Gestão de Consequência: confidencial, apenas para gestores e RH */}
+                {platformRole !== "colaborador" && (
+                  <div className="space-y-2 mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#8aa3c0" }}>
+                      Gestão de Consequência
+                    </p>
+                    {[
+                      { label: "Mérito", val: qInfo.merito },
+                      { label: "Promoção", val: qInfo.promocao },
+                      { label: "Bônus", val: qInfo.bonus === "yes" ? true : qInfo.bonus === "no" ? false : null },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between">
+                        <span className="text-sm" style={{ color: "#fdffdf" }}>{item.label}</span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full border"
+                          style={{
+                            backgroundColor:
+                              item.val === true ? "#22c55e15" : item.val === false ? "#ef444415" : "#f59e0b15",
+                            borderColor:
+                              item.val === true ? "#22c55e30" : item.val === false ? "#ef444430" : "#f59e0b30",
+                            color:
+                              item.val === true ? "#22c55e" : item.val === false ? "#ef4444" : "#f59e0b",
+                          }}
+                        >
+                          {item.val === true ? "Sim" : item.val === false ? "Não" : "Por meta"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div
                   className="p-3 rounded-lg"

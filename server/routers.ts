@@ -31,6 +31,7 @@ import {
   getFlashFeedbacksForManager,
   getAllManagerEvaluations,
   getManagerEvaluation,
+  getManagerEvaluationByEmployee,
   getManagerEvaluationsForTeam,
   getNineboxPosition,
   getNineboxPositionsForTeam,
@@ -390,6 +391,14 @@ export const appRouter = router({
 
   // ─── MANAGER EVALUATION ──────────────────────────────────────────────────
   managerEvaluation: router({
+    // Colaborador: busca a avaliação submetida pelo gestor sobre si mesmo
+    myEval: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const me = await getEmployeeByUserId(ctx.user.id);
+        if (!me) return null;
+        return getManagerEvaluationByEmployee(me.id, input.cycleId);
+      }),
     getForEmployee: gestorProcedure
       .input(z.object({ employeeId: z.number(), cycleId: z.number() }))
       .query(async ({ ctx, input }) => {
@@ -428,6 +437,7 @@ export const appRouter = router({
           adaptacaoComment: z.string().optional(),
           usoDeIA: axisValueSchema.optional(),
           usoDeIAComment: z.string().optional(),
+          feedbackGeral: z.string().optional(),
           status: z.enum(["draft", "submitted"]).optional(),
         })
       )

@@ -49,6 +49,11 @@ export default function Relatorio() {
     { cycleId },
     { enabled: cycleId > 0 && platformRole === "colaborador" }
   );
+  // Avaliação do gestor sobre o colaborador (para exibir notas por dimensão na devolutiva)
+  const { data: myManagerEval } = trpc.managerEvaluation.myEval.useQuery(
+    { cycleId },
+    { enabled: cycleId > 0 && platformRole === "colaborador" }
+  );
 
   // Gestor: team reports
   const { data: teamReports } = trpc.feedbackReport.teamReports.useQuery(
@@ -122,6 +127,25 @@ export default function Relatorio() {
       ? NINEBOX_QUADRANTS[myNineboxPos.quadrant as NineboxQuadrant]
       : null;
 
+    const AXIS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
+      below: { label: "Abaixo do esperado", color: "#ef4444", bg: "#ef444415" },
+      within: { label: "Dentro do esperado", color: "#f59e0b", bg: "#f59e0b15" },
+      above: { label: "Acima do esperado", color: "#22c55e", bg: "#22c55e15" },
+    };
+
+    const DIMENSIONS = [
+      { key: "ambicao", label: "Ambição", axis: "Potencial" },
+      { key: "sonharGrande", label: "Sonhar Grande", axis: "Potencial" },
+      { key: "accountability", label: "Accountability", axis: "Potencial" },
+      { key: "juntosSomosMaisFortes", label: "Juntos Somos Mais Fortes", axis: "Potencial" },
+      { key: "qualidade", label: "Qualidade e Consistência", axis: "Performance" },
+      { key: "contribuicao", label: "Contribuição para o Negócio", axis: "Performance" },
+      { key: "adaptacao", label: "Adaptação e Velocidade", axis: "Performance" },
+      { key: "usoDeIA", label: "Uso de IA e Automação", axis: "Performance" },
+    ];
+
+    const devolutivaReady = myReport && myReport.status !== "draft";
+
     return (
       <StellarLayout title="Minha Devolutiva">
         <div className="p-4 sm:p-6 max-w-3xl space-y-4 sm:space-y-6">
@@ -150,7 +174,7 @@ export default function Relatorio() {
             </div>
           )}
 
-          {!isDevolutivaBlocked && (!myReport || myReport.status === "draft") ? (
+          {!isDevolutivaBlocked && !devolutivaReady ? (
             <div
               className="p-8 sm:p-12 rounded-xl border text-center"
               style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
@@ -163,8 +187,9 @@ export default function Relatorio() {
                 Seu gestor ainda não enviou o resultado da sua avaliação. Você será notificado quando estiver disponível.
               </p>
             </div>
-          ) : (
+          ) : devolutivaReady ? (
             <>
+              {/* Status header */}
               <div
                 className="p-5 rounded-xl border"
                 style={{ backgroundColor: "#001830", borderColor: "#d9f22a30" }}
@@ -180,7 +205,7 @@ export default function Relatorio() {
                 </p>
               </div>
 
-              {/* Ninebox position */}
+              {/* Quadrante calibrado no topo */}
               {qInfo && (
                 <div
                   className="p-5 rounded-xl border"
@@ -202,68 +227,75 @@ export default function Relatorio() {
                     <div>
                       <p className="font-bold text-lg" style={{ color: "#fdffdf" }}>{qInfo.name}</p>
                       <p className="text-sm mt-1" style={{ color: "#8aa3c0" }}>{qInfo.description}</p>
-                      <div className="flex gap-3 mt-3">
-                        {[
-                          { label: "Mérito", val: qInfo.merito },
-                          { label: "Promoção", val: qInfo.promocao },
-                        ].map((item) => (
-                          <span
-                            key={item.label}
-                            className="text-xs px-2 py-1 rounded-full border"
-                            style={{
-                              backgroundColor: item.val ? "#22c55e15" : "#ef444415",
-                              borderColor: item.val ? "#22c55e30" : "#ef444430",
-                              color: item.val ? "#22c55e" : "#ef4444",
-                            }}
-                          >
-                            {item.label}: {item.val ? "Sim" : "Não"}
-                          </span>
-                        ))}
-                      </div>
                     </div>
-                  </div>
-                  <div
-                    className="mt-4 p-3 rounded-lg"
-                    style={{ backgroundColor: "#001023" }}
-                  >
-                    <p className="text-xs font-semibold mb-1" style={{ color: "#d9f22a" }}>
-                      Plano de Ação
-                    </p>
-                    <p className="text-xs leading-relaxed" style={{ color: "#8aa3c0" }}>
-                      {qInfo.actionPlan}
-                    </p>
                   </div>
                 </div>
               )}
 
-              {/* Feedback content */}
-              <div
-                className="p-5 rounded-xl border"
-                style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
-              >
-                <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#8aa3c0" }}>
-                  Feedback do Gestor
-                </p>
-                <div style={{ color: "#fdffdf" }} className="text-sm">
-                  <Streamdown>{myReport?.finalContent ?? ""}</Streamdown>
+              {/* Notas por dimensão */}
+              {myManagerEval && (
+                <div>
+                  <h3 className="text-sm font-bold mb-3" style={{ color: "#fdffdf" }}>Avaliação por Dimensão</h3>
+                  {["Potencial", "Performance"].map((axis) => (
+                    <div key={axis} className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-5 rounded-full" style={{ backgroundColor: axis === "Performance" ? "#d9f22a" : "#1840eb" }} />
+                        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: axis === "Performance" ? "#d9f22a" : "#7ba7ff" }}>
+                          Eixo de {axis}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        {DIMENSIONS.filter((d) => d.axis === axis).map((dim) => {
+                          const val = (myManagerEval as any)[dim.key] as string | undefined;
+                          const comment = (myManagerEval as any)[`${dim.key}Comment`] as string | undefined;
+                          const axisInfo = val ? AXIS_LABELS[val] : null;
+                          return (
+                            <div
+                              key={dim.key}
+                              className="p-3 rounded-xl border"
+                              style={{ backgroundColor: "#001830", borderColor: axisInfo ? `${axisInfo.color}30` : "#0a3060" }}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-semibold" style={{ color: "#fdffdf" }}>{dim.label}</p>
+                                {axisInfo && (
+                                  <span
+                                    className="text-xs px-2 py-0.5 rounded-full font-bold flex-shrink-0"
+                                    style={{ backgroundColor: axisInfo.bg, color: axisInfo.color }}
+                                  >
+                                    {axisInfo.label}
+                                  </span>
+                                )}
+                              </div>
+                              {comment && (
+                                <p className="text-xs mt-2 leading-relaxed" style={{ color: "#8aa3c0" }}>
+                                  {comment}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
 
-              {myReport?.finalActionPlan && (
+              {/* Feedback Geral do gestor */}
+              {myManagerEval?.feedbackGeral && (
                 <div
                   className="p-5 rounded-xl border"
-                  style={{ backgroundColor: "#001830", borderColor: "#0a3060" }}
+                  style={{ backgroundColor: "#001830", borderColor: "#d9f22a30" }}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#8aa3c0" }}>
-                    Plano de Ação
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#d9f22a" }}>
+                    Feedback Geral do Gestor
                   </p>
-                  <div style={{ color: "#fdffdf" }} className="text-sm">
-                    <Streamdown>{myReport?.finalActionPlan ?? ""}</Streamdown>
-                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: "#fdffdf" }}>
+                    {(myManagerEval as any).feedbackGeral}
+                  </p>
                 </div>
               )}
             </>
-          )}
+          ) : null}
         </div>
       </StellarLayout>
     );
