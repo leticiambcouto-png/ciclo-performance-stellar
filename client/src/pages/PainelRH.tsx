@@ -925,7 +925,13 @@ export default function PainelRH() {
                     >
                       <option value="">Nenhum</option>
                       {activeEmployees
-                        .filter((e) => e.platformRole === "gestor" && e.id !== editingEmployee)
+                        .filter((e) => {
+                          // Include anyone with gestor as primary OR secondary role
+                          const isGestor =
+                            e.platformRole === "gestor" ||
+                            (e as any).secondaryPlatformRole === "gestor";
+                          return isGestor && e.id !== editingEmployee;
+                        })
                         .map((e) => (
                           <option key={e.id} value={e.id}>{e.name}</option>
                         ))}

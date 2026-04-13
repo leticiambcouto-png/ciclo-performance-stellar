@@ -252,3 +252,6 @@
 - [x] Adicionar abas na página 9-Box
 - [x] Adicionar abas na página Flash Feedback
 - [x] Adicionar abas na página Devolutiva
+
+## Correção Lista de Líderes (Abril 2026 - Lote 6)
+- [x] Lista suspensa "Líder Direto" deve incluir todos com papel gestor (primário OU secundário)

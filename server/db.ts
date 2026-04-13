@@ -773,6 +773,7 @@ export async function getAllEmployeesWithManager() {
       diretoria: employees.diretoria,
       managerId: employees.managerId,
       platformRole: employees.platformRole,
+      secondaryPlatformRole: employees.secondaryPlatformRole,
       isActive: employees.isActive,
       userId: employees.userId,
       createdAt: employees.createdAt,
