@@ -189,3 +189,14 @@
 - [x] Perfil: validação de senha atual antes de trocar
 - [x] Perfil: indicador de força de senha com dicas visuais
 - [x] Perfil: rota /perfil registrada no App.tsx e link no menu lateral
+
+## Redefinição de Senha por E-mail (Abril 2026)
+- [x] Schema: tabela password_reset_tokens (token, employeeId, expiresAt, usedAt)
+- [x] Backend: POST /api/auth/forgot-password — gera token seguro (96 hex chars), envia e-mail
+- [x] Backend: POST /api/auth/reset-password — valida token, salva nova senha, marca usedAt
+- [x] Frontend: link "Esqueci minha senha" na tela de login
+- [x] Frontend: página /esqueci-senha com campo de e-mail e estado de sucesso
+- [x] Frontend: página /redefinir-senha?token=... com indicador de força e validações
+- [x] E-mail: template HTML Stellar Gaming com link de redefinição e validade de 1 hora
+- [x] Segurança: tokens de uso único, expiração 1h, proteção contra enumeração de usuários
+- [ ] SMTP: configurar credenciais reais (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)

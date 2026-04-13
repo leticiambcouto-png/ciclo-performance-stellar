@@ -16,6 +16,8 @@ import PainelRH from "./pages/PainelRH";
 import Calibracao from "./pages/Calibracao";
 import Perfil from "./pages/Perfil";
 import CicloOverview from "./pages/CicloOverview";
+import EsqueciSenha from "./pages/EsqueciSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -60,6 +62,8 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/" component={Login} />
+      <Route path="/esqueci-senha" component={EsqueciSenha} />
+      <Route path="/redefinir-senha" component={RedefinirSenha} />
       <Route path="/ciclo">
         <ProtectedRoute component={CicloOverview} />
       </Route>

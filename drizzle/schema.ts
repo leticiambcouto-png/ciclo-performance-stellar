@@ -285,3 +285,15 @@ export const cyclePhases = mysqlTable("cycle_phases", {
 
 export type CyclePhase = typeof cyclePhases.$inferSelect;
 export type InsertCyclePhase = typeof cyclePhases.$inferInsert;
+
+// ─── PASSWORD RESET TOKENS ───────────────────────────────────────────────────
+// Stores one-time tokens for password reset via email link
+export const passwordResetTokens = mysqlTable("password_reset_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  employeeId: int("employeeId").references(() => employees.id).notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

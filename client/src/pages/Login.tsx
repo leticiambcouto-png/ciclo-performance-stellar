@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useStellarAuth } from "@/contexts/StellarAuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,6 +168,18 @@ export default function Login() {
                 "Entrar"
               )}
             </Button>
+
+            <div className="text-center mt-3">
+              <Link href="/esqueci-senha">
+                <button
+                  type="button"
+                  className="text-sm transition-colors hover:underline"
+                  style={{ color: "#4a7ab5" }}
+                >
+                  Esqueci minha senha
+                </button>
+              </Link>
+            </div>
           </form>
         </div>
 
