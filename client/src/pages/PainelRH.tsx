@@ -346,8 +346,8 @@ export default function PainelRH() {
   };
 
   const quadrantColor = (q: string): string => {
-    if (["Q7", "Q8", "Q9"].includes(q)) return "#22c55e";
-    if (["Q4", "Q5", "Q6"].includes(q)) return "#eab308";
+    if (["Q3", "Q8", "Q9"].includes(q)) return "#22c55e";
+    if (["Q2", "Q5", "Q6"].includes(q)) return "#eab308";
     return "#ef4444";
   };
 

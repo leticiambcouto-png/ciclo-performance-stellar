@@ -16,14 +16,14 @@ type AxisLevel = "low" | "medium" | "high";
 
 // 9-box grid layout:
 //   Cultura ↑
-//   Alta  │ Q7  Q8  Q9
-//   Média │ Q4  Q5  Q6
-//   Baixa │ Q1  Q2  Q3
+//   Alta  │ Q3  Q8  Q9
+//   Média │ Q2  Q5  Q6
+//   Baixa │ Q1  Q4  Q7
 //          ──────────────→ Performance (Baixa → Média → Alta)
 const GRID_LAYOUT: NineboxQuadrant[][] = [
-  ["Q7", "Q8", "Q9"],
-  ["Q4", "Q5", "Q6"],
-  ["Q1", "Q2", "Q3"],
+  ["Q3", "Q8", "Q9"],
+  ["Q2", "Q5", "Q6"],
+  ["Q1", "Q4", "Q7"],
 ];
 
 const AXIS_LABELS_SIM: Record<AxisValue, string> = {

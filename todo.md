@@ -284,3 +284,6 @@
 - [x] Tela de Avaliação: reorganizar por ciclo com "Autoavaliação" e "Avaliação dos Liderados" com status
 - [x] Backend: context.ts atualizado para suportar usuários com login customizado (apenas na tabela employees)
 - [x] Backend: getEmployeeByUserId atualizado para suportar IDs sintéticos negativos
+
+## Correção Numeração 9-Box (Abril 2026 - Lote 10)
+- [x] Trocar números Q4↔Q2 e Q3↔Q7 no 9-Box (manter descrições, cores e significados no lugar)

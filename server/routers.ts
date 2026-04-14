@@ -642,15 +642,21 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Determine axes from quadrant
         const qInfo = NINEBOX_QUADRANTS[input.quadrant as keyof typeof NINEBOX_QUADRANTS];
+        // New quadrant numbering:
+        //   Cultura ↑
+        //   Alta  │ Q3  Q8  Q9
+        //   Média │ Q2  Q5  Q6
+        //   Baixa │ Q1  Q4  Q7
+        //          ──────────────→ Performance
         const potencialMap: Record<string, "low" | "medium" | "high"> = {
-          Q1: "low", Q2: "medium", Q3: "high",
-          Q4: "low", Q5: "medium", Q6: "high",
-          Q7: "low", Q8: "medium", Q9: "high",
+          Q1: "low", Q4: "low", Q7: "low",
+          Q2: "medium", Q5: "medium", Q6: "medium",
+          Q3: "high", Q8: "high", Q9: "high",
         };
         const performanceMap: Record<string, "low" | "medium" | "high"> = {
           Q1: "low", Q2: "low", Q3: "low",
-          Q4: "medium", Q5: "medium", Q6: "medium",
-          Q7: "high", Q8: "high", Q9: "high",
+          Q4: "medium", Q5: "medium", Q8: "medium",
+          Q7: "high", Q6: "high", Q9: "high",
         };
         return upsertNineboxPosition({
           employeeId: input.employeeId,

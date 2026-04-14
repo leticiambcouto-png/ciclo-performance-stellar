@@ -16,9 +16,9 @@ import { NINEBOX_QUADRANTS } from "../../../shared/nineboxData";
 import type { NineboxQuadrant } from "../../../shared/nineboxData";
 
 const GRID_LAYOUT: NineboxQuadrant[][] = [
-  ["Q7", "Q8", "Q9"],
-  ["Q4", "Q5", "Q6"],
-  ["Q1", "Q2", "Q3"],
+  ["Q3", "Q8", "Q9"],
+  ["Q2", "Q5", "Q6"],
+  ["Q1", "Q4", "Q7"],
 ];
 
 const CONSEQUENCE_OPTIONS = [

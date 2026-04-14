@@ -159,14 +159,14 @@ describe("calculateNineboxQuadrant", () => {
   it("Q1: low cultura + low performance", () => {
     expect(calculateNineboxQuadrant("low", "low")).toBe("Q1");
   });
-  it("Q2: low cultura + medium performance", () => {
-    expect(calculateNineboxQuadrant("low", "medium")).toBe("Q2");
+  it("Q4: low cultura + medium performance", () => {
+    expect(calculateNineboxQuadrant("low", "medium")).toBe("Q4");
   });
-  it("Q3: low cultura + high performance", () => {
-    expect(calculateNineboxQuadrant("low", "high")).toBe("Q3");
+  it("Q7: low cultura + high performance", () => {
+    expect(calculateNineboxQuadrant("low", "high")).toBe("Q7");
   });
-  it("Q4: medium cultura + low performance", () => {
-    expect(calculateNineboxQuadrant("medium", "low")).toBe("Q4");
+  it("Q2: medium cultura + low performance", () => {
+    expect(calculateNineboxQuadrant("medium", "low")).toBe("Q2");
   });
   it("Q5: medium cultura + medium performance", () => {
     expect(calculateNineboxQuadrant("medium", "medium")).toBe("Q5");
@@ -174,8 +174,8 @@ describe("calculateNineboxQuadrant", () => {
   it("Q6: medium cultura + high performance", () => {
     expect(calculateNineboxQuadrant("medium", "high")).toBe("Q6");
   });
-  it("Q7: high cultura + low performance", () => {
-    expect(calculateNineboxQuadrant("high", "low")).toBe("Q7");
+  it("Q3: high cultura + low performance", () => {
+    expect(calculateNineboxQuadrant("high", "low")).toBe("Q3");
   });
   it("Q8: high cultura + medium performance", () => {
     expect(calculateNineboxQuadrant("high", "medium")).toBe("Q8");

@@ -3,9 +3,9 @@
 // Grid layout (new orientation):
 //
 //   Cultura ↑
-//   Alta  │ Q7  Q8  Q9
-//   Média │ Q4  Q5  Q6
-//   Baixa │ Q1  Q2  Q3
+//   Alta  │ Q3  Q8  Q9
+//   Média │ Q2  Q5  Q6
+//   Baixa │ Q1  Q4  Q7
 //          ──────────────→ Performance
 //            Baixa Média Alta
 //
@@ -70,8 +70,8 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     actionPlan:
       "Plano de Desenvolvimento Individual (PDI) com metas claras e prazos definidos. Reuniões semanais de acompanhamento. Decisão sobre continuidade em até 90 dias.",
   },
-  Q2: {
-    id: "Q2",
+  Q4: {
+    id: "Q4",
     name: "Resultado sem Cultura",
     description:
       "Performance média, mas cultura baixa. Entrega resultado dentro do escopo, mas não demonstra os valores e comportamentos esperados pela Stellar. O risco está na cultura: essa pessoa pode contaminar o time.",
@@ -86,8 +86,8 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     actionPlan:
       "Conversa direta sobre comportamentos específicos com exemplos concretos. Plano de ajuste comportamental com prazo de 60 dias. Monitoramento próximo do gestor.",
   },
-  Q3: {
-    id: "Q3",
+  Q7: {
+    id: "Q7",
     name: "Alta Entrega, Baixa Cultura",
     description:
       "Alta performance, mas cultura baixa. Entrega muito bem, mas não demonstra os valores Stellar. É um risco cultural: pode gerar resultados no curto prazo, mas corrói a cultura no longo prazo.",
@@ -104,8 +104,8 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
   },
 
   // ── Row 2 (Cultura Média) ─────────────────────────────────────────────────
-  Q4: {
-    id: "Q4",
+  Q2: {
+    id: "Q2",
     name: "Crítico Comportamental",
     description:
       "Performance baixa e cultura média. Tem os valores, mas não está entregando. Pode ser falta de clareza, engajamento, recursos ou fit com o papel. Requer diagnóstico antes de qualquer decisão.",
@@ -154,8 +154,8 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
   },
 
   // ── Row 3 (Cultura Alta) ──────────────────────────────────────────────────
-  Q7: {
-    id: "Q7",
+  Q3: {
+    id: "Q3",
     name: "Talento Bloqueado",
     description:
       "Alta cultura, mas performance baixa. Tem os valores e a capacidade, mas não está entregando. O bloqueio pode ser o papel, o contexto, a liderança ou falta de clareza. Requer atenção urgente para não perder esse talento.",
@@ -270,9 +270,9 @@ export function calculatePerformance(
  *
  * Grid: X = Performance, Y = Cultura
  *   Cultura ↑
- *   Alta  │ Q7  Q8  Q9
- *   Média │ Q4  Q5  Q6
- *   Baixa │ Q1  Q2  Q3
+ *   Alta  │ Q3  Q8  Q9
+ *   Média │ Q2  Q5  Q6
+ *   Baixa │ Q1  Q4  Q7
  *          ──────────────→ Performance
  *            Baixa Média Alta
  *
@@ -284,9 +284,9 @@ export function calculateNineboxQuadrant(
   performance: PerformanceLevel
 ): NineboxQuadrant {
   const map: Record<CulturaLevel, Record<PerformanceLevel, NineboxQuadrant>> = {
-    low:    { low: "Q1", medium: "Q2", high: "Q3" },
-    medium: { low: "Q4", medium: "Q5", high: "Q6" },
-    high:   { low: "Q7", medium: "Q8", high: "Q9" },
+    low:    { low: "Q1", medium: "Q4", high: "Q7" },
+    medium: { low: "Q2", medium: "Q5", high: "Q6" },
+    high:   { low: "Q3", medium: "Q8", high: "Q9" },
   };
   return map[cultura][performance];
 }

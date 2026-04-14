@@ -12,21 +12,21 @@ import type { NineboxQuadrant } from "@shared/nineboxData";
 
 // ─── Mini 9-Box grid ─────────────────────────────────────────────────────────
 const NINEBOX_LAYOUT = [
-  ["Q7", "Q8", "Q9"],
-  ["Q4", "Q5", "Q6"],
-  ["Q1", "Q2", "Q3"],
+  ["Q3", "Q8", "Q9"],
+  ["Q2", "Q5", "Q6"],
+  ["Q1", "Q4", "Q7"],
 ];
 
 const QUADRANT_COLORS: Record<string, string> = {
-  Q9: "#22c55e", Q8: "#22c55e", Q7: "#22c55e",
-  Q6: "#d9f22a", Q5: "#d9f22a", Q4: "#d9f22a",
-  Q3: "#f59e0b", Q2: "#f59e0b", Q1: "#ef4444",
+  Q9: "#22c55e", Q8: "#22c55e", Q3: "#22c55e",
+  Q6: "#d9f22a", Q5: "#d9f22a", Q2: "#d9f22a",
+  Q7: "#f59e0b", Q4: "#f59e0b", Q1: "#ef4444",
 };
 
 const QUADRANT_BG: Record<string, string> = {
-  Q9: "#22c55e12", Q8: "#22c55e0c", Q7: "#22c55e0c",
-  Q6: "#d9f22a10", Q5: "#d9f22a0c", Q4: "#d9f22a0c",
-  Q3: "#f59e0b10", Q2: "#f59e0b0c", Q1: "#ef444412",
+  Q9: "#22c55e12", Q8: "#22c55e0c", Q3: "#22c55e0c",
+  Q6: "#d9f22a10", Q5: "#d9f22a0c", Q2: "#d9f22a0c",
+  Q7: "#f59e0b10", Q4: "#f59e0b0c", Q1: "#ef444412",
 };
 
 function MiniNineBox({
@@ -152,8 +152,8 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
 
   // Metrics
   const total = employees.length;
-  const talentos = positions.filter((p) => ["Q7", "Q8", "Q9"].includes(p.quadrant)).length;
-  const zonaCritica = positions.filter((p) => ["Q1", "Q2", "Q3"].includes(p.quadrant)).length;
+  const talentos = positions.filter((p) => ["Q3", "Q8", "Q9"].includes(p.quadrant)).length;
+  const zonaCritica = positions.filter((p) => ["Q1", "Q2", "Q4"].includes(p.quadrant)).length;
   const ffAtrasados = feedbacks.filter((f) => f.status === "overdue").length;
   const ffRealizados = feedbacks.filter((f) => f.status === "completed").length;
   const ffPendentes = feedbacks.filter((f) => f.status === "scheduled").length;
@@ -220,9 +220,9 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
     const cons = allConsequences ?? [];
     const posMap = new Map<number, string>();
     for (const p of positions) posMap.set(p.employeeId, p.quadrant);
-    const talentos = cons.filter((c) => ["Q7","Q8","Q9"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
-    const mantenedores = cons.filter((c) => ["Q4","Q5","Q6"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
-    const criticos = cons.filter((c) => ["Q1","Q2","Q3"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
+    const talentos = cons.filter((c) => ["Q3","Q8","Q9"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
+    const mantenedores = cons.filter((c) => ["Q2","Q5","Q6"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
+    const criticos = cons.filter((c) => ["Q1","Q2","Q4"].includes(posMap.get(c.employeeId) ?? "") && c.consequence !== "nenhuma");
     const groupStats = (list: typeof cons) => ({
       total: list.length,
       merito: list.filter((c) => c.consequence === "merito").length,
