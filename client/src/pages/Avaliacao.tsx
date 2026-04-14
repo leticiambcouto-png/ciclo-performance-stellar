@@ -18,8 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useViewMode, type ViewMode } from "@/hooks/useViewMode";
-import { ViewModeTabs } from "@/components/ViewModeTabs";
+import { useViewMode } from "@/hooks/useViewMode";
 
 type AxisValue = "below" | "within" | "above";
 
@@ -575,7 +574,6 @@ function EvaluationForm({
 
 function CycleCard({
   cycle,
-  isSelfView,
   isGestor,
   onOpenSelf,
   onOpenTeam,
@@ -588,7 +586,6 @@ function CycleCard({
     selfEvalSubmittedAt: Date | string | null;
     teamEvals: { employeeId: number; employeeName: string; status: string | null; submittedAt: Date | string | null }[];
   };
-  isSelfView: boolean;
   isGestor: boolean;
   onOpenSelf: (cycleId: number) => void;
   onOpenTeam: (cycleId: number, employeeId: number, employeeName: string) => void;
@@ -628,65 +625,68 @@ function CycleCard({
       </div>
 
       {expanded && (
-        <div className="border-t px-4 pb-4 space-y-3 pt-3" style={{ borderColor: "#0a3060" }}>
-          {/* Self evaluation row */}
-          {(isSelfView || !isGestor) && (
-            <div>
-              <p className="text-xs font-semibold uppercase mb-2" style={{ color: "#8aa3c0" }}>
-                <User size={10} className="inline mr-1" />
-                Autoavaliação
-              </p>
-              <button
-                onClick={() => onOpenSelf(cycle.cycleId)}
-                className="w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all hover:border-opacity-60"
-                style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}
-              >
-                <span className="text-sm font-medium" style={{ color: "#fdffdf" }}>
-                  Minha autoavaliação
-                </span>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={cycle.selfEvalStatus} />
-                  <ChevronRight size={14} style={{ color: "#8aa3c0" }} />
-                </div>
-              </button>
-            </div>
-          )}
+        <div className="border-t px-4 pb-4 space-y-4 pt-3" style={{ borderColor: "#0a3060" }}>
+          {/* Self evaluation — always visible for all users */}
+          <div>
+            <p className="text-xs font-semibold uppercase mb-2" style={{ color: "#8aa3c0" }}>
+              <User size={10} className="inline mr-1" />
+              Autoavaliação
+            </p>
+            <button
+              onClick={() => onOpenSelf(cycle.cycleId)}
+              className="w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all hover:border-opacity-60"
+              style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}
+            >
+              <span className="text-sm font-medium" style={{ color: "#fdffdf" }}>
+                Minha autoavaliação
+              </span>
+              <div className="flex items-center gap-2">
+                <StatusBadge status={cycle.selfEvalStatus} />
+                <ChevronRight size={14} style={{ color: "#8aa3c0" }} />
+              </div>
+            </button>
+          </div>
 
-          {/* Team evaluations */}
-          {!isSelfView && isGestor && cycle.teamEvals.length > 0 && (
+          {/* Team evaluations — only for gestores */}
+          {isGestor && (
             <div>
               <p className="text-xs font-semibold uppercase mb-2" style={{ color: "#8aa3c0" }}>
                 <Users size={10} className="inline mr-1" />
-                Avaliação dos Liderados — {teamDone}/{teamTotal} enviados
+                Avaliação dos Liderados
+                {teamTotal > 0 && (
+                  <span className="ml-1 normal-case" style={{ color: "#8aa3c0" }}>
+                    — {teamDone}/{teamTotal} enviados
+                  </span>
+                )}
               </p>
-              <div className="space-y-2">
-                {cycle.teamEvals.map((emp) => (
-                  <button
-                    key={emp.employeeId}
-                    onClick={() => onOpenTeam(cycle.cycleId, emp.employeeId, emp.employeeName)}
-                    className="w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all"
-                    style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <User size={14} style={{ color: "#8aa3c0" }} />
-                      <span className="text-sm font-medium" style={{ color: "#fdffdf" }}>
-                        {emp.employeeName}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={emp.status} />
-                      <ChevronRight size={14} style={{ color: "#8aa3c0" }} />
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {cycle.teamEvals.length === 0 ? (
+                <p className="text-sm" style={{ color: "#8aa3c0" }}>
+                  Nenhum liderado direto encontrado. Configure no Painel RH.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {cycle.teamEvals.map((emp) => (
+                    <button
+                      key={emp.employeeId}
+                      onClick={() => onOpenTeam(cycle.cycleId, emp.employeeId, emp.employeeName)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all"
+                      style={{ backgroundColor: "#001023", borderColor: "#0a3060" }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <User size={14} style={{ color: "#8aa3c0" }} />
+                        <span className="text-sm font-medium" style={{ color: "#fdffdf" }}>
+                          {emp.employeeName}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={emp.status} />
+                        <ChevronRight size={14} style={{ color: "#8aa3c0" }} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-
-          {!isSelfView && isGestor && cycle.teamEvals.length === 0 && (
-            <p className="text-sm" style={{ color: "#8aa3c0" }}>
-              Nenhum liderado direto encontrado. Configure no Painel RH.
-            </p>
           )}
         </div>
       )}
@@ -697,8 +697,7 @@ function CycleCard({
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function Avaliacao() {
-  const { viewMode, setViewMode, showTabs, isGestor } = useViewMode();
-  const isSelfView = viewMode === "self";
+  const { isGestor } = useViewMode();
 
   // Drill-down state: null = show cycle list, otherwise show form
   const [activeForm, setActiveForm] = useState<{
@@ -708,7 +707,7 @@ export default function Avaliacao() {
     employeeName?: string;
   } | null>(null);
 
-  const { data: summary, isLoading } = trpc.cycles.evaluationSummary.useQuery();
+  const { data: summary, isLoading, error } = trpc.cycles.evaluationSummary.useQuery();
 
   const handleOpenSelf = (cycleId: number) => {
     setActiveForm({ cycleId, isSelfEval: true });
@@ -722,22 +721,9 @@ export default function Avaliacao() {
     setActiveForm(null);
   };
 
-  // Reset active form when switching view mode
-  const handleSetViewMode = (mode: ViewMode) => {
-    setViewMode(mode);
-    setActiveForm(null);
-  };
-
   return (
     <StellarLayout title="Avaliação">
       <div className="p-4 sm:p-6 max-w-3xl space-y-4 sm:space-y-6">
-        {/* Role tabs */}
-        <ViewModeTabs
-          viewMode={viewMode}
-          setViewMode={handleSetViewMode}
-          showTabs={showTabs}
-        />
-
         {/* Drill-down: evaluation form */}
         {activeForm ? (
           <EvaluationForm
@@ -749,6 +735,31 @@ export default function Avaliacao() {
           />
         ) : (
           <>
+            {/* Page header */}
+            <div>
+              <h2 className="text-lg font-bold" style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>
+                Minhas Avaliações
+              </h2>
+              <p className="text-sm mt-0.5" style={{ color: "#8aa3c0" }}>
+                Selecione um ciclo para ver e preencher as avaliações.
+              </p>
+            </div>
+
+            {/* Error state */}
+            {error && (
+              <div
+                className="p-6 rounded-xl border text-center"
+                style={{ backgroundColor: "#001830", borderColor: "#ef444440" }}
+              >
+                <p className="text-sm font-semibold" style={{ color: "#ef4444" }}>
+                  Erro ao carregar avaliações
+                </p>
+                <p className="text-xs mt-1" style={{ color: "#8aa3c0" }}>
+                  {error.message || "Tente recarregar a página."}
+                </p>
+              </div>
+            )}
+
             {/* Cycle list */}
             {isLoading && (
               <div className="space-y-3">
@@ -779,7 +790,6 @@ export default function Avaliacao() {
                   <CycleCard
                     key={cycle.cycleId}
                     cycle={cycle}
-                    isSelfView={isSelfView}
                     isGestor={isGestor}
                     onOpenSelf={handleOpenSelf}
                     onOpenTeam={handleOpenTeam}

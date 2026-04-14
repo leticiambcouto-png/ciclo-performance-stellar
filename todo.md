@@ -276,3 +276,11 @@
 - [x] Tela de Avaliação: reorganizar por ciclo (lista de ciclos com status)
 - [x] Tela de Avaliação: dentro de cada ciclo, exibir "Autoavaliação" com status (pendente/rascunho/enviada)
 - [x] Tela de Avaliação: dentro de cada ciclo, exibir "Avaliação dos Liderados" com status por liderado
+
+## Painel RH Compartilhado e Avaliação por Ciclo (Abril 2026 - Lote 9)
+- [x] Verificar se dados do Painel RH (ciclos, fases, configurações) são globais (não vinculados ao userId do RH)
+- [x] Verificar se salas de calibração são visíveis para todos os perfis RH (primário e secundário)
+- [x] Garantir que qualquer parametrização feita por um RH aparece para todos os outros RHs
+- [x] Tela de Avaliação: reorganizar por ciclo com "Autoavaliação" e "Avaliação dos Liderados" com status
+- [x] Backend: context.ts atualizado para suportar usuários com login customizado (apenas na tabela employees)
+- [x] Backend: getEmployeeByUserId atualizado para suportar IDs sintéticos negativos

@@ -106,6 +106,12 @@ export async function getAllEmployees() {
 export async function getEmployeeByUserId(userId: number) {
   const db = await getDb();
   if (!db) return undefined;
+  // Negative IDs are synthetic (custom auth users without a users table entry)
+  // In this case, the absolute value is the actual employee ID
+  if (userId < 0) {
+    const result = await db.select().from(employees).where(eq(employees.id, -userId)).limit(1);
+    return result[0];
+  }
   const result = await db.select().from(employees).where(eq(employees.userId, userId)).limit(1);
   return result[0];
 }
