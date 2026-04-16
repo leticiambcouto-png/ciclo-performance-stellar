@@ -287,3 +287,9 @@
 
 ## Correção Numeração 9-Box (Abril 2026 - Lote 10)
 - [x] Trocar números Q4↔Q2 e Q3↔Q7 no 9-Box (manter descrições, cores e significados no lugar)
+
+## Tela de Avaliação por Ciclo com Status (Abril 2026 - Lote 11)
+- [x] Tela de Avaliação: listar todos os ciclos (ativos e encerrados) como cards expansíveis
+- [x] Dentro de cada ciclo: seção "Autoavaliação" com status (Não iniciado / Em andamento / Enviado)
+- [x] Dentro de cada ciclo: seção "Avaliação dos Liderados" com lista de liderados e status por pessoa (apenas para gestores)
+- [x] Backend: endpoint evaluationSummary deve retornar ciclos + status de autoavaliação + status por liderado
