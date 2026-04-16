@@ -653,7 +653,7 @@ export async function getCyclePhases(cycleId: number): Promise<CyclePhase[]> {
 export async function updateCyclePhase(
   id: number,
   data: { startDate: Date; endDate: Date; titulo?: string; descricao?: string },
-  updatedBy: number
+  updatedBy: number | null
 ): Promise<void> {
   const db = await getDb();
   if (!db) return;
@@ -1038,4 +1038,86 @@ export async function getConsolidatedPanelData(cycleId?: number) {
       observacoesConsequencia: cons?.notes ?? "—",
     };
   });
+}
+
+// ─── CYCLE MANAGEMENT ────────────────────────────────────────────────────────
+
+/** Create a new evaluation cycle with default phases */
+export async function createCycle(data: {
+  name: string;
+  semester: string;
+  startDate: Date;
+  endDate: Date;
+  status?: "draft" | "open" | "closed";
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(evaluationCycles).values({
+    name: data.name,
+    semester: data.semester,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    status: data.status ?? "draft",
+  });
+
+  const cycleId = (result as any).insertId as number;
+
+  // Create default 7 phases for the new cycle
+  const defaultPhases = [
+    { phaseNumber: 1, titulo: "Autoavaliação", descricao: "Período de autoavaliação dos colaboradores", isContinuous: false },
+    { phaseNumber: 2, titulo: "Avaliação do Gestor", descricao: "Período de avaliação dos liderados pelo gestor", isContinuous: false },
+    { phaseNumber: 3, titulo: "Calibração", descricao: "Reuniões de calibração com RH e gestores", isContinuous: false },
+    { phaseNumber: 4, titulo: "Devolutiva", descricao: "Período de devolutiva dos resultados aos colaboradores", isContinuous: false },
+    { phaseNumber: 5, titulo: "PDI", descricao: "Elaboração do Plano de Desenvolvimento Individual", isContinuous: false },
+    { phaseNumber: 6, titulo: "Flash Feedbacks", descricao: "Período contínuo de flash feedbacks", isContinuous: true },
+    { phaseNumber: 7, titulo: "Encerramento", descricao: "Encerramento do ciclo e consolidação dos dados", isContinuous: false },
+  ];
+
+  for (const phase of defaultPhases) {
+    // Default: each phase starts at cycle start and ends at cycle end (RH will adjust)
+    await db.insert(cyclePhases).values({
+      cycleId,
+      phaseNumber: phase.phaseNumber,
+      titulo: phase.titulo,
+      descricao: phase.descricao,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      isContinuous: phase.isContinuous,
+    });
+  }
+
+  return cycleId;
+}
+
+/** Update cycle status (draft → open → closed) */
+export async function updateCycleStatus(
+  cycleId: number,
+  status: "draft" | "open" | "closed"
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(evaluationCycles)
+    .set({ status })
+    .where(eq(evaluationCycles.id, cycleId));
+}
+
+/** Get active cycle phases and check if a specific phase is currently active */
+export async function isPhaseActive(cycleId: number, phaseNumber: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const now = new Date();
+  const result = await db
+    .select()
+    .from(cyclePhases)
+    .where(
+      and(
+        eq(cyclePhases.cycleId, cycleId),
+        eq(cyclePhases.phaseNumber, phaseNumber)
+      )
+    )
+    .limit(1);
+  if (!result[0]) return false;
+  return result[0].startDate <= now && result[0].endDate >= now;
 }

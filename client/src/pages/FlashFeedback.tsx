@@ -127,9 +127,47 @@ export default function FlashFeedback() {
     activeFilter === "all" ? true : f.status === activeFilter
   ) ?? [];
 
+  // Generate Outlook meeting URL
+  const buildOutlookUrl = (receiverName: string, scheduledAt: string, agenda: string) => {
+    const start = new Date(scheduledAt);
+    const end = new Date(start.getTime() + 30 * 60 * 1000); // 30 min duration
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    const subject = encodeURIComponent(`Flash Feedback - ${receiverName}`);
+    const body = encodeURIComponent(agenda || "Flash Feedback Stellar Gaming");
+    const startStr = fmt(start);
+    const endStr = fmt(end);
+    return `https://outlook.office.com/calendar/0/deeplink/compose?subject=${subject}&body=${body}&startdt=${startStr}&enddt=${endStr}&path=%2Fcalendar%2Faction%2Fcompose&rru=addevent`;
+  };
+
   const scheduleMutation = trpc.flashFeedback.schedule.useMutation({
-    onSuccess: () => {
-      toast.success("Flash feedback agendado!");
+    onSuccess: (_data, variables) => {
+      // Build Outlook link for the scheduled meeting
+      const receiver = (platformRole === "colaborador" ? employees : directReports)?.find(
+        (e) => e.id === variables.receiverId
+      );
+      const receiverName = receiver?.name ?? "Liderado";
+      const structuredAgenda = [
+        agendaFields.oQueEstaFuncionando ? `O que está funcionando: ${agendaFields.oQueEstaFuncionando}` : "",
+        agendaFields.gapPrioritario ? `Gap prioritário: ${agendaFields.gapPrioritario}` : "",
+        agendaFields.compromisso ? `Compromisso: ${agendaFields.compromisso}` : "",
+        agendaFields.apoioGestor ? `Apoio do gestor: ${agendaFields.apoioGestor}` : "",
+      ].filter(Boolean).join("\n\n");
+      const outlookUrl = buildOutlookUrl(receiverName, variables.scheduledAt, structuredAgenda);
+      toast.success(
+        <div className="flex flex-col gap-2">
+          <span>Flash feedback agendado!</span>
+          <a
+            href={outlookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs underline font-semibold"
+            style={{ color: "#1840eb" }}
+          >
+            📅 Criar reunião no Outlook
+          </a>
+        </div>,
+        { duration: 8000 }
+      );
       setShowSchedule(false);
       setScheduleData({ receiverId: 0, scheduledAt: "", agenda: "" });
       setAgendaFields({ oQueEstaFuncionando: "", gapPrioritario: "", compromisso: "", apoioGestor: "" });
@@ -357,24 +395,47 @@ export default function FlashFeedback() {
                       </div>
                     </div>
 
-                    {canFormalize && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setShowFormalize(fb.id);
-                          setFormalizeStep("questions");
-                          setCurrentQuestion(0);
-                          setAnswers({});
-                          setAiPlan(null);
-                        }}
-                        className="flex-shrink-0 flex items-center gap-1"
-                        style={{ borderColor: "#d9f22a40", color: "#d9f22a", backgroundColor: "transparent" }}
-                      >
-                        <MessageSquare size={12} />
-                        Formalizar
-                      </Button>
-                    )}
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      {fb.status === "scheduled" && (
+                        <a
+                          href={buildOutlookUrl(
+                            getEmployeeName(fb.receiverId),
+                            new Date(fb.scheduledAt).toISOString(),
+                            fb.agenda ?? ""
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex items-center gap-1 w-full"
+                            style={{ borderColor: "#1840eb40", color: "#6b9eff", backgroundColor: "transparent" }}
+                          >
+                            <Calendar size={12} />
+                            Outlook
+                          </Button>
+                        </a>
+                      )}
+                      {canFormalize && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setShowFormalize(fb.id);
+                            setFormalizeStep("questions");
+                            setCurrentQuestion(0);
+                            setAnswers({});
+                            setAiPlan(null);
+                          }}
+                          className="flex-shrink-0 flex items-center gap-1"
+                          style={{ borderColor: "#d9f22a40", color: "#d9f22a", backgroundColor: "transparent" }}
+                        >
+                          <MessageSquare size={12} />
+                          Formalizar
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

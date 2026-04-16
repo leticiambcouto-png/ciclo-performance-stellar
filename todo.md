@@ -293,3 +293,28 @@
 - [x] Dentro de cada ciclo: seção "Autoavaliação" com status (Não iniciado / Em andamento / Enviado)
 - [x] Dentro de cada ciclo: seção "Avaliação dos Liderados" com lista de liderados e status por pessoa (apenas para gestores)
 - [x] Backend: endpoint evaluationSummary deve retornar ciclos + status de autoavaliação + status por liderado
+
+## Lote 12 — Melhorias Gerais (Abril 2026)
+
+### 9-Box e Calibração
+- [x] Sincronizar resultado final do 9-Box (posição calculada + ajuste manual) no cadastro do colaborador (aba de perfil)
+- [x] Garantir que ajustes feitos na calibração espelhem no 9-Box final do colaborador
+- [x] Dashboard: filtro por ciclo para navegar entre ciclos históricos (ex: S2/2026)
+- [x] Dashboard: exibir gestão de consequência por quadrante após calibração
+
+### Ciclos
+- [x] Painel RH: criar novo ciclo (nome, período, fases) via interface
+- [x] Dashboard: filtro por ciclo com seletor de ciclo ativo/histórico
+
+### Controle de Acesso por Fase
+- [x] Avaliação do gestor: bloquear/liberar página conforme data da fase configurada no Painel RH
+- [x] Autoavaliação: bloquear/liberar conforme data da fase configurada
+- [x] Calibração: bloquear/liberar conforme data da fase configurada
+
+### Correções e Ajustes
+- [x] Bug: perfil thais.rabech (RH secundário) recebe erro ao tentar alterar datas das fases — corrigido: updateCyclePhase aceita updatedBy null para usuários sem registro na tabela users
+- [x] Menu: reordenar para Ciclo 2.0 > 9-Box > Avaliação > Devolutiva > Flash Feedback > Calibração | (separado abaixo) Dashboard > Painel do RH
+- [x] Gestão de Consequência: elegibilidade ao bônus — Q1 = "Não", todos os outros quadrantes = "Sim"
+
+### Integração Outlook
+- [x] Flash Feedback: ao criar agendamento, gerar link de reunião do Outlook (Microsoft Teams/Outlook Calendar)

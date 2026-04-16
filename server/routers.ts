@@ -53,6 +53,9 @@ import {
   upsertSelfEvaluation,
   getCyclePhases,
   updateCyclePhase,
+  createCycle,
+  updateCycleStatus,
+  isPhaseActive,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -281,6 +284,40 @@ export const appRouter = router({
   cycles: router({
     active: protectedProcedure.query(() => getActiveCycle()),
     all: protectedProcedure.query(() => getAllCycles()),
+    // RH can create a new cycle
+    create: rhProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          semester: z.string().min(1),
+          startDate: z.date(),
+          endDate: z.date(),
+          status: z.enum(["draft", "open", "closed"]).default("draft"),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const cycleId = await createCycle(input);
+        return { cycleId };
+      }),
+
+    // RH can update cycle status
+    updateStatus: rhProcedure
+      .input(
+        z.object({
+          cycleId: z.number(),
+          status: z.enum(["draft", "open", "closed"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await updateCycleStatus(input.cycleId, input.status);
+        return { success: true };
+      }),
+
+    // Check if a specific phase is currently active for a cycle
+    isPhaseActive: protectedProcedure
+      .input(z.object({ cycleId: z.number(), phaseNumber: z.number() }))
+      .query(({ input }) => isPhaseActive(input.cycleId, input.phaseNumber)),
+
     // Returns a summary of evaluations per cycle for the current user
     evaluationSummary: protectedProcedure.query(async ({ ctx }) => {
       const me = await getEmployeeByUserId(ctx.user.id);
@@ -333,6 +370,8 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        // Use null for updatedBy when user is synthetic (negative ID = custom auth without users table entry)
+        const updatedBy = ctx.user.id > 0 ? ctx.user.id : null;
         await updateCyclePhase(
           input.id,
           {
@@ -341,7 +380,7 @@ export const appRouter = router({
             titulo: input.titulo,
             descricao: input.descricao,
           },
-          ctx.user.id
+          updatedBy as number
         );
         return { success: true };
       }),

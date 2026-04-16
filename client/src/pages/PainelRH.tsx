@@ -57,6 +57,8 @@ export default function PainelRH() {
   const [phaseEdits, setPhaseEdits] = useState<Record<number, { startDate: string; endDate: string; titulo: string; descricao: string }>>({});
   const [showInactive, setShowInactive] = useState(false);
   const [activeSection, setActiveSection] = useState<"colaboradores" | "fases" | "relatorios">("colaboradores");
+  const [showNewCycleDialog, setShowNewCycleDialog] = useState(false);
+  const [newCycleForm, setNewCycleForm] = useState({ name: "", semester: "", startDate: "", endDate: "" });
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [csvPreview, setCsvPreview] = useState<Array<Record<string, string>>>([])
   const [exportLoading, setExportLoading] = useState<string | null>(null);
@@ -67,7 +69,8 @@ export default function PainelRH() {
 
   const { data: employees, refetch: refetchEmployees } = trpc.employees.allWithManager.useQuery();
   const { data: calibrationRooms } = trpc.calibration.rooms.useQuery({});
-  const { data: activeCycle } = trpc.cycles.active.useQuery();
+  const { data: activeCycle, refetch: refetchActiveCycle } = trpc.cycles.active.useQuery();
+  const { data: allCycles, refetch: refetchAllCycles } = trpc.cycles.all.useQuery();
   const { data: cyclePhases, refetch: refetchPhases } = trpc.cyclePhases.list.useQuery(
     { cycleId: activeCycle?.id ?? 0 },
     { enabled: !!activeCycle?.id }
@@ -81,6 +84,27 @@ export default function PainelRH() {
     { enabled: !!activeCycle?.id }
   );
   const { data: allFlashFeedbacks } = trpc.flashFeedback.allFeedbacks.useQuery();
+
+  const createCycleMutation = trpc.cycles.create.useMutation({
+    onSuccess: () => {
+      toast.success("Ciclo criado com sucesso!");
+      setShowNewCycleDialog(false);
+      setNewCycleForm({ name: "", semester: "", startDate: "", endDate: "" });
+      refetchActiveCycle();
+      refetchAllCycles();
+      refetchPhases();
+    },
+    onError: (e) => toast.error(`Erro ao criar ciclo: ${e.message}`),
+  });
+
+  const updateCycleStatus = trpc.cycles.updateStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Status do ciclo atualizado!");
+      refetchActiveCycle();
+      refetchAllCycles();
+    },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
 
   const updatePhase = trpc.cyclePhases.update.useMutation({
     onSuccess: () => {
@@ -727,8 +751,46 @@ export default function PainelRH() {
 
           {showPhaseEditor && (
             <div className="p-5 space-y-3">
+              {/* Cycle list + create new cycle */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {(allCycles ?? []).map((c) => (
+                    <span key={c.id} className="text-xs px-2 py-1 rounded-full border"
+                      style={{
+                        backgroundColor: c.id === activeCycle?.id ? "#d9f22a20" : "#001023",
+                        borderColor: c.id === activeCycle?.id ? "#d9f22a" : "#0a3060",
+                        color: c.id === activeCycle?.id ? "#d9f22a" : "#8aa3c0",
+                      }}>
+                      {c.name}
+                      {c.status === "open" && <span className="ml-1">(ativo)</span>}
+                      {c.status === "draft" && (
+                        <button className="ml-2 underline text-xs" style={{ color: "#7ba7ff" }}
+                          onClick={() => updateCycleStatus.mutate({ cycleId: c.id, status: "open" })}>
+                          Ativar
+                        </button>
+                      )}
+                      {c.status === "open" && (
+                        <button className="ml-2 underline text-xs" style={{ color: "#f59e0b" }}
+                          onClick={() => updateCycleStatus.mutate({ cycleId: c.id, status: "closed" })}>
+                          Encerrar
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                <Button size="sm" onClick={() => setShowNewCycleDialog(true)}
+                  style={{ backgroundColor: "#d9f22a", color: "#001023" }}>
+                  <Plus size={14} className="mr-1" /> Novo Ciclo
+                </Button>
+              </div>
+
               {!activeCycle ? (
-                <p className="text-sm text-center py-6" style={{ color: "#8aa3c0" }}>Nenhum ciclo ativo encontrado.</p>
+                <div className="text-center py-6">
+                  <p className="text-sm mb-3" style={{ color: "#8aa3c0" }}>Nenhum ciclo ativo. Crie um novo ciclo para começar.</p>
+                  <Button onClick={() => setShowNewCycleDialog(true)} style={{ backgroundColor: "#d9f22a", color: "#001023" }}>
+                    <Plus size={14} className="mr-1" /> Criar Primeiro Ciclo
+                  </Button>
+                </div>
               ) : !cyclePhases || cyclePhases.length === 0 ? (
                 <p className="text-sm text-center py-6" style={{ color: "#8aa3c0" }}>Nenhuma fase configurada para este ciclo.</p>
               ) : (
@@ -1332,6 +1394,84 @@ export default function PainelRH() {
         </DialogContent>
       </Dialog>
 
+      {/* New Cycle Dialog */}
+      <Dialog open={showNewCycleDialog} onOpenChange={setShowNewCycleDialog}>
+        <DialogContent
+          className="max-w-md"
+          style={{ backgroundColor: "#001830", border: "1px solid #0a3060", color: "#fdffdf" }}
+        >
+          <DialogHeader>
+            <DialogTitle style={{ color: "#fdffdf", fontFamily: "Space Grotesk" }}>Criar Novo Ciclo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>Nome do Ciclo *</label>
+              <Input
+                placeholder="Ex: Ciclo S1/2026"
+                value={newCycleForm.name}
+                onChange={(e) => setNewCycleForm((p) => ({ ...p, name: e.target.value }))}
+                style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" }}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>Semestre *</label>
+              <Input
+                placeholder="Ex: S1/26 ou S2/26"
+                value={newCycleForm.semester}
+                onChange={(e) => setNewCycleForm((p) => ({ ...p, semester: e.target.value }))}
+                style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf" }}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>Data de Início *</label>
+                <input
+                  type="date"
+                  value={newCycleForm.startDate}
+                  onChange={(e) => setNewCycleForm((p) => ({ ...p, startDate: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf", colorScheme: "dark" }}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold mb-1 block" style={{ color: "#8aa3c0" }}>Data de Término *</label>
+                <input
+                  type="date"
+                  value={newCycleForm.endDate}
+                  onChange={(e) => setNewCycleForm((p) => ({ ...p, endDate: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg text-sm"
+                  style={{ backgroundColor: "#001023", border: "1px solid #0a3060", color: "#fdffdf", colorScheme: "dark" }}
+                />
+              </div>
+            </div>
+            <p className="text-xs" style={{ color: "#8aa3c0" }}>
+              O ciclo será criado como rascunho com 7 fases padrão. Você poderá ajustar as datas de cada fase e ativar o ciclo quando estiver pronto.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1"
+                style={{ borderColor: "#0a3060", color: "#8aa3c0", backgroundColor: "transparent" }}
+                onClick={() => setShowNewCycleDialog(false)}>
+                Cancelar
+              </Button>
+              <Button className="flex-1"
+                style={{ backgroundColor: "#d9f22a", color: "#001023" }}
+                disabled={!newCycleForm.name || !newCycleForm.semester || !newCycleForm.startDate || !newCycleForm.endDate || createCycleMutation.isPending}
+                onClick={() => {
+                  if (!newCycleForm.name || !newCycleForm.semester || !newCycleForm.startDate || !newCycleForm.endDate) return;
+                  createCycleMutation.mutate({
+                    name: newCycleForm.name,
+                    semester: newCycleForm.semester,
+                    startDate: new Date(newCycleForm.startDate),
+                    endDate: new Date(newCycleForm.endDate),
+                    status: "draft",
+                  });
+                }}>
+                {createCycleMutation.isPending ? "Criando..." : "Criar Ciclo"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </StellarLayout>
   );
 }

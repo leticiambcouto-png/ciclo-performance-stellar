@@ -40,7 +40,7 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   roles: ("rh" | "gestor" | "colaborador")[];
-  badge?: string;
+  group?: "main" | "admin";
 }
 
 const navItems: NavItem[] = [
@@ -49,48 +49,56 @@ const navItems: NavItem[] = [
     href: "/ciclo",
     icon: <BookOpen size={18} />,
     roles: ["rh", "gestor", "colaborador"],
+    group: "main",
   },
   {
     label: "9-Box",
     href: "/9box",
     icon: <Grid3x3 size={18} />,
     roles: ["rh", "gestor", "colaborador"],
-  },
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: <LayoutDashboard size={18} />,
-    roles: ["rh", "gestor", "colaborador"],
+    group: "main",
   },
   {
     label: "Avaliação",
     href: "/avaliacao",
     icon: <ClipboardList size={18} />,
     roles: ["rh", "gestor", "colaborador"],
-  },
-  {
-    label: "Flash Feedbacks",
-    href: "/flash-feedback",
-    icon: <Zap size={18} />,
-    roles: ["rh", "gestor", "colaborador"],
+    group: "main",
   },
   {
     label: "Devolutiva",
     href: "/relatorio",
     icon: <FileText size={18} />,
     roles: ["rh", "gestor", "colaborador"],
+    group: "main",
   },
   {
-    label: "Painel RH",
-    href: "/rh",
-    icon: <Users size={18} />,
-    roles: ["rh"],
+    label: "Flash Feedbacks",
+    href: "/flash-feedback",
+    icon: <Zap size={18} />,
+    roles: ["rh", "gestor", "colaborador"],
+    group: "main",
   },
   {
     label: "Calibração",
     href: "/calibracao",
     icon: <BarChart3 size={18} />,
     roles: ["rh"],
+    group: "main",
+  },
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: <LayoutDashboard size={18} />,
+    roles: ["rh", "gestor", "colaborador"],
+    group: "admin",
+  },
+  {
+    label: "Painel RH",
+    href: "/rh",
+    icon: <Users size={18} />,
+    roles: ["rh"],
+    group: "admin",
   },
 ];
 
@@ -160,31 +168,70 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
 
       {/* Nav */}
       <ScrollArea className="flex-1 py-3">
-        <nav className="px-2 space-y-1">
-          {visibleNav.map((item) => {
-            const isActive = location === item.href || location.startsWith(item.href + "/");
-            return (
-              <Link key={item.href} href={item.href}>
-                <div
-                  onClick={onItemClick}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150",
-                    isActive ? "text-[#001023]" : "text-[#8aa3c0] hover:text-[#fdffdf]"
-                  )}
-                  style={isActive ? { backgroundColor: "#d9f22a" } : { backgroundColor: "transparent" }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "#001830";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
-                  }}
-                >
-                  <span className={cn("flex-shrink-0", isActive ? "text-[#001023]" : "")}>{item.icon}</span>
-                  {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
-                </div>
-              </Link>
-            );
-          })}
+        <nav className="px-2">
+          {/* Main navigation group */}
+          <div className="space-y-1">
+            {visibleNav.filter(i => i.group !== "admin").map((item) => {
+              const isActive = location === item.href || location.startsWith(item.href + "/");
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    onClick={onItemClick}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150",
+                      isActive ? "text-[#001023]" : "text-[#8aa3c0] hover:text-[#fdffdf]"
+                    )}
+                    style={isActive ? { backgroundColor: "#d9f22a" } : { backgroundColor: "transparent" }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "#001830";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
+                    }}
+                  >
+                    <span className={cn("flex-shrink-0", isActive ? "text-[#001023]" : "")}>{item.icon}</span>
+                    {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Admin group separator + items */}
+          {visibleNav.some(i => i.group === "admin") && (
+            <>
+              <div className="my-3 border-t" style={{ borderColor: "#0a3060" }} />
+              {!collapsed && (
+                <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider" style={{ color: "#4a6a90" }}>Gestão</p>
+              )}
+              <div className="space-y-1">
+                {visibleNav.filter(i => i.group === "admin").map((item) => {
+                  const isActive = location === item.href || location.startsWith(item.href + "/");
+                  return (
+                    <Link key={item.href} href={item.href}>
+                      <div
+                        onClick={onItemClick}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150",
+                          isActive ? "text-[#001023]" : "text-[#8aa3c0] hover:text-[#fdffdf]"
+                        )}
+                        style={isActive ? { backgroundColor: "#d9f22a" } : { backgroundColor: "transparent" }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "#001830";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
+                        }}
+                      >
+                        <span className={cn("flex-shrink-0", isActive ? "text-[#001023]" : "")}>{item.icon}</span>
+                        {!collapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </nav>
       </ScrollArea>
 

@@ -124,9 +124,17 @@ function StatCard({
 
 // ─── Dashboard for Gestor / RH ───────────────────────────────────────────────
 function ManagerDashboard({ isRH }: { isRH: boolean }) {
-  const { data: cycle } = trpc.cycles.active.useQuery();
-  const cycleId = cycle?.id ?? 0;
+  const { data: allCycles } = trpc.cycles.all.useQuery();
+  const { data: activeCycle } = trpc.cycles.active.useQuery();
+  // selectedCycleId: null means "use active cycle"
+  const [selectedCycleId, setSelectedCycleId] = useState<number | null>(null);
   const [selectedQ, setSelectedQ] = useState<string | null>(null);
+
+  // Resolve which cycle to show: selected or active
+  const cycle = selectedCycleId
+    ? (allCycles ?? []).find((c) => c.id === selectedCycleId)
+    : activeCycle;
+  const cycleId = cycle?.id ?? 0;
 
   const { data: teamPositions } = isRH
     ? trpc.ninebox.allPositions.useQuery({ cycleId: cycleId || 0 }, { enabled: cycleId > 0 })
@@ -255,11 +263,27 @@ function ManagerDashboard({ isRH }: { isRH: boolean }) {
 
   return (
     <div className="space-y-5">
-      {/* Cycle + title */}
-      <div>
-        <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: "#8aa3c0" }}>
+      {/* Cycle selector + title */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#8aa3c0" }}>
           {cycle ? `${cycle.name} · ${isRH ? "Empresa" : "Time"}` : "Sem ciclo ativo"}
         </p>
+        {(allCycles ?? []).length > 1 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: "#8aa3c0" }}>Ciclo:</span>
+            <select
+              value={selectedCycleId ?? ""}
+              onChange={(e) => setSelectedCycleId(e.target.value ? Number(e.target.value) : null)}
+              className="text-xs px-2 py-1 rounded-md border"
+              style={{ backgroundColor: "#001830", borderColor: "#0a3060", color: "#fdffdf" }}
+            >
+              <option value="">{activeCycle ? `${activeCycle.name} (ativo)` : "Ciclo ativo"}</option>
+              {(allCycles ?? []).filter((c) => c.id !== activeCycle?.id).map((c) => (
+                <option key={c.id} value={c.id}>{c.name} ({c.status === "closed" ? "encerrado" : c.status})</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Stat cards */}

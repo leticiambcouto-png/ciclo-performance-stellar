@@ -80,7 +80,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     performance: "medium",
     merito: false,
     promocao: false,
-    bonus: "by_goal",
+    bonus: "yes",
     color: "#f97316",
     bgClass: "quadrant-silent-risk",
     actionPlan:
@@ -114,7 +114,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     performance: "low",
     merito: false,
     promocao: false,
-    bonus: "by_goal",
+    bonus: "yes",
     color: "#f97316",
     bgClass: "quadrant-behavioral-critical",
     actionPlan:
@@ -130,7 +130,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     performance: "medium",
     merito: true,
     promocao: false,
-    bonus: "by_goal",
+    bonus: "yes",
     color: "#3b82f6",
     bgClass: "quadrant-core",
     actionPlan:
@@ -146,7 +146,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     performance: "high",
     merito: true,
     promocao: false,
-    bonus: "by_goal",
+    bonus: "yes",
     color: "#22c55e",
     bgClass: "quadrant-high-performer",
     actionPlan:
@@ -164,7 +164,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     performance: "low",
     merito: false,
     promocao: false,
-    bonus: "by_goal",
+    bonus: "yes",
     color: "#a855f7",
     bgClass: "quadrant-blocked-talent",
     actionPlan:
@@ -180,7 +180,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     performance: "medium",
     merito: true,
     promocao: true,
-    bonus: "by_goal",
+    bonus: "yes",
     color: "#d9f22a",
     bgClass: "quadrant-accelerate",
     actionPlan:
@@ -196,7 +196,7 @@ export const NINEBOX_QUADRANTS: Record<NineboxQuadrant, QuadrantInfo> = {
     performance: "high",
     merito: true,
     promocao: true,
-    bonus: "by_goal",
+    bonus: "yes",
     color: "#d9f22a",
     bgClass: "quadrant-top-talent",
     actionPlan:
