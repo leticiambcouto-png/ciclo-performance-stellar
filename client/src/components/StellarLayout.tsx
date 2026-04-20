@@ -153,14 +153,24 @@ export default function StellarLayout({ children, title }: StellarLayoutProps) {
   const NavContent = ({ onItemClick }: { onItemClick?: () => void }) => (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b flex-shrink-0" style={{ borderColor: "#0a3060" }}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#d9f22a" }}>
-          <BrainCircuit size={16} style={{ color: "#001023" }} />
-        </div>
-        {!collapsed && (
-          <div>
-            <p className="text-xs font-bold leading-none" style={{ color: "#d9f22a" }}>STELLAR</p>
-            <p className="text-xs leading-none mt-0.5" style={{ color: "#8aa3c0" }}>Performance 2.0</p>
+      <div className="flex flex-col items-center px-4 py-4 border-b flex-shrink-0" style={{ borderColor: "#0a3060" }}>
+        {collapsed ? (
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#d9f22a" }}>
+            <BrainCircuit size={16} style={{ color: "#001023" }} />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center w-full gap-2">
+            <img
+              src="/manus-storage/stellar-gaming-logo_7497063a.svg"
+              alt="Stellar Gaming"
+              className="w-full max-w-[140px] h-auto object-contain"
+            />
+            <div
+              className="w-full text-center px-3 py-1 rounded"
+              style={{ backgroundColor: "#d9f22a" }}
+            >
+              <span className="text-xs font-black tracking-widest uppercase" style={{ color: "#001023" }}>Performance 2.0</span>
+            </div>
           </div>
         )}
       </div>
