@@ -365,36 +365,36 @@
 ## Lote 14 — PDI Estruturado 70/20/10 (Abril 2026)
 
 ### Banco de Dados
-- [ ] Criar tabela `pdis` (cycleId, employeeId, leaderId, status: draft|leader_defined|employee_filling|completed, createdAt, updatedAt)
-- [ ] Criar tabela `pdi_blocks` (pdiId, blockType: valor_stellar|competencia_tecnica, competencia, justificativaEmpate, acoes70, acoes20, acoes10, iaAcoes70, iaAcoes20, iaAcoes10, preenchidoPor: lider|colaborador, validadoPorLider)
-- [ ] Gerar migração SQL e aplicar no banco
+- [x] Criar tabela `pdis` (cycleId, employeeId, leaderId, status: draft|leader_defined|employee_filling|completed, createdAt, updatedAt)
+- [x] Criar tabela `pdi_blocks` (pdiId, blockType: valor_stellar|competencia_tecnica, competencia, justificativaEmpate, acoes70, acoes20, acoes10, iaAcoes70, iaAcoes20, iaAcoes10, preenchidoPor: lider|colaborador, validadoPorLider)
+- [x] Gerar migração SQL e aplicar no banco
 
 ### Backend (tRPC)
-- [ ] Procedure `pdi.initForEmployee` (gestorProcedure): líder inicia PDI, define valor a desenvolver (com justificativa se empate) e competência técnica
-- [ ] Procedure `pdi.getIASuggestions` (protectedProcedure): IA gera sugestões 70/20/10 para uma competência
-- [ ] Procedure `pdi.saveEmployeeActions` (protectedProcedure): colaborador salva/edita ações do plano
-- [ ] Procedure `pdi.leaderValidate` (gestorProcedure): líder valida e finaliza o PDI
-- [ ] Procedure `pdi.getForEmployee` (protectedProcedure): buscar PDI de um colaborador no ciclo
-- [ ] Procedure `pdi.listForManager` (gestorProcedure): listar PDIs dos liderados com status
-- [ ] Procedure `pdi.listAll` (rhProcedure): RH vê todos os PDIs da empresa
+- [x] Procedure `pdi.initForEmployee` (gestorProcedure): líder inicia PDI, define valor a desenvolver (com justificativa se empate) e competência técnica
+- [x] Procedure `pdi.getIASuggestions` (protectedProcedure): IA gera sugestões 70/20/10 para uma competência
+- [x] Procedure `pdi.saveEmployeeActions` (protectedProcedure): colaborador salva/edita ações do plano
+- [x] Procedure `pdi.leaderValidate` (gestorProcedure): líder valida e finaliza o PDI
+- [x] Procedure `pdi.getForEmployee` (protectedProcedure): buscar PDI de um colaborador no ciclo
+- [x] Procedure `pdi.listForManager` (gestorProcedure): listar PDIs dos liderados com status
+- [x] Procedure `pdi.listAll` (rhProcedure): RH vê todos os PDIs da empresa
 
 ### Frontend — Tela PDI (/pdi)
-- [ ] Criar página `PDI.tsx` com rota `/pdi`
-- [ ] Gestor: lista de liderados obrigatórios (Talentos Q6/Q8/Q9 e Críticos Q1/Q2/Q4) com status por ciclo
-- [ ] Colaborador: visualiza seu PDI com status e pode preencher ações quando liberado pelo líder
-- [ ] Etapa 1 (Líder): selecionar valor Stellar a desenvolver (pré-selecionado com menor nota; em caso de empate, exibir os 2 e pedir justificativa obrigatória de 1 frase)
-- [ ] Etapa 1 (Líder): selecionar competência técnica (campo texto livre com sugestão da IA baseada no quadrante/avaliação)
-- [ ] Etapa 2 (Colaborador): plano de ação 70/20/10 para Valor Stellar (campo editável com sugestões da IA)
-- [ ] Etapa 2 (Colaborador): plano de ação 70/20/10 para Competência Técnica (campo editável com sugestões da IA)
-- [ ] Regra: campo 70% obrigatório editar/confirmar com justificativa; campos 20% e 10% aceitam sugestão com 1 clique
-- [ ] Etapa 3 (Líder): validar e finalizar PDI do colaborador
-- [ ] Loop ciclo seguinte: valor escolhido aparece destacado na próxima avaliação com pergunta "evoluiu?"
+- [x] Criar página `PDI.tsx` com rota `/pdi`
+- [x] Gestor: lista de liderados obrigatórios (Talentos Q6/Q8/Q9 e Críticos Q1/Q2/Q4) com status por ciclo
+- [x] Colaborador: visualiza seu PDI com status e pode preencher ações quando liberado pelo líder
+- [x] Etapa 1 (Líder): selecionar valor Stellar a desenvolver (pré-selecionado com menor nota; em caso de empate, exibir os 2 e pedir justificativa obrigatória de 1 frase)
+- [x] Etapa 1 (Líder): selecionar competência técnica (campo texto livre com sugestão da IA baseada no quadrante/avaliação)
+- [x] Etapa 2 (Colaborador): plano de ação 70/20/10 para Valor Stellar (campo editável com sugestões da IA)
+- [x] Etapa 2 (Colaborador): plano de ação 70/20/10 para Competência Técnica (campo editável com sugestões da IA)
+- [x] Regra: campo 70% obrigatório editar/confirmar com justificativa; campos 20% e 10% aceitam sugestão com 1 clique
+- [x] Etapa 3 (Líder): validar e finalizar PDI do colaborador
+- [x] Loop ciclo seguinte: valor escolhido aparece destacado na próxima avaliação com pergunta "evoluiu?"
 
 ### Menu e CicloOverview
-- [ ] Remover "Feedback" e "Plano de Impacto" do menu
-- [ ] Adicionar "PDI" no menu (entre Devolutiva e Calibração)
-- [ ] CicloOverview: substituir fase Flash Feedback pela fase PDI com descrição da metodologia 70/20/10
-- [ ] CicloOverview: explicar quem é obrigado (Talentos e Críticos) e o fluxo líder → colaborador → validação
+- [x] Remover "Feedback" e "Plano de Impacto" do menu
+- [x] Adicionar "PDI" no menu (entre Devolutiva e Calibração)
+- [x] CicloOverview: substituir fase Flash Feedback pela fase PDI com descrição da metodologia 70/20/10
+- [x] CicloOverview: explicar quem é obrigado (Talentos e Críticos) e o fluxo líder → colaborador → validação
 
 ## Lote 14 — PDI Estruturado 70/20/10 (Abril 2026) — CONCLUÍDO
 
@@ -431,3 +431,12 @@
 ### Testes
 - [x] 28 testes unitários PDI passando (mandatory quadrants, status transitions, block validation, 70/20/10)
 - [x] Total: 98 testes passando, 0 erros TypeScript
+
+## Lote 15 — Reorganização do Ciclo e Menu (Abril 2026)
+
+- [x] CicloOverview: reordenar fases para Contratação de Metas → Autoavaliação → Avaliação do Líder → Calibração Coletiva → Devolutiva → Feedback → Gestão de Consequência → PDI (8 fases)
+- [x] CicloOverview: adicionar fase "Feedback" (nova, entre Devolutiva e Gestão de Consequência) com descrição, responsabilidades por perfil e destaque
+- [x] CicloOverview: renomear/reposicionar "Gestão de Consequência" como fase 7 (antes do PDI)
+- [x] CicloOverview: PDI passa a ser fase 8 (última)
+- [x] Menu lateral: reordenar itens para seguir a ordem do ciclo (Ciclo 2.0 > 9-Box > Avaliação > Devolutiva > Feedback > PDI > Calibração | Dashboard > Painel RH)
+- [x] Menu lateral: garantir que "Feedback" e "PDI" aparecem na ordem correta entre Devolutiva e Calibração

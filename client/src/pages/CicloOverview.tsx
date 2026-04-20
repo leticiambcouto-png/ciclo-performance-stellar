@@ -10,6 +10,7 @@ import {
   BarChart3,
   Award,
   Zap,
+  MessageSquare,
   ChevronRight,
   ChevronDown,
   ArrowRight,
@@ -174,37 +175,68 @@ const FASES = [
   },
   {
     id: 6,
+    icone: MessageSquare,
+    titulo: "Feedback Estruturado",
+    periodo: "Após a Calibração",
+    objetivo:
+      "Com os posicionamentos calibrados e definitivos, o gestor entrega o feedback estruturado a cada liderado. O feedback é preparado com apoio da IA da plataforma, baseado nas notas da avaliação, no quadrante final e nas evidências registradas ao longo do semestre. É a conversa mais importante do ciclo.",
+    cor: "#3b82f6",
+    corBg: "#3b82f615",
+    corBorda: "#3b82f640",
+    gestor: [
+      "Usar a IA da plataforma para estruturar o feedback de cada liderado com base nas notas e no quadrante",
+      "Preencher o Feedback Estruturado: entregas relevantes, gap comportamental e expectativa para o próximo ciclo",
+      "Enviar o feedback ao colaborador pela plataforma antes da conversa presencial",
+      "Conduzir a conversa de devolutiva com base no feedback enviado",
+      "Garantir que todos os liderados recebam o feedback antes do prazo",
+    ],
+    colaborador: [
+      "Acessar o feedback enviado pelo gestor na plataforma",
+      "Ler o posicionamento no 9-Box com descrição do quadrante e gestão de consequência",
+      "Participar da conversa de devolutiva com abertura e curiosidade",
+      "Usar o feedback como base para o preenchimento do PDI",
+    ],
+    rh: [
+      "Monitorar o envio dos feedbacks pelos gestores (% enviados vs pendentes)",
+      "Identificar gestores com feedbacks atrasados e acionar proativamente",
+      "Garantir que todos os colaboradores recebam a devolutiva antes do prazo",
+      "Usar os feedbacks como insumo para o Painel RH e decisões de desenvolvimento",
+    ],
+    destaque:
+      "O feedback estruturado é obrigatório para todos os colaboradores. Gestores que não enviam o feedback no prazo comprometem o ciclo completo e a confiança do time.",
+  },
+  {
+    id: 7,
     icone: Award,
     titulo: "Gestão de Consequências",
     periodo: "Setembro/2026",
     objetivo:
-      "Com os posicionamentos finais definidos, o RH e os gestores definem o budget de mérito, promoções e ações de desenvolvimento para cada quadrante. Cada quadrante tem uma gestão de consequência específica.",
+      "Com os posicionamentos finais definidos e o feedback entregue, o RH e os gestores formalizam as decisões de mérito, promoções e ações de desenvolvimento para cada quadrante. Cada quadrante tem uma gestão de consequência específica que precisa ser comunicada com clareza.",
     cor: "#eab308",
     corBg: "#eab30815",
     corBorda: "#eab30840",
     gestor: [
-      "Receber o posicionamento final do time após a calibração",
-      "Usar a IA da plataforma para estruturar o feedback de cada liderado",
-      "Preparar a devolutiva individual com base no quadrante e nas evidências",
-      "Enviar o relatório de devolutiva para cada colaborador pela plataforma",
+      "Receber o budget de mérito e promoções definido pelo RH",
+      "Aplicar a gestão de consequência conforme o quadrante de cada liderado",
+      "Comunicar as decisões de mérito, promoção ou plano de recuperação ao colaborador",
+      "Registrar a consequência definida na plataforma para cada pessoa do time",
     ],
     colaborador: [
-      "Aguardar a devolutiva do gestor na plataforma",
-      "Visualizar o posicionamento no 9-Box com descrição do quadrante",
-      "Entender a gestão de consequência do seu quadrante (mérito, promoção, bônus)",
-      "Usar a devolutiva como base para o PDI do próximo semestre",
+      "Entender a gestão de consequência do seu quadrante (mérito, promoção, bônus, plano de recuperação)",
+      "Receber a comunicação formal da decisão do gestor",
+      "Usar a consequência como insumo para o PDI do próximo ciclo",
     ],
     rh: [
-      "Definir o budget total de mérito e promoções com a liderança",
-      "Garantir que todos os colaboradores recebam a devolutiva",
-      "Monitorar o envio das devolutivas pelos gestores",
-      "Consolidar as ações de desenvolvimento por quadrante",
+      "Definir o budget total de mérito e promoções com a liderança executiva",
+      "Consolidar as ações de consequência por quadrante no Painel RH",
+      "Garantir consistência nas decisões entre áreas e gestores",
+      "Monitorar o registro das consequências na plataforma",
     ],
     destaque:
       "A gestão de consequência é por quadrante, não por nota. Q9 e Q8 têm mérito e promoção. Q7 e Q3 têm bônus por meta, mas sem mérito. Q1 não tem bônus.",
   },
   {
-    id: 7,
+    id: 8,
     icone: Zap,
     titulo: "PDI — Plano de Desenvolvimento Individual",
     periodo: "Após a Devolutiva",
@@ -439,11 +471,11 @@ export default function CicloOverview() {
               <span style={{ color: "#d9f22a" }}> Stellar Gaming</span>
             </h1>
             <p className="text-base max-w-2xl mb-6" style={{ color: "#8aa3c0" }}>
-              Aqui a performance é medida com critério, não com intenção. Sete fases estruturadas para garantir que as pessoas certas sejam reconhecidas, desenvolvidas e aceleradas. As decisões são tomadas com dados, não com feeling.
+              Aqui a performance é medida com critério, não com intenção. Oito fases estruturadas para garantir que as pessoas certas sejam reconhecidas, desenvolvidas e aceleradas. As decisões são tomadas com dados, não com feeling.
             </p>
             <div className="flex flex-wrap gap-4">
               {[
-                { label: "Fases do ciclo", valor: "7" },
+                { label: "Fases do ciclo", valor: "8" },
                 { label: "Critérios de avaliação", valor: "8" },
                 { label: "Curva esperada de talentos", valor: "30%" },
                 { label: "Curva esperada críticos", valor: "10%" },
@@ -488,7 +520,7 @@ export default function CicloOverview() {
         {/* ── Fases do Ciclo ────────────────────────────────────────────────── */}
         <div>
           <h2 className="text-lg font-bold mb-4" style={{ color: "#fdffdf" }}>
-            As 7 Fases do Ciclo
+            As 8 Fases do Ciclo
           </h2>
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Lista de fases */}
@@ -548,7 +580,7 @@ export default function CicloOverview() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-bold uppercase tracking-widest" style={{ color: fase.cor }}>
-                        Fase {fase.id}
+                        Fase {FASES.findIndex(f => f.id === fase.id) + 1}
                       </span>
                       <span
                         className="text-xs px-2 py-0.5 rounded-full"
@@ -611,8 +643,8 @@ export default function CicloOverview() {
                   })}
                 </div>
 
-                {/* Metodologia 70/20/10 — apenas Fase 7 (PDI) */}
-                {"metodologia7020" in fase && (fase as any).metodologia7020 && (
+                {/* Metodologia 70/20/10 — apenas Fase 8 (PDI) */}
+                {("metodologia7020" in fase) && (fase as any).metodologia7020 && (
                   <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: "#001023", border: "1px solid #d9f22a30" }}>
                     <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#d9f22a" }}>
                       Metodologia 70/20/10
@@ -640,8 +672,8 @@ export default function CicloOverview() {
                   </div>
                 )}
 
-                {/* Obrigatórios por quadrante — apenas Fase 7 (PDI) */}
-                {"obrigatorios" in fase && (fase as any).obrigatorios && (
+                {/* Obrigatórios por quadrante — apenas Fase 8 (PDI) */}
+                {("obrigatorios" in fase) && (fase as any).obrigatorios && (
                   <div className="p-4 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
                     <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#8aa3c0" }}>
                       PDI Obrigatório por Grupo
