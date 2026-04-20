@@ -56,6 +56,14 @@ import {
   createCycle,
   updateCycleStatus,
   isPhaseActive,
+  getStructuredFeedback,
+  getStructuredFeedbackById,
+  getStructuredFeedbackForEmployee,
+  listStructuredFeedbacksForManager,
+  upsertStructuredFeedback,
+  getImpactPlan,
+  listImpactPlansForManager,
+  upsertImpactPlan,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -1314,6 +1322,206 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
           ctx.user.id
         )
       ),
+  }),
+
+  // ─── STRUCTURED FEEDBACK ─────────────────────────────────────────────────
+  feedback: router({
+    // Gestor: salvar rascunho ou enviar feedback estruturado
+    save: protectedProcedure
+      .input(
+        z.object({
+          cycleId: z.number(),
+          employeeId: z.number(),
+          entregasRelevantes: z.string().optional(),
+          metaAtingidaAuto: z.boolean().optional(),
+          abaixoEsperado: z.string().optional(),
+          valorConsistente: z.string().optional(),
+          valorConsistenteDesc: z.string().optional(),
+          valorEvoluir: z.string().optional(),
+          valorEvoluirComportamento: z.string().optional(),
+          proximoCicloDiferente: z.string().optional(),
+          proximoCicloExpectativa: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) throw new TRPCError({ code: "NOT_FOUND", message: "Líder não encontrado" });
+        return upsertStructuredFeedback({
+          cycleId: input.cycleId,
+          leaderId: leader.id,
+          employeeId: input.employeeId,
+          entregasRelevantes: input.entregasRelevantes,
+          metaAtingidaAuto: input.metaAtingidaAuto,
+          abaixoEsperado: input.abaixoEsperado,
+          valorConsistente: input.valorConsistente,
+          valorConsistenteDesc: input.valorConsistenteDesc,
+          valorEvoluir: input.valorEvoluir,
+          valorEvoluirComportamento: input.valorEvoluirComportamento,
+          proximoCicloDiferente: input.proximoCicloDiferente,
+          proximoCicloExpectativa: input.proximoCicloExpectativa,
+          status: "draft",
+        });
+      }),
+
+    // Gestor: enviar feedback (valida campos obrigatórios)
+    submit: protectedProcedure
+      .input(
+        z.object({
+          cycleId: z.number(),
+          employeeId: z.number(),
+          entregasRelevantes: z.string().min(1, "Campo obrigatório"),
+          metaAtingidaAuto: z.boolean(),
+          abaixoEsperado: z.string().min(1, "Campo obrigatório"),
+          valorConsistente: z.string().min(1, "Campo obrigatório"),
+          valorConsistenteDesc: z.string().min(1, "Campo obrigatório"),
+          valorEvoluir: z.string().min(1, "Campo obrigatório"),
+          valorEvoluirComportamento: z.string().min(150, "Mínimo 150 caracteres para evidência comportamental"),
+          proximoCicloDiferente: z.string().min(1, "Campo obrigatório"),
+          proximoCicloExpectativa: z.string().min(1, "Campo obrigatório"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) throw new TRPCError({ code: "NOT_FOUND", message: "Líder não encontrado" });
+        // Validate no "nada" in abaixoEsperado
+        if (input.abaixoEsperado.trim().toLowerCase() === "nada") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: 'O campo "Abaixo do esperado" não pode ser "nada"' });
+        }
+        return upsertStructuredFeedback({
+          cycleId: input.cycleId,
+          leaderId: leader.id,
+          employeeId: input.employeeId,
+          entregasRelevantes: input.entregasRelevantes,
+          metaAtingidaAuto: input.metaAtingidaAuto,
+          abaixoEsperado: input.abaixoEsperado,
+          valorConsistente: input.valorConsistente,
+          valorConsistenteDesc: input.valorConsistenteDesc,
+          valorEvoluir: input.valorEvoluir,
+          valorEvoluirComportamento: input.valorEvoluirComportamento,
+          proximoCicloDiferente: input.proximoCicloDiferente,
+          proximoCicloExpectativa: input.proximoCicloExpectativa,
+          status: "submitted",
+          submittedAt: new Date(),
+        });
+      }),
+
+    // Gestor: buscar feedback de um liderado
+    getForEmployee: protectedProcedure
+      .input(z.object({ cycleId: z.number(), employeeId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) return null;
+        return getStructuredFeedback(input.cycleId, leader.id, input.employeeId);
+      }),
+
+    // Colaborador: buscar feedback escrito pelo líder para si
+    getMyFeedback: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const employee = await getEmployeeByUserId(ctx.user.id);
+        if (!employee) return null;
+        return getStructuredFeedbackForEmployee(input.cycleId, employee.id);
+      }),
+
+    // Gestor: listar feedbacks de todos os liderados no ciclo
+    listForManager: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) return [];
+        return listStructuredFeedbacksForManager(input.cycleId, leader.id);
+      }),
+
+    // RH: listar todos os feedbacks de um ciclo
+    listAll: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ input }) => {
+        return listStructuredFeedbacksForManager(input.cycleId, -1).catch(() => []);
+      }),
+  }),
+
+  // ─── IMPACT PLANS ────────────────────────────────────────────────────────
+  impactPlan: router({
+    // Colaborador: salvar rascunho do plano de impacto
+    save: protectedProcedure
+      .input(
+        z.object({
+          cycleId: z.number(),
+          feedbackId: z.number(),
+          valorDesenvolver: z.string().optional(),
+          valorAcoes: z.string().optional(),
+          competenciaTecnica: z.string().optional(),
+          comoDesenvolver: z.string().optional(),
+          prazoDias: z.number().max(90, "Prazo máximo de 90 dias").optional(),
+          resultadoEsperado: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const employee = await getEmployeeByUserId(ctx.user.id);
+        if (!employee) throw new TRPCError({ code: "NOT_FOUND", message: "Colaborador não encontrado" });
+        return upsertImpactPlan({
+          cycleId: input.cycleId,
+          employeeId: employee.id,
+          feedbackId: input.feedbackId,
+          valorDesenvolver: input.valorDesenvolver,
+          valorAcoes: input.valorAcoes,
+          competenciaTecnica: input.competenciaTecnica,
+          comoDesenvolver: input.comoDesenvolver,
+          prazoDias: input.prazoDias,
+          resultadoEsperado: input.resultadoEsperado,
+          status: "draft",
+        });
+      }),
+
+    // Colaborador: enviar plano de impacto (valida campos obrigatórios)
+    submit: protectedProcedure
+      .input(
+        z.object({
+          cycleId: z.number(),
+          feedbackId: z.number(),
+          valorDesenvolver: z.string().min(1, "Campo obrigatório"),
+          valorAcoes: z.string().min(1, "Descreva pelo menos 2 exemplos concretos"),
+          competenciaTecnica: z.string().min(1, "Campo obrigatório"),
+          comoDesenvolver: z.string().min(1, "Campo obrigatório"),
+          prazoDias: z.number().min(1).max(90, "Prazo máximo de 90 dias"),
+          resultadoEsperado: z.string().min(1, "Campo obrigatório"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const employee = await getEmployeeByUserId(ctx.user.id);
+        if (!employee) throw new TRPCError({ code: "NOT_FOUND", message: "Colaborador não encontrado" });
+        return upsertImpactPlan({
+          cycleId: input.cycleId,
+          employeeId: employee.id,
+          feedbackId: input.feedbackId,
+          valorDesenvolver: input.valorDesenvolver,
+          valorAcoes: input.valorAcoes,
+          competenciaTecnica: input.competenciaTecnica,
+          comoDesenvolver: input.comoDesenvolver,
+          prazoDias: input.prazoDias,
+          resultadoEsperado: input.resultadoEsperado,
+          status: "submitted",
+          submittedAt: new Date(),
+        });
+      }),
+
+    // Colaborador: buscar meu plano de impacto no ciclo
+    get: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const employee = await getEmployeeByUserId(ctx.user.id);
+        if (!employee) return null;
+        return getImpactPlan(input.cycleId, employee.id);
+      }),
+
+    // Gestor: listar planos dos liderados
+    listForManager: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) return [];
+        return listImpactPlansForManager(input.cycleId, leader.id);
+      }),
   }),
 
   // ─── NOTIFICATIONS ───────────────────────────────────────────────────────

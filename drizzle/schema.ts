@@ -300,3 +300,62 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// ─── STRUCTURED FEEDBACKS ────────────────────────────────────────────────────
+// Preenchido pelo líder antes da conversa com o liderado (Etapa 1)
+export const structuredFeedbacks = mysqlTable("structured_feedbacks", {
+  id: int("id").autoincrement().primaryKey(),
+  cycleId: int("cycleId").references(() => evaluationCycles.id).notNull(),
+  leaderId: int("leaderId").references(() => employees.id).notNull(),
+  employeeId: int("employeeId").references(() => employees.id).notNull(),
+
+  // Entregas
+  entregasRelevantes: text("entregasRelevantes"), // O que entregou de mais relevante
+  metaAtingidaAuto: boolean("metaAtingidaAuto"), // Puxado automaticamente da avaliação
+  abaixoEsperado: text("abaixoEsperado"), // O que ficou abaixo do esperado (obrigatório)
+
+  // Comportamento Cultural
+  valorConsistente: varchar("valorConsistente", { length: 255 }), // Valor demonstrado com consistência
+  valorConsistenteDesc: text("valorConsistenteDesc"), // Descrição do comportamento observado
+  valorEvoluir: varchar("valorEvoluir", { length: 255 }), // Valor que precisa evoluir (automático)
+  valorEvoluirComportamento: text("valorEvoluirComportamento"), // Comportamento concreto (mín 150 chars)
+
+  // Próximo Ciclo
+  proximoCicloDiferente: text("proximoCicloDiferente"), // O que fazer diferente (1-3 itens)
+  proximoCicloExpectativa: text("proximoCicloExpectativa"), // Expectativa nos próximos 6 meses
+
+  status: mysqlEnum("status", ["draft", "submitted"]).default("draft").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  submittedAt: timestamp("submittedAt"),
+});
+export type StructuredFeedback = typeof structuredFeedbacks.$inferSelect;
+export type InsertStructuredFeedback = typeof structuredFeedbacks.$inferInsert;
+
+// ─── IMPACT PLANS ────────────────────────────────────────────────────────────
+// Preenchido pelo colaborador Talento após a conversa de feedback (Etapa 2)
+export const impactPlans = mysqlTable("impact_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  cycleId: int("cycleId").references(() => evaluationCycles.id).notNull(),
+  employeeId: int("employeeId").references(() => employees.id).notNull(),
+  feedbackId: int("feedbackId").references(() => structuredFeedbacks.id).notNull(),
+
+  // Cultura
+  valorDesenvolver: varchar("valorDesenvolver", { length: 255 }), // Valor a desenvolver (pré-preenchido)
+  valorAcoes: text("valorAcoes"), // O que farei diferente (mín. 2 exemplos)
+
+  // Desenvolvimento Técnico
+  competenciaTecnica: text("competenciaTecnica"), // Competência a desenvolver
+  comoDesenvolver: text("comoDesenvolver"), // Como farei (curso, projeto, mentoria, etc.)
+  prazoDias: int("prazoDias"), // Prazo em dias (máx 90)
+
+  // Compromisso
+  resultadoEsperado: text("resultadoEsperado"), // Resultado esperado (1 frase objetiva)
+
+  status: mysqlEnum("status", ["draft", "submitted"]).default("draft").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  submittedAt: timestamp("submittedAt"),
+});
+export type ImpactPlan = typeof impactPlans.$inferSelect;
+export type InsertImpactPlan = typeof impactPlans.$inferInsert;

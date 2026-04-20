@@ -71,6 +71,13 @@
       "when": 1776110433761,
       "tag": "0009_fast_leech",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1776443019170,
+      "tag": "0010_typical_warstar",
+      "breakpoints": true
     }
   ]
 }

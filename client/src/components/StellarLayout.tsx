@@ -16,11 +16,11 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  Target,
   Settings,
   Shield,
   Users,
   X,
-  Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -73,9 +73,16 @@ const navItems: NavItem[] = [
     group: "main",
   },
   {
-    label: "Flash Feedbacks",
-    href: "/flash-feedback",
-    icon: <Zap size={18} />,
+    label: "Feedback",
+    href: "/feedback",
+    icon: <MessageSquare size={18} />,
+    roles: ["rh", "gestor", "colaborador"],
+    group: "main",
+  },
+  {
+    label: "Plano de Impacto",
+    href: "/plano-impacto",
+    icon: <Target size={18} />,
     roles: ["rh", "gestor", "colaborador"],
     group: "main",
   },

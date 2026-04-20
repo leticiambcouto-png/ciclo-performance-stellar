@@ -318,3 +318,46 @@
 
 ### Integração Outlook
 - [x] Flash Feedback: ao criar agendamento, gerar link de reunião do Outlook (Microsoft Teams/Outlook Calendar)
+
+## Lote 13 — Feedback Estruturado e Plano de Impacto (Abril 2026)
+
+### Banco de Dados
+- [x] Criar tabela `structured_feedbacks` (cycleId, leaderId, employeeId, entregas_relevantes, meta_atingida_auto, abaixo_esperado, valor_consistente, valor_consistente_desc, valor_evoluir, valor_evoluir_comportamento, proximo_ciclo_diferente, proximo_ciclo_expectativa, status: draft|submitted, createdAt, submittedAt)
+- [x] Criar tabela `impact_plans` (cycleId, employeeId, feedbackId, valor_desenvolver, valor_acoes, competencia_tecnica, como_desenvolver, prazo_dias, resultado_esperado, status: draft|submitted, createdAt, submittedAt)
+- [x] Gerar migração SQL e aplicar no banco
+
+### Backend (tRPC)
+- [x] Procedure `feedback.save` (protectedProcedure — gestor): salvar/atualizar rascunho
+- [x] Procedure `feedback.submit` (protectedProcedure — gestor): enviar feedback (valida campos obrigatórios e mínimo de caracteres)
+- [x] Procedure `feedback.getForEmployee` (protectedProcedure): buscar feedback de um colaborador num ciclo
+- [x] Procedure `feedback.listForManager` (protectedProcedure — gestor): listar feedbacks do gestor no ciclo
+- [x] Procedure `impactPlan.save` (protectedProcedure — colaborador): salvar/atualizar rascunho
+- [x] Procedure `impactPlan.submit` (protectedProcedure — colaborador): enviar plano (valida prazo ≤ 90 dias e mínimo 1 ação por eixo)
+- [x] Procedure `impactPlan.get` (protectedProcedure): buscar plano do colaborador no ciclo
+- [x] Procedure `impactPlan.listForManager` (protectedProcedure — gestor): listar planos dos liderados
+
+### Frontend — Feedback Estruturado (Etapa 1 — Líder)
+- [x] Criar página `FeedbackEstruturado.tsx` com rota `/feedback`
+- [x] Exibir dados da avaliação do colaborador (notas de metas e valores) durante preenchimento
+- [x] Seção Entregas: campo "O que entregou de mais relevante" (mín. 3 linhas), "Meta atingida?" (automático da avaliação), "O que ficou abaixo do esperado" (obrigatório)
+- [x] Seção Comportamento Cultural: "Valor demonstrado com consistência" (texto livre), "Valor que precisa evoluir" (automático — 2 menores notas), "Comportamento concreto" (mín. 150 chars)
+- [x] Seção Próximo Ciclo: "O que fazer diferente" (1-3 itens), "Expectativa nos próximos 6 meses" (texto)
+- [x] Validação: nenhum campo vazio, evidência comportamental ≥ 150 chars, não aceita "nada"
+- [x] Botão Salvar Rascunho e Enviar Feedback
+- [x] Lista de liderados com status (Não iniciado / Rascunho / Enviado)
+
+### Frontend — Plano de Impacto (Etapa 2 — Colaborador Talento)
+- [x] Criar página `PlanoImpacto.tsx` com rota `/plano-impacto`
+- [x] Exibir feedback do líder durante preenchimento (somente leitura)
+- [x] Visível apenas para colaboradores classificados como Talentos (Q6, Q8, Q9)
+- [x] Seção Cultura: "Valor a desenvolver" (pré-preenchido com menor nota, confirmável), "O que farei diferente" (mín. 2 exemplos concretos)
+- [x] Seção Desenvolvimento Técnico: "Competência a desenvolver", "Como farei", "Prazo (máx 90 dias)"
+- [x] Seção Compromisso: "Resultado esperado" (1 frase objetiva)
+- [x] Validação: prazo ≤ 90 dias, mín. 1 ação por eixo
+- [x] Exibir plano do ciclo anterior para comparação (se existir)
+
+### Menu e Ciclo
+- [x] Substituir "Flash Feedback" no menu por "Feedback" (aponta para /feedback)
+- [x] Adicionar "Plano de Impacto" no menu (aponta para /plano-impacto, visível para colaboradores Talento e gestores)
+- [x] Adicionar fases "Feedback Estruturado" e "Plano de Impacto" nas fases padrão de novos ciclos
+- [x] Remover ou arquivar a página FlashFeedback.tsx (manter rota para não quebrar links existentes)

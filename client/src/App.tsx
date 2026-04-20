@@ -10,7 +10,8 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Avaliacao from "./pages/Avaliacao";
 import NineBox from "./pages/NineBox";
-import FlashFeedback from "./pages/FlashFeedback";
+import FeedbackEstruturado from "./pages/FeedbackEstruturado";
+import PlanoImpacto from "./pages/PlanoImpacto";
 import Relatorio from "./pages/Relatorio";
 import PainelRH from "./pages/PainelRH";
 import Calibracao from "./pages/Calibracao";
@@ -76,8 +77,11 @@ function Router() {
       <Route path="/9box">
         <ProtectedRoute component={NineBox} />
       </Route>
-      <Route path="/flash-feedback">
-        <ProtectedRoute component={FlashFeedback} />
+      <Route path="/feedback">
+        <ProtectedRoute component={FeedbackEstruturado} />
+      </Route>
+      <Route path="/plano-impacto">
+        <ProtectedRoute component={PlanoImpacto} />
       </Route>
       <Route path="/relatorio">
         <ProtectedRoute component={Relatorio} />

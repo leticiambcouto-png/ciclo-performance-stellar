@@ -11,12 +11,14 @@ import {
   evaluationCycles,
   feedbackReports,
   flashFeedbacks,
+  impactPlans,
   InsertEmployee,
   InsertUser,
   managerEvaluations,
   nineboxPositions,
   notifications,
   selfEvaluations,
+  structuredFeedbacks,
   users,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
@@ -1120,4 +1122,163 @@ export async function isPhaseActive(cycleId: number, phaseNumber: number): Promi
     .limit(1);
   if (!result[0]) return false;
   return result[0].startDate <= now && result[0].endDate >= now;
+}
+
+
+// ─── STRUCTURED FEEDBACKS ────────────────────────────────────────────────────
+
+export async function getStructuredFeedback(cycleId: number, leaderId: number, employeeId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(structuredFeedbacks)
+    .where(
+      and(
+        eq(structuredFeedbacks.cycleId, cycleId),
+        eq(structuredFeedbacks.leaderId, leaderId),
+        eq(structuredFeedbacks.employeeId, employeeId)
+      )
+    )
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getStructuredFeedbackById(feedbackId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(structuredFeedbacks)
+    .where(eq(structuredFeedbacks.id, feedbackId))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getStructuredFeedbackForEmployee(cycleId: number, employeeId: number) {
+  // Returns the feedback written BY the employee's leader FOR the employee
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(structuredFeedbacks)
+    .where(
+      and(
+        eq(structuredFeedbacks.cycleId, cycleId),
+        eq(structuredFeedbacks.employeeId, employeeId)
+      )
+    )
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function listStructuredFeedbacksForManager(cycleId: number, leaderId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(structuredFeedbacks)
+    .where(
+      and(
+        eq(structuredFeedbacks.cycleId, cycleId),
+        eq(structuredFeedbacks.leaderId, leaderId)
+      )
+    )
+    .orderBy(desc(structuredFeedbacks.updatedAt));
+}
+
+export async function upsertStructuredFeedback(data: {
+  cycleId: number;
+  leaderId: number;
+  employeeId: number;
+  entregasRelevantes?: string | null;
+  metaAtingidaAuto?: boolean | null;
+  abaixoEsperado?: string | null;
+  valorConsistente?: string | null;
+  valorConsistenteDesc?: string | null;
+  valorEvoluir?: string | null;
+  valorEvoluirComportamento?: string | null;
+  proximoCicloDiferente?: string | null;
+  proximoCicloExpectativa?: string | null;
+  status?: "draft" | "submitted";
+  submittedAt?: Date | null;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await getStructuredFeedback(data.cycleId, data.leaderId, data.employeeId);
+  if (existing) {
+    await db
+      .update(structuredFeedbacks)
+      .set({ ...data })
+      .where(eq(structuredFeedbacks.id, existing.id));
+    return { ...existing, ...data };
+  } else {
+    const result = await db.insert(structuredFeedbacks).values({ ...data });
+    return { id: Number((result as any).insertId), ...data };
+  }
+}
+
+// ─── IMPACT PLANS ────────────────────────────────────────────────────────────
+
+export async function getImpactPlan(cycleId: number, employeeId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(impactPlans)
+    .where(
+      and(
+        eq(impactPlans.cycleId, cycleId),
+        eq(impactPlans.employeeId, employeeId)
+      )
+    )
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function listImpactPlansForManager(cycleId: number, leaderId: number) {
+  // Returns impact plans for all direct reports of the leader in this cycle
+  const db = await getDb();
+  if (!db) return [];
+  const feedbacks = await listStructuredFeedbacksForManager(cycleId, leaderId);
+  if (feedbacks.length === 0) return [];
+  const employeeIds = feedbacks.map((f) => f.employeeId);
+  const plans = await db
+    .select()
+    .from(impactPlans)
+    .where(
+      and(
+        eq(impactPlans.cycleId, cycleId),
+        sql`${impactPlans.employeeId} IN (${employeeIds.join(",")})`
+      )
+    );
+  return plans;
+}
+
+export async function upsertImpactPlan(data: {
+  cycleId: number;
+  employeeId: number;
+  feedbackId: number;
+  valorDesenvolver?: string | null;
+  valorAcoes?: string | null;
+  competenciaTecnica?: string | null;
+  comoDesenvolver?: string | null;
+  prazoDias?: number | null;
+  resultadoEsperado?: string | null;
+  status?: "draft" | "submitted";
+  submittedAt?: Date | null;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await getImpactPlan(data.cycleId, data.employeeId);
+  if (existing) {
+    await db
+      .update(impactPlans)
+      .set({ ...data })
+      .where(eq(impactPlans.id, existing.id));
+    return { ...existing, ...data };
+  } else {
+    const result = await db.insert(impactPlans).values({ ...data });
+    return { id: Number((result as any).insertId), ...data };
+  }
 }
