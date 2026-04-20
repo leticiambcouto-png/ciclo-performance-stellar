@@ -440,3 +440,24 @@
 - [x] CicloOverview: PDI passa a ser fase 8 (última)
 - [x] Menu lateral: reordenar itens para seguir a ordem do ciclo (Ciclo 2.0 > 9-Box > Avaliação > Devolutiva > Feedback > PDI > Calibração | Dashboard > Painel RH)
 - [x] Menu lateral: garantir que "Feedback" e "PDI" aparecem na ordem correta entre Devolutiva e Calibração
+
+## Lote 16 — Feedback com IA Stellar e PDI 70/20/10 (Abril 2026) — CONCLUÍDO
+
+### Menu
+- [x] Renomear "Devolutiva" para "Feedback" no menu lateral (StellarLayout)
+- [x] Rota /relatorio continua funcionando (não quebrar links)
+
+### Tela de Feedback (/feedback) — Refatoração completa
+- [x] Remover estrutura antiga (entregas, comportamento, próximo ciclo em campos livres)
+- [x] Nova estrutura de feedback ágil com 4 blocos: (1) Resultado e Entrega, (2) Comportamento e Cultura, (3) Pontos Cegos e Oportunidade, (4) Próximos 90 dias
+- [x] IA Stella integrada: botão "Gerar com Stella" que usa notas da avaliação do líder, quadrante 9-Box e comentários para gerar sugestão de feedback por bloco
+- [x] Tom de voz Stellar: direto, sem rodeios, orientado a performance, sem eufemismos, IA-first
+- [x] Campo 70% obrigatório editar/confirmar (não aceita cópia direta da IA sem edição)
+- [x] Remover "Plano de Ação" da tela de Feedback — substituir por botão "Ir para PDI" que leva para /pdi
+- [x] Status: Rascunho → Enviado (gestor envia para colaborador)
+- [x] Colaborador: visualiza o feedback recebido com layout clean, sem campos de edição
+
+### PDI (/pdi) — Sugestões IA com 70/20/10 explícito
+- [x] Sugestão da IA deve retornar 3 blocos separados: 70% (prática no trabalho), 20% (aprendizado social), 10% (aprendizado formal)
+- [x] Cada bloco com título, descrição e 2-3 exemplos concretos adaptados ao cargo/quadrante
+- [x] Prompt da IA atualizado para discriminar os 3 buckets com contexto Stellar Gaming

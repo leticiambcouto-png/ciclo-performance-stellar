@@ -1334,6 +1334,93 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
 
   // ─── STRUCTURED FEEDBACK ─────────────────────────────────────────────────
   feedback: router({
+    // IA Stella: gerar sugestão de feedback estruturado com base na avaliação do líder
+    generateWithStella: gestorProcedure
+      .input(
+        z.object({
+          employeeName: z.string(),
+          jobTitle: z.string().optional(),
+          quadrant: z.string().optional(),
+          // notas da avaliação do líder
+          qualidade: z.string().optional(),
+          contribuicao: z.string().optional(),
+          adaptacao: z.string().optional(),
+          usoDeIA: z.string().optional(),
+          ambicao: z.string().optional(),
+          sonharGrande: z.string().optional(),
+          accountability: z.string().optional(),
+          juntosSomosMaisFortes: z.string().optional(),
+          // comentários opcionais do líder
+          comentariosLider: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const ratingLabel: Record<string, string> = {
+          above: "Acima do esperado",
+          within: "Dentro do esperado",
+          below: "Abaixo do esperado",
+        };
+        const r = (v?: string) => (v ? ratingLabel[v] || v : "não avaliado");
+
+        const perfBlock = [
+          `- Qualidade: ${r(input.qualidade)}`,
+          `- Contribuição: ${r(input.contribuicao)}`,
+          `- Adaptação: ${r(input.adaptacao)}`,
+          `- Uso de IA: ${r(input.usoDeIA)}`,
+        ].join("\n");
+
+        const cultBlock = [
+          `- Ambição: ${r(input.ambicao)}`,
+          `- Sonhar Grande: ${r(input.sonharGrande)}`,
+          `- Accountability: ${r(input.accountability)}`,
+          `- Juntos Somos Mais Fortes: ${r(input.juntosSomosMaisFortes)}`,
+        ].join("\n");
+
+        const quadrantCtx = input.quadrant ? `\nPosicionamento no 9-Box: ${input.quadrant}` : "";
+        const jobCtx = input.jobTitle ? `\nCargo: ${input.jobTitle}` : "";
+        const comentCtx = input.comentariosLider ? `\nComentários do líder: ${input.comentariosLider}` : "";
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `Você é Stella, a IA de RH da Stellar Gaming. Seu papel é ajudar gestores a dar feedbacks de performance excepcionais: diretos, sem rodeios, orientados a resultado, sem eufemismos, sem paternalismos. A Stellar Gaming é uma empresa que valoriza alta performance, accountability, ambicião, uso intensivo de IA e crescimento acelerado. O feedback precisa ser honesto, respeitoso e extremamente útil para quem recebe. Nunca use frases genéricas. Sempre baseie no que foi avaliado. Responda APENAS em JSON válido.`,
+            },
+            {
+              role: "user",
+              content: `Gere uma sugestão de feedback estruturado para ${input.employeeName}.${jobCtx}${quadrantCtx}${comentCtx}\n\nNotas de Performance:\n${perfBlock}\n\nNotas de Cultura:\n${cultBlock}\n\nEstrutura obrigatória (4 blocos):\n1. resultado_entrega: O que essa pessoa entregou de mais relevante e qual foi o impacto concreto. Seja específico. Mencione o que ficou abaixo também.\n2. comportamento_cultura: Qual valor cultural essa pessoa demonstrou com consistência e qual precisa evoluir. Use exemplos comportamentais concretos.\n3. ponto_cego: Um ponto cego ou padrão limitante que essa pessoa provavelmente não vê em si mesma. Seja direto e cuidadoso.\n4. proximos_90_dias: O que essa pessoa precisa fazer diferente nos próximos 90 dias para crescer aqui. Máximo 3 ações objetivas e mensuráveis.`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "stella_feedback",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  resultado_entrega: { type: "string", description: "Bloco 1: resultado e entrega" },
+                  comportamento_cultura: { type: "string", description: "Bloco 2: comportamento e cultura" },
+                  ponto_cego: { type: "string", description: "Bloco 3: ponto cego e oportunidade" },
+                  proximos_90_dias: { type: "string", description: "Bloco 4: próximos 90 dias" },
+                },
+                required: ["resultado_entrega", "comportamento_cultura", "ponto_cego", "proximos_90_dias"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices[0].message.content;
+        const parsed = typeof content === "string" ? JSON.parse(content) : content;
+        return parsed as {
+          resultado_entrega: string;
+          comportamento_cultura: string;
+          ponto_cego: string;
+          proximos_90_dias: string;
+        };
+      }),
+
     // Gestor: salvar rascunho ou enviar feedback estruturado
     save: protectedProcedure
       .input(
@@ -1349,6 +1436,11 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
           valorEvoluirComportamento: z.string().optional(),
           proximoCicloDiferente: z.string().optional(),
           proximoCicloExpectativa: z.string().optional(),
+          // novos campos estrutura ágil
+          resultadoEntrega: z.string().optional(),
+          comportamentoCultura: z.string().optional(),
+          pontoCego: z.string().optional(),
+          proximos90Dias: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -1358,14 +1450,14 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
           cycleId: input.cycleId,
           leaderId: leader.id,
           employeeId: input.employeeId,
-          entregasRelevantes: input.entregasRelevantes,
+          entregasRelevantes: input.resultadoEntrega ?? input.entregasRelevantes,
           metaAtingidaAuto: input.metaAtingidaAuto,
           abaixoEsperado: input.abaixoEsperado,
           valorConsistente: input.valorConsistente,
-          valorConsistenteDesc: input.valorConsistenteDesc,
+          valorConsistenteDesc: input.comportamentoCultura ?? input.valorConsistenteDesc,
           valorEvoluir: input.valorEvoluir,
-          valorEvoluirComportamento: input.valorEvoluirComportamento,
-          proximoCicloDiferente: input.proximoCicloDiferente,
+          valorEvoluirComportamento: input.pontoCego ?? input.valorEvoluirComportamento,
+          proximoCicloDiferente: input.proximos90Dias ?? input.proximoCicloDiferente,
           proximoCicloExpectativa: input.proximoCicloExpectativa,
           status: "draft",
         });
@@ -1377,37 +1469,31 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
         z.object({
           cycleId: z.number(),
           employeeId: z.number(),
-          entregasRelevantes: z.string().min(1, "Campo obrigatório"),
-          metaAtingidaAuto: z.boolean(),
-          abaixoEsperado: z.string().min(1, "Campo obrigatório"),
-          valorConsistente: z.string().min(1, "Campo obrigatório"),
-          valorConsistenteDesc: z.string().min(1, "Campo obrigatório"),
-          valorEvoluir: z.string().min(1, "Campo obrigatório"),
-          valorEvoluirComportamento: z.string().min(150, "Mínimo 150 caracteres para evidência comportamental"),
-          proximoCicloDiferente: z.string().min(1, "Campo obrigatório"),
-          proximoCicloExpectativa: z.string().min(1, "Campo obrigatório"),
+          // novos campos obrigatórios
+          resultadoEntrega: z.string().min(1, "Campo obrigatório"),
+          comportamentoCultura: z.string().min(1, "Campo obrigatório"),
+          pontoCego: z.string().min(1, "Campo obrigatório"),
+          proximos90Dias: z.string().min(1, "Campo obrigatório"),
+          metaAtingidaAuto: z.boolean().optional(),
+          valorEvoluir: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const leader = await getEmployeeByUserId(ctx.user.id);
         if (!leader) throw new TRPCError({ code: "NOT_FOUND", message: "Líder não encontrado" });
-        // Validate no "nada" in abaixoEsperado
-        if (input.abaixoEsperado.trim().toLowerCase() === "nada") {
-          throw new TRPCError({ code: "BAD_REQUEST", message: 'O campo "Abaixo do esperado" não pode ser "nada"' });
-        }
         return upsertStructuredFeedback({
           cycleId: input.cycleId,
           leaderId: leader.id,
           employeeId: input.employeeId,
-          entregasRelevantes: input.entregasRelevantes,
+          entregasRelevantes: input.resultadoEntrega,
           metaAtingidaAuto: input.metaAtingidaAuto,
-          abaixoEsperado: input.abaixoEsperado,
-          valorConsistente: input.valorConsistente,
-          valorConsistenteDesc: input.valorConsistenteDesc,
-          valorEvoluir: input.valorEvoluir,
-          valorEvoluirComportamento: input.valorEvoluirComportamento,
-          proximoCicloDiferente: input.proximoCicloDiferente,
-          proximoCicloExpectativa: input.proximoCicloExpectativa,
+          abaixoEsperado: "",
+          valorConsistente: "",
+          valorConsistenteDesc: input.comportamentoCultura,
+          valorEvoluir: input.valorEvoluir ?? "",
+          valorEvoluirComportamento: input.pontoCego,
+          proximoCicloDiferente: input.proximos90Dias,
+          proximoCicloExpectativa: "",
           status: "submitted",
           submittedAt: new Date(),
         });
@@ -1626,26 +1712,81 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
           messages: [
             {
               role: "system",
-              content: `Você é um especialista em desenvolvimento de pessoas para a empresa Stellar Gaming. Gere sugestões práticas de ações de desenvolvimento seguindo a metodologia 70/20/10 para um PDI (Plano de Desenvolvimento Individual). Responda APENAS em JSON válido.`,
+              content: `Você é Stella, a IA de RH da Stellar Gaming. Gere sugestões de desenvolvimento usando a metodologia 70/20/10 para um PDI (Plano de Desenvolvimento Individual). A Stellar Gaming valoriza alta performance, uso intensivo de IA, accountability e crescimento acelerado. Suas sugestões devem ser práticas, específicas e acionáveis. Responda APENAS em JSON válido.`,
             },
             {
               role: "user",
-              content: `Gere sugestões de ações de desenvolvimento para a seguinte competência/valor:\n\n${blockLabel}: "${input.competencia}"\n${context}\n${jobContext}\n\nRetorne um JSON com exatamente esta estrutura:\n{\n  "acoes70": "[Uma ação prática detalhada para 70% — aprendizagem no trabalho (projetos, desafios, responsabilidades novas)]",\n  "acoes20": "[Uma ação de aprendizagem social para 20% (mentoria, shadowing, feedback estruturado, comunidades de prática)]",\n  "acoes10": "[Uma ação de aprendizagem formal para 10% (curso, livro, certificação, workshop)]"\n}`,
+              content: `Gere sugestões de desenvolvimento para:\n\n${blockLabel}: "${input.competencia}"\n${context}\n${jobContext}\n\nRetorne um JSON com exatamente esta estrutura (3 buckets discriminados):\n{
+  "bucket70": {
+    "titulo": "70% — Aprender Fazendo",
+    "descricao": "Descrição do que é aprendizagem no trabalho para esta competência",
+    "acao": "Ação principal específica e mensurável (projeto, desafio, responsabilidade nova)",
+    "exemplos": ["Exemplo concreto 1", "Exemplo concreto 2"]
+  },
+  "bucket20": {
+    "titulo": "20% — Aprender com Pessoas",
+    "descricao": "Descrição do que é aprendizagem social para esta competência",
+    "acao": "Ação principal específica (mentoria, shadowing, feedback, comunidade)",
+    "exemplos": ["Exemplo concreto 1", "Exemplo concreto 2"]
+  },
+  "bucket10": {
+    "titulo": "10% — Aprender Formalmente",
+    "descricao": "Descrição do que é aprendizagem formal para esta competência",
+    "acao": "Ação principal específica (curso, livro, certificação, workshop)",
+    "exemplos": ["Exemplo concreto 1", "Exemplo concreto 2"]
+  },
+  "acoes70": "Texto resumido da ação 70% para o campo do PDI",
+  "acoes20": "Texto resumido da ação 20% para o campo do PDI",
+  "acoes10": "Texto resumido da ação 10% para o campo do PDI"
+}`,
             },
           ],
           response_format: {
             type: "json_schema",
             json_schema: {
-              name: "pdi_suggestions",
+              name: "pdi_suggestions_v2",
               strict: true,
               schema: {
                 type: "object",
                 properties: {
-                  acoes70: { type: "string", description: "Ação 70% - prática no trabalho" },
-                  acoes20: { type: "string", description: "Ação 20% - aprendizado social" },
-                  acoes10: { type: "string", description: "Ação 10% - aprendizado formal" },
+                  bucket70: {
+                    type: "object",
+                    properties: {
+                      titulo: { type: "string" },
+                      descricao: { type: "string" },
+                      acao: { type: "string" },
+                      exemplos: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["titulo", "descricao", "acao", "exemplos"],
+                    additionalProperties: false,
+                  },
+                  bucket20: {
+                    type: "object",
+                    properties: {
+                      titulo: { type: "string" },
+                      descricao: { type: "string" },
+                      acao: { type: "string" },
+                      exemplos: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["titulo", "descricao", "acao", "exemplos"],
+                    additionalProperties: false,
+                  },
+                  bucket10: {
+                    type: "object",
+                    properties: {
+                      titulo: { type: "string" },
+                      descricao: { type: "string" },
+                      acao: { type: "string" },
+                      exemplos: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["titulo", "descricao", "acao", "exemplos"],
+                    additionalProperties: false,
+                  },
+                  acoes70: { type: "string", description: "Texto resumido 70%" },
+                  acoes20: { type: "string", description: "Texto resumido 20%" },
+                  acoes10: { type: "string", description: "Texto resumido 10%" },
                 },
-                required: ["acoes70", "acoes20", "acoes10"],
+                required: ["bucket70", "bucket20", "bucket10", "acoes70", "acoes20", "acoes10"],
                 additionalProperties: false,
               },
             },
@@ -1654,7 +1795,14 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
 
         const content = response.choices[0].message.content;
         const parsed = typeof content === "string" ? JSON.parse(content) : content;
-        return parsed as { acoes70: string; acoes20: string; acoes10: string };
+        return parsed as {
+          bucket70: { titulo: string; descricao: string; acao: string; exemplos: string[] };
+          bucket20: { titulo: string; descricao: string; acao: string; exemplos: string[] };
+          bucket10: { titulo: string; descricao: string; acao: string; exemplos: string[] };
+          acoes70: string;
+          acoes20: string;
+          acoes10: string;
+        };
       }),
 
     // Colaborador: salvar ações do plano 70/20/10

@@ -129,6 +129,11 @@ function BlockForm({ blockType, competencia, quadrant, jobTitle, initialData, pd
   const [iaAcoes70, setIaAcoes70] = useState(initialData?.iaAcoes70 ?? "");
   const [iaAcoes20, setIaAcoes20] = useState(initialData?.iaAcoes20 ?? "");
   const [iaAcoes10, setIaAcoes10] = useState(initialData?.iaAcoes10 ?? "");
+  const [iaBuckets, setIaBuckets] = useState<{
+    bucket70?: { titulo: string; descricao: string; acao: string; exemplos: string[] };
+    bucket20?: { titulo: string; descricao: string; acao: string; exemplos: string[] };
+    bucket10?: { titulo: string; descricao: string; acao: string; exemplos: string[] };
+  } | null>(null);
   const [loadingIA, setLoadingIA] = useState(false);
 
   const getIASuggestions = trpc.pdi.getIASuggestions.useMutation();
@@ -148,7 +153,8 @@ function BlockForm({ blockType, competencia, quadrant, jobTitle, initialData, pd
       setIaAcoes70(result.acoes70);
       setIaAcoes20(result.acoes20);
       setIaAcoes10(result.acoes10);
-      toast.success("Sugestões geradas pela IA!");
+      setIaBuckets({ bucket70: result.bucket70, bucket20: result.bucket20, bucket10: result.bucket10 });
+      toast.success("Sugestões 70/20/10 geradas pela Stella!");
     } catch {
       toast.error("Erro ao gerar sugestões da IA.");
     } finally {
@@ -215,122 +221,137 @@ function BlockForm({ blockType, competencia, quadrant, jobTitle, initialData, pd
 
       {/* 70% */}
       <div className="rounded-lg border border-[#d9f22a]/20 bg-[#d9f22a]/5 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#d9f22a]/20 flex items-center justify-center text-[#d9f22a] font-bold text-sm">70%</div>
-          <div>
-            <p className="font-medium text-white text-sm">Prática no Trabalho</p>
-            <p className="text-xs text-slate-400">Projetos, desafios e responsabilidades novas no dia a dia</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-[#d9f22a]/20 flex items-center justify-center text-[#d9f22a] font-black text-sm">70%</div>
+            <div>
+              <p className="font-bold text-[#d9f22a] text-sm">{iaBuckets?.bucket70?.titulo ?? "Aprender Fazendo"}</p>
+              <p className="text-xs text-slate-400">{iaBuckets?.bucket70?.descricao ?? "Projetos, desafios e responsabilidades novas no dia a dia"}</p>
+            </div>
           </div>
+          <span className="text-xs px-2 py-1 rounded-full bg-[#d9f22a]/10 text-[#d9f22a] font-semibold">Obrigatório editar</span>
         </div>
-        {iaAcoes70 && (
-          <div className="bg-slate-800/60 rounded p-3 border border-slate-700/50">
-            <p className="text-xs text-[#d9f22a] mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Sugestão da IA</p>
-            <p className="text-sm text-slate-300">{iaAcoes70}</p>
+        {iaBuckets?.bucket70 && (
+          <div className="bg-slate-800/60 rounded-lg p-3 border border-[#d9f22a]/20 space-y-2">
+            <p className="text-xs text-[#d9f22a] font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> Sugestão da Stella</p>
+            <p className="text-sm text-white font-medium">{iaBuckets.bucket70.acao}</p>
+            {iaBuckets.bucket70.exemplos.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-slate-400">Exemplos:</p>
+                {iaBuckets.bucket70.exemplos.map((ex, i) => (
+                  <p key={i} className="text-xs text-slate-300 pl-2 border-l border-[#d9f22a]/30">{ex}</p>
+                ))}
+              </div>
+            )}
             {!readOnly && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2 text-xs text-[#d9f22a] hover:text-[#d9f22a] hover:bg-[#d9f22a]/10 h-7"
-                onClick={() => setAcoes70(iaAcoes70)}
-              >
-                Usar como base
+              <Button variant="ghost" size="sm" className="text-xs text-[#d9f22a] hover:bg-[#d9f22a]/10 h-7" onClick={() => setAcoes70(iaBuckets.bucket70!.acao)}>
+                Usar como base (edite depois)
               </Button>
             )}
           </div>
         )}
+        {!iaBuckets?.bucket70 && iaAcoes70 && (
+          <div className="bg-slate-800/60 rounded p-3 border border-slate-700/50">
+            <p className="text-xs text-[#d9f22a] mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Sugestão da IA</p>
+            <p className="text-sm text-slate-300">{iaAcoes70}</p>
+            {!readOnly && <Button variant="ghost" size="sm" className="mt-2 text-xs text-[#d9f22a] hover:bg-[#d9f22a]/10 h-7" onClick={() => setAcoes70(iaAcoes70)}>Usar como base</Button>}
+          </div>
+        )}
         <div className="space-y-2">
-          <Label className="text-slate-300 text-xs">Minha ação <span className="text-red-400">*</span></Label>
-          <Textarea
-            value={acoes70}
-            onChange={(e) => setAcoes70(e.target.value)}
-            placeholder="Descreva a ação prática que irá realizar no trabalho para desenvolver esta competência..."
-            className="bg-slate-800/60 border-slate-700 text-white min-h-[80px] text-sm"
-            disabled={readOnly}
-          />
+          <Label className="text-slate-300 text-xs">Minha ação <span className="text-red-400">*</span> <span className="text-slate-500">(edite a sugestão com sua voz)</span></Label>
+          <Textarea value={acoes70} onChange={(e) => setAcoes70(e.target.value)} placeholder="Descreva a ação prática que irá realizar no trabalho para desenvolver esta competência..." className="bg-slate-800/60 border-slate-700 text-white min-h-[80px] text-sm" disabled={readOnly} />
         </div>
         <div className="space-y-2">
           <Label className="text-slate-300 text-xs">Justificativa — por que escolheu esta ação? <span className="text-red-400">*</span></Label>
-          <Input
-            value={acoes70Just}
-            onChange={(e) => setAcoes70Just(e.target.value)}
-            placeholder="Ex: Escolhi este projeto pois me desafia a desenvolver X no contexto Y..."
-            className="bg-slate-800/60 border-slate-700 text-white text-sm"
-            disabled={readOnly}
-          />
+          <Input value={acoes70Just} onChange={(e) => setAcoes70Just(e.target.value)} placeholder="Ex: Escolhi este projeto pois me desafia a desenvolver X no contexto Y..." className="bg-slate-800/60 border-slate-700 text-white text-sm" disabled={readOnly} />
         </div>
       </div>
 
       {/* 20% */}
       <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">20%</div>
-          <div>
-            <p className="font-medium text-white text-sm">Aprendizado Social</p>
-            <p className="text-xs text-slate-400">Mentoria, shadowing, feedback estruturado, comunidades de prática</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-black text-sm">20%</div>
+            <div>
+              <p className="font-bold text-blue-400 text-sm">{iaBuckets?.bucket20?.titulo ?? "Aprender com Pessoas"}</p>
+              <p className="text-xs text-slate-400">{iaBuckets?.bucket20?.descricao ?? "Mentoria, shadowing, feedback estruturado, comunidades de prática"}</p>
+            </div>
           </div>
+          <span className="text-xs px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 font-semibold">1 clique</span>
         </div>
-        {iaAcoes20 && (
-          <div className="bg-slate-800/60 rounded p-3 border border-slate-700/50">
-            <p className="text-xs text-blue-400 mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Sugestão da IA</p>
-            <p className="text-sm text-slate-300">{iaAcoes20}</p>
+        {iaBuckets?.bucket20 && (
+          <div className="bg-slate-800/60 rounded-lg p-3 border border-blue-500/20 space-y-2">
+            <p className="text-xs text-blue-400 font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> Sugestão da Stella</p>
+            <p className="text-sm text-white font-medium">{iaBuckets.bucket20.acao}</p>
+            {iaBuckets.bucket20.exemplos.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-slate-400">Exemplos:</p>
+                {iaBuckets.bucket20.exemplos.map((ex, i) => (
+                  <p key={i} className="text-xs text-slate-300 pl-2 border-l border-blue-500/30">{ex}</p>
+                ))}
+              </div>
+            )}
             {!readOnly && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2 text-xs text-blue-400 hover:text-blue-400 hover:bg-blue-400/10 h-7"
-                onClick={() => setAcoes20(iaAcoes20)}
-              >
+              <Button variant="ghost" size="sm" className="text-xs text-blue-400 hover:bg-blue-400/10 h-7" onClick={() => setAcoes20(iaBuckets.bucket20!.acao)}>
                 Aceitar sugestão
               </Button>
             )}
           </div>
         )}
+        {!iaBuckets?.bucket20 && iaAcoes20 && (
+          <div className="bg-slate-800/60 rounded p-3 border border-slate-700/50">
+            <p className="text-xs text-blue-400 mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Sugestão da IA</p>
+            <p className="text-sm text-slate-300">{iaAcoes20}</p>
+            {!readOnly && <Button variant="ghost" size="sm" className="mt-2 text-xs text-blue-400 hover:bg-blue-400/10 h-7" onClick={() => setAcoes20(iaAcoes20)}>Aceitar sugestão</Button>}
+          </div>
+        )}
         <div className="space-y-2">
           <Label className="text-slate-300 text-xs">Minha ação <span className="text-red-400">*</span></Label>
-          <Textarea
-            value={acoes20}
-            onChange={(e) => setAcoes20(e.target.value)}
-            placeholder="Ex: Agendar sessão mensal de mentoria com X para discutir Y..."
-            className="bg-slate-800/60 border-slate-700 text-white min-h-[70px] text-sm"
-            disabled={readOnly}
-          />
+          <Textarea value={acoes20} onChange={(e) => setAcoes20(e.target.value)} placeholder="Ex: Agendar sessão mensal de mentoria com X para discutir Y..." className="bg-slate-800/60 border-slate-700 text-white min-h-[70px] text-sm" disabled={readOnly} />
         </div>
       </div>
 
       {/* 10% */}
       <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-sm">10%</div>
-          <div>
-            <p className="font-medium text-white text-sm">Aprendizado Formal</p>
-            <p className="text-xs text-slate-400">Curso, livro, certificação, workshop</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-black text-sm">10%</div>
+            <div>
+              <p className="font-bold text-purple-400 text-sm">{iaBuckets?.bucket10?.titulo ?? "Aprender Formalmente"}</p>
+              <p className="text-xs text-slate-400">{iaBuckets?.bucket10?.descricao ?? "Curso, livro, certificação, workshop"}</p>
+            </div>
           </div>
+          <span className="text-xs px-2 py-1 rounded-full bg-purple-500/10 text-purple-400 font-semibold">1 clique</span>
         </div>
-        {iaAcoes10 && (
-          <div className="bg-slate-800/60 rounded p-3 border border-slate-700/50">
-            <p className="text-xs text-purple-400 mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Sugestão da IA</p>
-            <p className="text-sm text-slate-300">{iaAcoes10}</p>
+        {iaBuckets?.bucket10 && (
+          <div className="bg-slate-800/60 rounded-lg p-3 border border-purple-500/20 space-y-2">
+            <p className="text-xs text-purple-400 font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> Sugestão da Stella</p>
+            <p className="text-sm text-white font-medium">{iaBuckets.bucket10.acao}</p>
+            {iaBuckets.bucket10.exemplos.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs text-slate-400">Exemplos:</p>
+                {iaBuckets.bucket10.exemplos.map((ex, i) => (
+                  <p key={i} className="text-xs text-slate-300 pl-2 border-l border-purple-500/30">{ex}</p>
+                ))}
+              </div>
+            )}
             {!readOnly && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2 text-xs text-purple-400 hover:text-purple-400 hover:bg-purple-400/10 h-7"
-                onClick={() => setAcoes10(iaAcoes10)}
-              >
+              <Button variant="ghost" size="sm" className="text-xs text-purple-400 hover:bg-purple-400/10 h-7" onClick={() => setAcoes10(iaBuckets.bucket10!.acao)}>
                 Aceitar sugestão
               </Button>
             )}
           </div>
         )}
+        {!iaBuckets?.bucket10 && iaAcoes10 && (
+          <div className="bg-slate-800/60 rounded p-3 border border-slate-700/50">
+            <p className="text-xs text-purple-400 mb-1 flex items-center gap-1"><Lightbulb className="w-3 h-3" /> Sugestão da IA</p>
+            <p className="text-sm text-slate-300">{iaAcoes10}</p>
+            {!readOnly && <Button variant="ghost" size="sm" className="mt-2 text-xs text-purple-400 hover:bg-purple-400/10 h-7" onClick={() => setAcoes10(iaAcoes10)}>Aceitar sugestão</Button>}
+          </div>
+        )}
         <div className="space-y-2">
           <Label className="text-slate-300 text-xs">Minha ação <span className="text-red-400">*</span></Label>
-          <Textarea
-            value={acoes10}
-            onChange={(e) => setAcoes10(e.target.value)}
-            placeholder="Ex: Concluir o curso X na plataforma Y até o final do semestre..."
-            className="bg-slate-800/60 border-slate-700 text-white min-h-[70px] text-sm"
-            disabled={readOnly}
-          />
+          <Textarea value={acoes10} onChange={(e) => setAcoes10(e.target.value)} placeholder="Ex: Concluir o curso X na plataforma Y até o final do semestre..." className="bg-slate-800/60 border-slate-700 text-white min-h-[70px] text-sm" disabled={readOnly} />
         </div>
       </div>
 
@@ -385,8 +406,9 @@ function LeaderStep1({ employee, cycleId, existingPdi, managerEval, nineboxPos, 
         quadrant: nineboxPos?.quadrant,
         jobTitle: employee.jobTitle ?? undefined,
       });
-      // Use the 70% suggestion as a starting point for competência técnica suggestion
-      setIaCompSugestao(`Baseado no valor "${VALOR_LABELS[selectedValor] ?? selectedValor}", sugerimos focar em: ${result.acoes70}`);
+      // Use the 70% bucket suggestion as a starting point for competência técnica suggestion
+      const bucket70Acao = result.bucket70?.acao ?? result.acoes70 ?? "";
+      setIaCompSugestao(`Baseado no valor "${VALOR_LABELS[selectedValor] ?? selectedValor}", sugerimos focar em: ${bucket70Acao}`);
       toast.success("Sugestão gerada pela IA!");
     } catch {
       toast.error("Erro ao gerar sugestão.");
