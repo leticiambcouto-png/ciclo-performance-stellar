@@ -13,10 +13,14 @@ import {
   flashFeedbacks,
   impactPlans,
   InsertEmployee,
+  InsertPdi,
+  InsertPdiBlock,
   InsertUser,
   managerEvaluations,
   nineboxPositions,
   notifications,
+  pdiBlocks,
+  pdis,
   selfEvaluations,
   structuredFeedbacks,
   users,
@@ -1281,4 +1285,105 @@ export async function upsertImpactPlan(data: {
     const result = await db.insert(impactPlans).values({ ...data });
     return { id: Number((result as any).insertId), ...data };
   }
+}
+
+// ─── PDI (PLANO DE DESENVOLVIMENTO INDIVIDUAL) ───────────────────────────────
+
+
+
+export async function getPdiForEmployee(cycleId: number, employeeId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(pdis)
+    .where(and(eq(pdis.cycleId, cycleId), eq(pdis.employeeId, employeeId)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getPdiWithBlocks(pdiId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const pdiRows = await db.select().from(pdis).where(eq(pdis.id, pdiId)).limit(1);
+  if (!pdiRows[0]) return null;
+  const blocks = await db.select().from(pdiBlocks).where(eq(pdiBlocks.pdiId, pdiId));
+  return { ...pdiRows[0], blocks };
+}
+
+export async function createPdi(data: {
+  cycleId: number;
+  employeeId: number;
+  leaderId: number;
+  valorStellar?: string | null;
+  valorEmpate?: boolean;
+  valorEmpateJustificativa?: string | null;
+  competenciaTecnica?: string | null;
+  iaCompetenciaSugestao?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(pdis).values({
+    ...data,
+    status: "draft",
+  });
+  return { id: Number((result as any).insertId), ...data };
+}
+
+export async function updatePdi(pdiId: number, data: Partial<typeof pdis.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(pdis).set(data).where(eq(pdis.id, pdiId));
+}
+
+export async function upsertPdiBlock(data: {
+  pdiId: number;
+  blockType: "valor_stellar" | "competencia_tecnica";
+  competencia: string;
+  iaAcoes70?: string | null;
+  iaAcoes20?: string | null;
+  iaAcoes10?: string | null;
+  acoes70?: string | null;
+  acoes70Justificativa?: string | null;
+  acoes20?: string | null;
+  acoes10?: string | null;
+  preenchidoPeloColaborador?: boolean;
+  validadoPeloLider?: boolean;
+  liderComentario?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  const existing = await db
+    .select()
+    .from(pdiBlocks)
+    .where(and(eq(pdiBlocks.pdiId, data.pdiId), eq(pdiBlocks.blockType, data.blockType)))
+    .limit(1);
+  if (existing[0]) {
+    await db.update(pdiBlocks).set(data).where(eq(pdiBlocks.id, existing[0].id));
+    return { ...existing[0], ...data };
+  } else {
+    const result = await db.insert(pdiBlocks).values(data);
+    return { id: Number((result as any).insertId), ...data };
+  }
+}
+
+export async function getPdiBlocksForPdi(pdiId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(pdiBlocks).where(eq(pdiBlocks.pdiId, pdiId));
+}
+
+export async function listPdisForManager(leaderId: number, cycleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(pdis)
+    .where(and(eq(pdis.leaderId, leaderId), eq(pdis.cycleId, cycleId)));
+}
+
+export async function listAllPdis(cycleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(pdis).where(eq(pdis.cycleId, cycleId));
 }

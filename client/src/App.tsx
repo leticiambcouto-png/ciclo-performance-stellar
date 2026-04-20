@@ -17,6 +17,7 @@ import PainelRH from "./pages/PainelRH";
 import Calibracao from "./pages/Calibracao";
 import Perfil from "./pages/Perfil";
 import CicloOverview from "./pages/CicloOverview";
+import PDI from "./pages/PDI";
 import EsqueciSenha from "./pages/EsqueciSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
 import { Loader2 } from "lucide-react";
@@ -82,6 +83,9 @@ function Router() {
       </Route>
       <Route path="/plano-impacto">
         <ProtectedRoute component={PlanoImpacto} />
+      </Route>
+      <Route path="/pdi">
+        <ProtectedRoute component={PDI} />
       </Route>
       <Route path="/relatorio">
         <ProtectedRoute component={Relatorio} />

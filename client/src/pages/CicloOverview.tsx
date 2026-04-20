@@ -206,49 +206,45 @@ const FASES = [
   {
     id: 7,
     icone: Zap,
-    titulo: "Flash Feedbacks Contínuos",
-    periodo: "Durante todo o semestre",
+    titulo: "PDI — Plano de Desenvolvimento Individual",
+    periodo: "Após a Devolutiva",
     objetivo:
-      "Conversas rápidas e estruturadas entre gestor e colaborador ao longo do semestre. Não substituem a avaliação formal, mas garantem que o desenvolvimento aconteça em tempo real, sem esperar o ciclo anual.",
+      "O PDI estrutura o desenvolvimento individual usando a metodologia 70/20/10: 70% aprendizagem no trabalho (projetos, desafios e responsabilidades novas), 20% aprendizado social (mentoria, shadowing, feedback estruturado) e 10% aprendizado formal (cursos, livros, certificações). É obrigatório para Talentos (Q6, Q8, Q9) e Críticos (Q1, Q2, Q4).",
     cor: "#d9f22a",
     corBg: "#d9f22a10",
     corBorda: "#d9f22a30",
     gestor: [
-      "Agendar flash feedbacks regulares com cada liderado conforme periodicidade do quadrante",
-      "Formalizar o conteúdo do feedback e o plano de ação na plataforma",
-      "Acompanhar o status dos flash feedbacks: realizados, pendentes e atrasados",
-      "Usar os flash feedbacks como insumo para a avaliação formal",
+      "Iniciar o PDI para cada Talento (Q6/Q8/Q9) e Crítico (Q1/Q2/Q4) do time",
+      "Selecionar o valor Stellar a desenvolver (pré-sugerido com base na menor nota da avaliação)",
+      "Em caso de empate de valores, escolher um e justificar a decisão em uma frase",
+      "Definir a competência técnica a desenvolver no ciclo (IA pode sugerir com base no quadrante)",
+      "Liberar o PDI para o colaborador preencher o plano de ação 70/20/10",
+      "Validar e finalizar o PDI após o colaborador preencher as ações",
     ],
     colaborador: [
-      "Agendar flash feedbacks com o gestor quando sentir necessidade",
-      "Usar a IA Stella para estruturar a pauta antes de cada reunião",
-      "Participar ativamente com exemplos e perguntas concretas",
-      "Ter acesso vitalício ao histórico de todos os flash feedbacks realizados",
+      "Preencher o plano de ação 70/20/10 para o Valor Stellar definido pelo líder",
+      "Preencher o plano de ação 70/20/10 para a Competência Técnica definida pelo líder",
+      "O campo 70% exige edição e justificativa própria — não pode ser apenas a sugestão da IA",
+      "Os campos 20% e 10% aceitam a sugestão da IA com um clique, mas podem ser editados",
+      "Usar o botão 'Gerar sugestões com IA' para receber ideias práticas por competência",
+      "Acompanhar o status do PDI: Aguardando líder → Em preenchimento → Aguardando validação → Concluído",
     ],
     rh: [
-      "Monitorar a frequência de flash feedbacks por gestor e time",
-      "Identificar gestores com flash feedbacks atrasados ou pendentes",
-      "Usar os dados de flash feedbacks como indicador de saúde da liderança",
-      "Garantir que a cultura de feedback contínuo seja mantida",
+      "Monitorar a cobertura de PDIs: % de Talentos e Críticos com PDI iniciado",
+      "Identificar gestores que ainda não iniciaram PDIs obrigatórios",
+      "Visualizar todos os PDIs do ciclo no Painel RH",
+      "Usar o PDI como insumo para decisões de promoção, mérito e plano de carreira",
     ],
     destaque:
-      "Flash feedbacks atrasados ou não realizados são um sinal de alerta. O RH monitora esse indicador como parte da avaliação da qualidade da liderança.",
-    estruturaPauta: [
-      { pergunta: "O que está funcionando e precisa continuar?", tempo: "5 min" },
-      { pergunta: "Qual é o gap prioritário do próximo trimestre?", tempo: "10 min" },
-      { pergunta: "Qual compromisso concreto a pessoa assume?", tempo: "10 min" },
-      { pergunta: "O que o gestor vai fazer para viabilizar?", tempo: "5 min" },
+      "O valor escolhido no PDI aparece destacado na próxima avaliação com a pergunta 'Evoluiu?'. Isso cria um loop de desenvolvimento contínuo entre ciclos.",
+    metodologia7020: [
+      { pct: "70%", label: "Prática no Trabalho", desc: "Projetos desafiadores, novas responsabilidades, rotação de funções, liderança de iniciativas", cor: "#d9f22a" },
+      { pct: "20%", label: "Aprendizado Social", desc: "Mentoria, shadowing, comunidades de prática, feedback estruturado, co-criação com pares", cor: "#3b82f6" },
+      { pct: "10%", label: "Aprendizado Formal", desc: "Cursos, certificações, livros, workshops, treinamentos presenciais ou online", cor: "#a855f7" },
     ],
-    periodicidadePorQuadrante: [
-      { quadrante: "Q9 — Estrela", frequencia: "Mensal", cor: "#22c55e" },
-      { quadrante: "Q8 — Talento a Acelerar", frequencia: "Mensal", cor: "#22c55e" },
-      { quadrante: "Q7 — Talento Consistente", frequencia: "Bimestral", cor: "#22c55e" },
-      { quadrante: "Q6 — Promissor", frequencia: "Bimestral", cor: "#eab308" },
-      { quadrante: "Q5 — Mantenedor", frequencia: "Bimestral", cor: "#eab308" },
-      { quadrante: "Q4 — Observação", frequencia: "Bimestral", cor: "#eab308" },
-      { quadrante: "Q3 — Especialista", frequencia: "Bimestral", cor: "#eab308" },
-      { quadrante: "Q2 — Em Desenvolvimento", frequencia: "Mensal", cor: "#ef4444" },
-      { quadrante: "Q1 — Crítico", frequencia: "Semanal · Plano de recuperação 30 dias", cor: "#ef4444" },
+    obrigatorios: [
+      { grupo: "Talentos", quadrantes: "Q6, Q8, Q9", motivo: "Alto potencial — PDI para acelerar crescimento e reter", cor: "#22c55e" },
+      { grupo: "Críticos", quadrantes: "Q1, Q2, Q4", motivo: "Risco de desligamento — PDI para estruturar plano de melhoria", cor: "#ef4444" },
     ],
   },
 ];
@@ -615,32 +611,28 @@ export default function CicloOverview() {
                   })}
                 </div>
 
-                {/* Estrutura da pauta — apenas Fase 7 */}
-                {"estruturaPauta" in fase && (fase as any).estruturaPauta && (
+                {/* Metodologia 70/20/10 — apenas Fase 7 (PDI) */}
+                {"metodologia7020" in fase && (fase as any).metodologia7020 && (
                   <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: "#001023", border: "1px solid #d9f22a30" }}>
                     <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#d9f22a" }}>
-                      Estrutura da Pauta (30 min)
+                      Metodologia 70/20/10
                     </p>
                     <div className="space-y-2">
-                      {(fase as any).estruturaPauta.map((item: { pergunta: string; tempo: string }, i: number) => (
+                      {(fase as any).metodologia7020.map((item: { pct: string; label: string; desc: string; cor: string }, i: number) => (
                         <div
                           key={i}
-                          className="flex items-center gap-3 p-3 rounded-lg"
-                          style={{ backgroundColor: "#d9f22a08", border: "1px solid #d9f22a20" }}
+                          className="flex items-start gap-3 p-3 rounded-lg"
+                          style={{ backgroundColor: `${item.cor}08`, border: `1px solid ${item.cor}25` }}
                         >
                           <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-black"
-                            style={{ backgroundColor: "#d9f22a20", color: "#d9f22a" }}
+                            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-black"
+                            style={{ backgroundColor: `${item.cor}20`, color: item.cor }}
                           >
-                            {i + 1}
+                            {item.pct}
                           </div>
-                          <p className="flex-1 text-xs" style={{ color: "#fdffdf" }}>{item.pergunta}</p>
-                          <div
-                            className="flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: "#d9f22a15", border: "1px solid #d9f22a30" }}
-                          >
-                            <Clock size={10} style={{ color: "#d9f22a" }} />
-                            <span className="text-xs font-bold" style={{ color: "#d9f22a" }}>{item.tempo}</span>
+                          <div>
+                            <p className="text-xs font-bold mb-0.5" style={{ color: item.cor }}>{item.label}</p>
+                            <p className="text-xs" style={{ color: "#8aa3c0" }}>{item.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -648,27 +640,24 @@ export default function CicloOverview() {
                   </div>
                 )}
 
-                {/* Periodicidade por quadrante — apenas Fase 7 */}
-                {"periodicidadePorQuadrante" in fase && (fase as any).periodicidadePorQuadrante && (
+                {/* Obrigatórios por quadrante — apenas Fase 7 (PDI) */}
+                {"obrigatorios" in fase && (fase as any).obrigatorios && (
                   <div className="p-4 rounded-xl" style={{ backgroundColor: "#001023", border: "1px solid #0a3060" }}>
                     <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#8aa3c0" }}>
-                      Periodicidade por Quadrante do 9-Box
+                      PDI Obrigatório por Grupo
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {(fase as any).periodicidadePorQuadrante.map((item: { quadrante: string; frequencia: string; cor: string }, i: number) => (
+                      {(fase as any).obrigatorios.map((item: { grupo: string; quadrantes: string; motivo: string; cor: string }, i: number) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between p-2 rounded-lg"
+                          className="p-3 rounded-lg"
                           style={{ backgroundColor: `${item.cor}08`, border: `1px solid ${item.cor}25` }}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mb-1">
                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.cor }} />
-                            <span className="text-xs font-semibold" style={{ color: "#fdffdf" }}>{item.quadrante}</span>
+                            <span className="text-xs font-bold" style={{ color: item.cor }}>{item.grupo} — {item.quadrantes}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar size={10} style={{ color: item.cor }} />
-                            <span className="text-xs font-bold" style={{ color: item.cor }}>{item.frequencia}</span>
-                          </div>
+                          <p className="text-xs" style={{ color: "#8aa3c0" }}>{item.motivo}</p>
                         </div>
                       ))}
                     </div>

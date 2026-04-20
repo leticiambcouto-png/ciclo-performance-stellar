@@ -73,15 +73,8 @@ const navItems: NavItem[] = [
     group: "main",
   },
   {
-    label: "Feedback",
-    href: "/feedback",
-    icon: <MessageSquare size={18} />,
-    roles: ["rh", "gestor", "colaborador"],
-    group: "main",
-  },
-  {
-    label: "Plano de Impacto",
-    href: "/plano-impacto",
+    label: "PDI",
+    href: "/pdi",
     icon: <Target size={18} />,
     roles: ["rh", "gestor", "colaborador"],
     group: "main",

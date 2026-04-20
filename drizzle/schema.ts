@@ -359,3 +359,59 @@ export const impactPlans = mysqlTable("impact_plans", {
 });
 export type ImpactPlan = typeof impactPlans.$inferSelect;
 export type InsertImpactPlan = typeof impactPlans.$inferInsert;
+
+// ─── PDI (PLANO DE DESENVOLVIMENTO INDIVIDUAL) ───────────────────────────────
+// Criado pelo líder para colaboradores Talentos (Q6/Q8/Q9) e Críticos (Q1/Q2/Q4)
+// Fluxo: draft → leader_defined → employee_filling → leader_validating → completed
+export const pdis = mysqlTable("pdis", {
+  id: int("id").autoincrement().primaryKey(),
+  cycleId: int("cycleId").references(() => evaluationCycles.id).notNull(),
+  employeeId: int("employeeId").references(() => employees.id).notNull(),
+  leaderId: int("leaderId").references(() => employees.id).notNull(),
+  // Valor Stellar a desenvolver (pré-selecionado com menor nota)
+  valorStellar: varchar("valorStellar", { length: 100 }),
+  // Se houve empate de valores, o líder escolhe e justifica
+  valorEmpate: boolean("valorEmpate").default(false).notNull(),
+  valorEmpateJustificativa: text("valorEmpateJustificativa"),
+  // Competência técnica a desenvolver (definida pelo líder)
+  competenciaTecnica: text("competenciaTecnica"),
+  // Sugestão da IA para competência técnica
+  iaCompetenciaSugestao: text("iaCompetenciaSugestao"),
+  status: mysqlEnum("status", ["draft", "leader_defined", "employee_filling", "leader_validating", "completed"]).default("draft").notNull(),
+  // Observações do líder na validação final
+  liderObservacoes: text("liderObservacoes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  completedAt: timestamp("completedAt"),
+});
+export type Pdi = typeof pdis.$inferSelect;
+export type InsertPdi = typeof pdis.$inferInsert;
+
+// ─── PDI BLOCKS ──────────────────────────────────────────────────────────────
+// Cada PDI tem 2 blocos: valor_stellar e competencia_tecnica
+// Cada bloco tem ações 70/20/10 (prática, social, formal)
+export const pdiBlocks = mysqlTable("pdi_blocks", {
+  id: int("id").autoincrement().primaryKey(),
+  pdiId: int("pdiId").references(() => pdis.id).notNull(),
+  // Tipo do bloco
+  blockType: mysqlEnum("blockType", ["valor_stellar", "competencia_tecnica"]).notNull(),
+  // Competência/valor a desenvolver neste bloco
+  competencia: varchar("competencia", { length: 255 }).notNull(),
+  // Sugestões da IA (geradas via invokeLLM)
+  iaAcoes70: text("iaAcoes70"), // JSON array de sugestões para 70%
+  iaAcoes20: text("iaAcoes20"), // JSON array de sugestões para 20%
+  iaAcoes10: text("iaAcoes10"), // JSON array de sugestões para 10%
+  // Ações definidas pelo colaborador
+  acoes70: text("acoes70"), // 70% — prática no trabalho (obrigatório editar + justificativa)
+  acoes70Justificativa: text("acoes70Justificativa"), // Justificativa do colaborador para o 70%
+  acoes20: text("acoes20"), // 20% — aprendizado social (pode aceitar sugestão com 1 clique)
+  acoes10: text("acoes10"), // 10% — aprendizado formal (pode aceitar sugestão com 1 clique)
+  // Status de preenchimento do bloco
+  preenchidoPeloColaborador: boolean("preenchidoPeloColaborador").default(false).notNull(),
+  validadoPeloLider: boolean("validadoPeloLider").default(false).notNull(),
+  liderComentario: text("liderComentario"), // Comentário do líder na validação
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PdiBlock = typeof pdiBlocks.$inferSelect;
+export type InsertPdiBlock = typeof pdiBlocks.$inferInsert;

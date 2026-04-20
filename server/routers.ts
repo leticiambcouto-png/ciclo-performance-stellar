@@ -64,6 +64,14 @@ import {
   getImpactPlan,
   listImpactPlansForManager,
   upsertImpactPlan,
+  getPdiForEmployee,
+  getPdiWithBlocks,
+  createPdi,
+  updatePdi,
+  upsertPdiBlock,
+  getPdiBlocksForPdi,
+  listPdisForManager,
+  listAllPdis,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -1521,6 +1529,268 @@ Valores da Stellar: ambição, accountability, sonhar grande e juntos somos mais
         const leader = await getEmployeeByUserId(ctx.user.id);
         if (!leader) return [];
         return listImpactPlansForManager(input.cycleId, leader.id);
+      }),
+  }),
+
+  // ─── PDI ─────────────────────────────────────────────────────────────────
+  pdi: router({
+    // Gestor: iniciar PDI para um liderado, definindo valor e competência
+    initForEmployee: gestorProcedure
+      .input(
+        z.object({
+          cycleId: z.number(),
+          employeeId: z.number(),
+          valorStellar: z.string(),
+          valorEmpate: z.boolean().optional().default(false),
+          valorEmpateJustificativa: z.string().optional().nullable(),
+          competenciaTecnica: z.string(),
+          iaCompetenciaSugestao: z.string().optional().nullable(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) throw new TRPCError({ code: "NOT_FOUND", message: "Líder não encontrado." });
+
+        // Check if PDI already exists
+        const existing = await getPdiForEmployee(input.cycleId, input.employeeId);
+        if (existing) {
+          // Update existing PDI
+          await updatePdi(existing.id, {
+            valorStellar: input.valorStellar,
+            valorEmpate: input.valorEmpate,
+            valorEmpateJustificativa: input.valorEmpateJustificativa,
+            competenciaTecnica: input.competenciaTecnica,
+            iaCompetenciaSugestao: input.iaCompetenciaSugestao,
+            status: "leader_defined",
+          });
+          // Upsert valor_stellar block
+          await upsertPdiBlock({
+            pdiId: existing.id,
+            blockType: "valor_stellar",
+            competencia: input.valorStellar,
+          });
+          // Upsert competencia_tecnica block
+          await upsertPdiBlock({
+            pdiId: existing.id,
+            blockType: "competencia_tecnica",
+            competencia: input.competenciaTecnica,
+          });
+          return { pdiId: existing.id };
+        }
+
+        const pdi = await createPdi({
+          cycleId: input.cycleId,
+          employeeId: input.employeeId,
+          leaderId: leader.id,
+          valorStellar: input.valorStellar,
+          valorEmpate: input.valorEmpate,
+          valorEmpateJustificativa: input.valorEmpateJustificativa,
+          competenciaTecnica: input.competenciaTecnica,
+          iaCompetenciaSugestao: input.iaCompetenciaSugestao,
+        });
+        if (!pdi) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erro ao criar PDI." });
+
+        await updatePdi(pdi.id, { status: "leader_defined" });
+
+        // Create the two blocks
+        await upsertPdiBlock({
+          pdiId: pdi.id,
+          blockType: "valor_stellar",
+          competencia: input.valorStellar,
+        });
+        await upsertPdiBlock({
+          pdiId: pdi.id,
+          blockType: "competencia_tecnica",
+          competencia: input.competenciaTecnica,
+        });
+
+        return { pdiId: pdi.id };
+      }),
+
+    // IA: gerar sugestões 70/20/10 para uma competência
+    getIASuggestions: protectedProcedure
+      .input(
+        z.object({
+          competencia: z.string(),
+          blockType: z.enum(["valor_stellar", "competencia_tecnica"]),
+          quadrant: z.string().optional(), // e.g. Q6, Q9
+          jobTitle: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const blockLabel = input.blockType === "valor_stellar" ? "Valor Cultural Stellar" : "Competência Técnica";
+        const context = input.quadrant ? `O colaborador está no quadrante ${input.quadrant} do 9-Box.` : "";
+        const jobContext = input.jobTitle ? `Cargo: ${input.jobTitle}.` : "";
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `Você é um especialista em desenvolvimento de pessoas para a empresa Stellar Gaming. Gere sugestões práticas de ações de desenvolvimento seguindo a metodologia 70/20/10 para um PDI (Plano de Desenvolvimento Individual). Responda APENAS em JSON válido.`,
+            },
+            {
+              role: "user",
+              content: `Gere sugestões de ações de desenvolvimento para a seguinte competência/valor:\n\n${blockLabel}: "${input.competencia}"\n${context}\n${jobContext}\n\nRetorne um JSON com exatamente esta estrutura:\n{\n  "acoes70": "[Uma ação prática detalhada para 70% — aprendizagem no trabalho (projetos, desafios, responsabilidades novas)]",\n  "acoes20": "[Uma ação de aprendizagem social para 20% (mentoria, shadowing, feedback estruturado, comunidades de prática)]",\n  "acoes10": "[Uma ação de aprendizagem formal para 10% (curso, livro, certificação, workshop)]"\n}`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "pdi_suggestions",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  acoes70: { type: "string", description: "Ação 70% - prática no trabalho" },
+                  acoes20: { type: "string", description: "Ação 20% - aprendizado social" },
+                  acoes10: { type: "string", description: "Ação 10% - aprendizado formal" },
+                },
+                required: ["acoes70", "acoes20", "acoes10"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices[0].message.content;
+        const parsed = typeof content === "string" ? JSON.parse(content) : content;
+        return parsed as { acoes70: string; acoes20: string; acoes10: string };
+      }),
+
+    // Colaborador: salvar ações do plano 70/20/10
+    saveEmployeeActions: protectedProcedure
+      .input(
+        z.object({
+          pdiId: z.number(),
+          blockType: z.enum(["valor_stellar", "competencia_tecnica"]),
+          acoes70: z.string().min(1, "Campo 70% é obrigatório"),
+          acoes70Justificativa: z.string().min(1, "Justificativa do 70% é obrigatória"),
+          acoes20: z.string().min(1, "Campo 20% é obrigatório"),
+          acoes10: z.string().min(1, "Campo 10% é obrigatório"),
+          iaAcoes70: z.string().optional().nullable(),
+          iaAcoes20: z.string().optional().nullable(),
+          iaAcoes10: z.string().optional().nullable(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const employee = await getEmployeeByUserId(ctx.user.id);
+        if (!employee) throw new TRPCError({ code: "NOT_FOUND", message: "Colaborador não encontrado." });
+
+        // Verify PDI belongs to this employee
+        const pdiData = await getPdiWithBlocks(input.pdiId);
+        if (!pdiData) throw new TRPCError({ code: "NOT_FOUND", message: "PDI não encontrado." });
+        if (pdiData.employeeId !== employee.id) throw new TRPCError({ code: "FORBIDDEN", message: "PDI não pertence a este colaborador." });
+        if (pdiData.status !== "leader_defined" && pdiData.status !== "employee_filling") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "PDI não está disponível para preenchimento." });
+        }
+
+        await upsertPdiBlock({
+          pdiId: input.pdiId,
+          blockType: input.blockType,
+          competencia: input.blockType === "valor_stellar" ? (pdiData.valorStellar ?? "") : (pdiData.competenciaTecnica ?? ""),
+          acoes70: input.acoes70,
+          acoes70Justificativa: input.acoes70Justificativa,
+          acoes20: input.acoes20,
+          acoes10: input.acoes10,
+          iaAcoes70: input.iaAcoes70,
+          iaAcoes20: input.iaAcoes20,
+          iaAcoes10: input.iaAcoes10,
+          preenchidoPeloColaborador: true,
+        });
+
+        // Check if both blocks are filled
+        const blocks = await getPdiBlocksForPdi(input.pdiId);
+        const allFilled = blocks.length >= 2 && blocks.every((b) => b.preenchidoPeloColaborador);
+        if (allFilled) {
+          await updatePdi(input.pdiId, { status: "leader_validating" });
+        } else {
+          await updatePdi(input.pdiId, { status: "employee_filling" });
+        }
+
+        return { success: true };
+      }),
+
+    // Gestor: validar e finalizar PDI
+    leaderValidate: gestorProcedure
+      .input(
+        z.object({
+          pdiId: z.number(),
+          liderObservacoes: z.string().optional().nullable(),
+          blockComments: z.array(
+            z.object({
+              blockType: z.enum(["valor_stellar", "competencia_tecnica"]),
+              liderComentario: z.string().optional().nullable(),
+              validadoPeloLider: z.boolean(),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) throw new TRPCError({ code: "NOT_FOUND", message: "Líder não encontrado." });
+
+        const pdiData = await getPdiWithBlocks(input.pdiId);
+        if (!pdiData) throw new TRPCError({ code: "NOT_FOUND", message: "PDI não encontrado." });
+        if (pdiData.leaderId !== leader.id) throw new TRPCError({ code: "FORBIDDEN", message: "Você não é o líder deste PDI." });
+
+        for (const bc of input.blockComments) {
+          await upsertPdiBlock({
+            pdiId: input.pdiId,
+            blockType: bc.blockType,
+            competencia: bc.blockType === "valor_stellar" ? (pdiData.valorStellar ?? "") : (pdiData.competenciaTecnica ?? ""),
+            liderComentario: bc.liderComentario,
+            validadoPeloLider: bc.validadoPeloLider,
+          });
+        }
+
+        await updatePdi(input.pdiId, {
+          status: "completed",
+          liderObservacoes: input.liderObservacoes,
+          completedAt: new Date(),
+        });
+
+        return { success: true };
+      }),
+
+    // Buscar PDI de um colaborador no ciclo (com blocos)
+    getForEmployee: protectedProcedure
+      .input(z.object({ cycleId: z.number(), employeeId: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        const employee = input.employeeId
+          ? { id: input.employeeId }
+          : await getEmployeeByUserId(ctx.user.id);
+        if (!employee) return null;
+        const pdi = await getPdiForEmployee(input.cycleId, employee.id);
+        if (!pdi) return null;
+        const blocks = await getPdiBlocksForPdi(pdi.id);
+        return { ...pdi, blocks };
+      }),
+
+    // Gestor: listar PDIs dos liderados com status
+    listForManager: gestorProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const leader = await getEmployeeByUserId(ctx.user.id);
+        if (!leader) return [];
+        const pdiList = await listPdisForManager(leader.id, input.cycleId);
+        // Enrich with employee info
+        const allEmps = await getAllEmployees();
+        return pdiList.map((p) => ({
+          ...p,
+          employee: allEmps.find((e) => e.id === p.employeeId) ?? null,
+        }));
+      }),
+
+    // RH: listar todos os PDIs do ciclo
+    listAll: rhProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ input }) => {
+        const pdiList = await listAllPdis(input.cycleId);
+        const allEmps = await getAllEmployees();
+        return pdiList.map((p) => ({
+          ...p,
+          employee: allEmps.find((e) => e.id === p.employeeId) ?? null,
+        }));
       }),
   }),
 
