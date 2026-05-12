@@ -461,3 +461,9 @@
 - [x] Sugestão da IA deve retornar 3 blocos separados: 70% (prática no trabalho), 20% (aprendizado social), 10% (aprendizado formal)
 - [x] Cada bloco com título, descrição e 2-3 exemplos concretos adaptados ao cargo/quadrante
 - [x] Prompt da IA atualizado para discriminar os 3 buckets com contexto Stellar Gaming
+
+## Bug Fix — Calibração API Error (Abril 2026)
+- [x] Investigado: erro "Unexpected token '<'" na página /calibracao era transitório — ocorreu durante reinicialização do servidor (16:21:30 stop, 16:21:33 start, erro em 16:21:32). Não há bug no código.
+
+## Bug Fix — NotFoundError removeChild crash (Maio 2026)
+- [x] Corrigido: `getNineboxPosition` e demais funções em db.ts retornavam `undefined` (proibido pelo React Query) em vez de `null` quando o colaborador não tinha posição no 9-Box. Todas as ocorrências de `return undefined` e `return result[0]` (sem fallback) foram substituídas por `return null` e `return result[0] ?? null`.

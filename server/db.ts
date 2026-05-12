@@ -81,9 +81,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function updateUserPlatformRole(
@@ -111,15 +111,15 @@ export async function getAllEmployees() {
 
 export async function getEmployeeByUserId(userId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   // Negative IDs are synthetic (custom auth users without a users table entry)
   // In this case, the absolute value is the actual employee ID
   if (userId < 0) {
     const result = await db.select().from(employees).where(eq(employees.id, -userId)).limit(1);
-    return result[0];
+    return result[0] ?? null;
   }
   const result = await db.select().from(employees).where(eq(employees.userId, userId)).limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getDirectReports(managerId: number) {
@@ -145,13 +145,13 @@ export async function updateEmployee(id: number, data: Partial<InsertEmployee>) 
 
 export async function getActiveCycle() {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(evaluationCycles)
     .where(eq(evaluationCycles.status, "open"))
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getAllCycles() {
@@ -164,13 +164,13 @@ export async function getAllCycles() {
 
 export async function getSelfEvaluation(employeeId: number, cycleId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(selfEvaluations)
     .where(and(eq(selfEvaluations.employeeId, employeeId), eq(selfEvaluations.cycleId, cycleId)))
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function upsertSelfEvaluation(data: typeof selfEvaluations.$inferInsert) {
@@ -193,7 +193,7 @@ export async function upsertSelfEvaluation(data: typeof selfEvaluations.$inferIn
 
 export async function getManagerEvaluation(managerId: number, employeeId: number, cycleId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(managerEvaluations)
@@ -205,7 +205,7 @@ export async function getManagerEvaluation(managerId: number, employeeId: number
       )
     )
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getManagerEvaluationsForTeam(managerId: number, cycleId: number) {
@@ -227,7 +227,7 @@ export async function getAllManagerEvaluations(cycleId: number) {
 
 export async function getManagerEvaluationByEmployee(employeeId: number, cycleId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(managerEvaluations)
@@ -239,7 +239,7 @@ export async function getManagerEvaluationByEmployee(employeeId: number, cycleId
       )
     )
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 export async function upsertManagerEvaluation(
   data: typeof managerEvaluations.$inferInsert
@@ -267,7 +267,7 @@ export async function upsertManagerEvaluation(
 
 export async function getNineboxPosition(employeeId: number, cycleId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(nineboxPositions)
@@ -278,7 +278,7 @@ export async function getNineboxPosition(employeeId: number, cycleId: number) {
       )
     )
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getNineboxPositionsForTeam(managerEmployeeId: number, cycleId: number) {
@@ -398,7 +398,7 @@ export async function updateOverdueFlashFeedbacks() {
 
 export async function getFeedbackReport(employeeId: number, cycleId: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db
     .select()
     .from(feedbackReports)
@@ -409,7 +409,7 @@ export async function getFeedbackReport(employeeId: number, cycleId: number) {
       )
     )
     .limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 export async function getFeedbackReportsForManager(managerId: number, cycleId: number) {
@@ -825,9 +825,9 @@ export async function reactivateEmployee(id: number) {
 
 export async function getEmployeeById(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return null;
   const result = await db.select().from(employees).where(eq(employees.id, id)).limit(1);
-  return result[0];
+  return result[0] ?? null;
 }
 
 // ─── REPORT DATA FUNCTIONS ───────────────────────────────────────────────────
